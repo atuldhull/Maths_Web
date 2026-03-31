@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Billing & Plans — Math Collective</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    :root {
+      --bg:      #0f172a;
+      --bg2:     #1e293b;
+      --bg3:     #0d1424;
+      --border:  #1e293b;
+      --text:    #f1f5f9;
+      --muted:   #64748b;
+      --accent:  #7c3aed;
+      --success: #22c55e;
+      --warn:    #f59e0b;
+      --danger:  #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; min-height: 100vh; }
+
+    /* ── Layout ── */
+    .page { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+    .back-link { color: var(--muted); font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 28px; }
+    .back-link:hover { color: var(--text); }
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+
+    /* ── Current plan banner ── */
+    .current-plan-banner {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 24px; margin-bottom: 32px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    }
+    .plan-badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .plan-badge.free    { background: var(--muted); }
+    .plan-badge.starter { background: #0ea5e9; }
+    .plan-badge.pro     { background: var(--accent); }
+    .plan-badge.enterprise { background: #f59e0b; color: #000; }
+    .expires-text { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .mrr-stat { text-align: right; }
+    .mrr-stat .val { font-size: 1.2rem; font-weight: 700; color: var(--success); }
+    .mrr-stat .lbl { font-size: 11px; color: var(--muted); }
+
+    /* ── Plans grid ── */
+    .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .plan-card {
+      background: var(--bg2); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 24px; cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s;
+      position: relative;
+    }
+    .plan-card:hover { border-color: #334155; transform: translateY(-2px); }
+    .plan-card.current { border-color: var(--accent); background: rgba(124,58,237,0.08); }
+    .plan-card.recommended { border-color: var(--accent); }
+    .badge-recommended {
+      position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: #fff; font-size: 10px; font-weight: 700;
+      padding: 2px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+    .plan-name { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .plan-price { font-size: 2rem; font-weight: 800; line-height: 1; }
+    .plan-price span { font-size: 13px; font-weight: 400; color: var(--muted); }
+    .plan-limits { margin: 16px 0; font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+    .plan-limits li { list-style: none; display: flex; align-items: center; gap: 6px; }
+    .plan-limits li::before { content: "✓"; color: var(--success); font-weight: 700; }
+    .btn-upgrade {
+      width: 100%; padding: 10px; border: none; border-radius: 8px;
+      background: var(--accent); color: #fff; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s; margin-top: 12px;
+    }
+    .btn-upgrade:hover { opacity: 0.85; }
+    .btn-upgrade:disabled { background: var(--muted); cursor: not-allowed; opacity: 1; }
+    .btn-current { background: transparent; border: 1px solid var(--border); color: var(--muted); cursor: default; }
+
+    /* ── Billing history ── */
+    .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 11px; text-transform: uppercase; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; letter-spacing: 0.05em; }
+    td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; vertical-align: middle; }
+    .status-pill { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+    .status-paid    { background: rgba(34,197,94,0.15); color: var(--success); }
+    .status-failed  { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .status-created { background: rgba(100,116,139,0.15); color: var(--muted); }
+    .empty-msg { text-align: center; color: var(--muted); padding: 32px; font-size: 13px; }
+
+    /* ── Toast ── */
+    #toast { position: fixed; bottom: 24px; right: 24px; max-width: 320px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+    .toast-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; font-size: 13px; animation: slideIn 0.3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+    .toast-item.success { border-color: var(--success); }
+    .toast-item.error   { border-color: var(--danger); }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    /* ── Loading spinner ── */
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; display: inline-block; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <a class="back-link" href="/admin">← Back to Dashboard</a>
+  <h1>💳 Billing & Plans</h1>
+  <p class="subtitle" id="pageSubtitle">Manage your organisation's subscription.</p>
+
+  <!-- Current plan -->
+  <div class="current-plan-banner" id="currentPlanBanner">
+    <div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px;">Current Plan</div>
+      <span class="plan-badge" id="currentPlanBadge">—</span>
+      <div class="expires-text" id="expiresText"></div>
+    </div>
+    <div class="mrr-stat" id="usageBlock" style="display:none">
+      <div class="val" id="usageUsers">—</div>
+      <div class="lbl">Users used</div>
+    </div>
+  </div>
+
+  <!-- Plan cards -->
+  <div class="plans-grid" id="plansGrid">
+    <div style="color:var(--muted);font-size:13px;grid-column:1/-1;padding:20px 0;">Loading plans…</div>
+  </div>
+
+  <!-- Billing history -->
+  <div class="section-title">Billing History</div>
+  <div id="billingHistoryWrap">
+    <div class="empty-msg">Loading…</div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+  /* ═══════════════ STATE ═══════════════ */
+  let currentPlanName = "free";
+  let orgName = "";
+  let userEmail = "";
+  let userName = "";
+
+  /* ═══════════════ HELPERS ═══════════════ */
+  async function api(method, path, body) {
+    const opts = { method, headers: { "Content-Type": "application/json" } };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch("/api" + path, opts);
+    return r.json();
+  }
+
+  function toast(msg, type = "info") {
+    const tc = document.getElementById("toast");
+    const el = document.createElement("div");
+    el.className = "toast-item " + type;
+    el.textContent = msg;
+    tc.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+
+  function formatDate(iso) {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  /* ═══════════════ LOAD ORG INFO ═══════════════ */
+  async function loadOrgInfo() {
+    const d = await api("GET", "/org-admin/org-stats");
+    if (!d || d.error) return;
+
+    currentPlanName = d.org?.plan_name || "free";
+    orgName = d.org?.name || "Your Organisation";
+
+    const badge = document.getElementById("currentPlanBadge");
+    badge.textContent = (currentPlanName || "free").toUpperCase();
+    badge.className = "plan-badge " + (currentPlanName || "free");
+
+    const exp = d.org?.plan_expires_at;
+    document.getElementById("expiresText").textContent = exp
+      ? `Active until ${formatDate(exp)}`
+      : currentPlanName === "free" ? "No expiry" : "";
+
+    if (d.usage) {
+      document.getElementById("usageBlock").style.display = "block";
+      document.getElementById("usageUsers").textContent =
+        `${d.usage.users?.count || 0} / ${d.limits?.max_users < 0 ? "∞" : d.limits?.max_users || "—"}`;
+    }
+
+    document.getElementById("pageSubtitle").textContent = `Manage subscription for ${orgName}`;
+  }
+
+  /* ═══════════════ LOAD PLANS ═══════════════ */
+  async function loadPlans() {
+    const plans = await api("GET", "/payment/plans");
+    if (!Array.isArray(plans)) {
+      document.getElementById("plansGrid").innerHTML = `<div style="color:var(--muted)">Could not load plans.</div>`;
+      return;
+    }
+
+    const grid = document.getElementById("plansGrid");
+    grid.innerHTML = plans.map(p => {
+      const isCurrent     = p.name === currentPlanName;
+      const isRecommended = p.name === "pro";
+      const isFree        = p.price_monthly === 0;
+
+      const limits = [
+        p.max_users < 0 ? "Unlimited users" : `Up to ${p.max_users} users`,
+        p.max_challenges < 0 ? "Unlimited challenges" : `Up to ${p.max_challenges} challenges`,
+        p.max_events < 0 ? "Unlimited events" : `Up to ${p.max_events} events`,
+        ...(p.features ? Object.entries(p.features).filter(([,v])=>v).map(([k])=> k.replace(/_/g," ")) : []),
+      ];
+
+      return `
+        <div class="plan-card ${isCurrent ? "current" : ""} ${isRecommended && !isCurrent ? "recommended" : ""}">
+          ${isRecommended && !isCurrent ? `<div class="badge-recommended">Most Popular</div>` : ""}
+          <div class="plan-name">${p.display_name || p.name}</div>
+          <div class="plan-price">
+            ${isFree ? "Free" : `₹${p.price_monthly.toLocaleString("en-IN")}`}
+            ${!isFree ? `<span>/ month</span>` : ""}
+          </div>
+          <ul class="plan-limits">
+            ${limits.map(l => `<li>${l}</li>`).join("")}
+          </ul>
+          ${isCurrent
+            ? `<button class="btn-upgrade btn-current" disabled>Current Plan</button>`
+            : isFree
+            ? `<button class="btn-upgrade" style="background:var(--muted);cursor:not-allowed;" disabled>Contact Admin</button>`
+            : `<button class="btn-upgrade" onclick="startUpgrade('${p.name}', '${p.display_name}', ${p.price_monthly})">
+                Upgrade to ${p.display_name}
+               </button>`
+          }
+        </div>`;
+    }).join("");
+  }
+
+  /* ═══════════════ RAZORPAY CHECKOUT ═══════════════ */
+  async function startUpgrade(planName, planDisplay, amount) {
+    if (!confirm(`Upgrade to ${planDisplay} for ₹${amount}/month?`)) return;
+
+    toast("Creating payment order…");
+
+    const order = await api("POST", "/payment/create-order", { plan_name: planName });
+    if (order.error) { toast("Error: " + order.error, "error"); return; }
+
+    const options = {
+      key:         order.key_id,
+      amount:      order.amount,
+      currency:    order.currency,
+      name:        "Math Collective",
+      description: `${planDisplay} Plan — 1 Month`,
+      order_id:    order.order_id,
+      prefill: {
+        name:  userName,
+        email: userEmail,
+      },
+      theme: { color: "#7c3aed" },
+      handler: async function(response) {
+        toast("Verifying payment…");
+        const result = await api("POST", "/payment/verify", {
+          razorpay_order_id:   response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature:  response.razorpay_signature,
+        });
+
+        if (result.success) {
+          toast(`✓ Upgraded to ${planDisplay}! Invoice sent to your email.`, "success");
+          setTimeout(() => location.reload(), 2000);
+        } else {
+          toast("Verification failed: " + (result.error || "Unknown error"), "error");
+        }
+      },
+      modal: {
+        ondismiss: () => toast("Payment cancelled"),
+      },
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.on("payment.failed", (resp) => {
+      toast("Payment failed: " + (resp.error?.description || "Unknown"), "error");
+    });
+    rzp.open();
+  }
+
+  /* ═══════════════ BILLING HISTORY ═══════════════ */
+  async function loadBillingHistory() {
+    const history = await api("GET", "/payment/history");
+    const wrap = document.getElementById("billingHistoryWrap");
+
+    if (!Array.isArray(history) || history.length === 0) {
+      wrap.innerHTML = `<div class="empty-msg">No payment history yet. Upgrade a plan to see records here.</div>`;
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Plan</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Payment ID</th>
+            <th>Valid Until</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${history.map(h => `
+            <tr>
+              <td>${formatDate(h.created_at)}</td>
+              <td style="text-transform:capitalize;font-weight:600;">${h.plan_name}</td>
+              <td>₹${Number(h.amount).toLocaleString("en-IN")}</td>
+              <td><span class="status-pill status-${h.status}">${h.status}</span></td>
+              <td style="font-size:11px;color:var(--muted);">${h.razorpay_payment_id || "—"}</td>
+              <td>${formatDate(h.plan_expires_at)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>`;
+  }
+
+  /* ═══════════════ GET CURRENT USER ═══════════════ */
+  async function loadUserInfo() {
+    const d = await api("GET", "/user/profile");
+    if (d && !d.error) {
+      userName  = d.name  || "";
+      userEmail = d.email || "";
+    }
+  }
+
+  /* ═══════════════ INIT ═══════════════ */
+  async function init() {
+    await Promise.all([loadUserInfo(), loadOrgInfo()]);
+    await loadPlans();
+    await loadBillingHistory();
+  }
+
+  init();
+</script>
+</body>
+</html>

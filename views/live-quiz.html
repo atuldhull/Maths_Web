@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Quiz Host | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+    .phase { display:none; }
+    .phase.active { display:block; }
+
+    /* ── SETUP LAYOUT ── */
+    .setup-layout { display:grid; grid-template-columns:1fr 320px; gap:1.5rem; margin-top:1.5rem; }
+    @media(max-width:900px) { .setup-layout { grid-template-columns:1fr; } }
+
+    /* ── TABS ── */
+    .builder-tabs { display:flex; gap:.35rem; margin-bottom:1.25rem; border-bottom:1px solid var(--border); }
+    .btab {
+      padding:.55rem 1.1rem; font-size:.82rem; font-weight:600; cursor:pointer;
+      border:none; background:none; color:var(--text-2);
+      border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s;
+    }
+    .btab.active { color:#a78bfa; border-bottom-color:#7c3aed; }
+
+    /* ── CARDS ── */
+    .panel { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1.25rem; }
+    .panel h3 { font-family:'Syne',sans-serif; font-size:.95rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:.5rem; }
+
+    /* ── AI GENERATE FORM ── */
+    .topic-tags { display:flex; flex-wrap:wrap; gap:.4rem; margin:0.5rem 0 .75rem; }
+    .topic-tag {
+      padding:4px 12px; border-radius:99px; font-size:.72rem; font-weight:600;
+      border:1px solid rgba(124,58,237,.35); background:rgba(124,58,237,.07);
+      color:#a78bfa; cursor:pointer; transition:all .15s; font-family:'Space Mono',monospace;
+      display:flex; align-items:center; gap:5px;
+    }
+    .topic-tag.selected { background:rgba(124,58,237,.25); border-color:#7c3aed; color:#c4b5fd; }
+    .topic-tag .rm { font-size:.65rem; opacity:.7; margin-left:2px; }
+    .topic-input-row { display:flex; gap:.5rem; }
+
+    /* ── CSV UPLOAD ZONE ── */
+    .csv-zone {
+      border:2px dashed rgba(124,58,237,.35); border-radius:10px;
+      padding:1.5rem; text-align:center; cursor:pointer;
+      transition:all .2s; background:rgba(124,58,237,.02);
+    }
+    .csv-zone:hover { border-color:rgba(124,58,237,.65); background:rgba(124,58,237,.07); }
+    .csv-zone.ok { border-color:rgba(74,222,128,.5); background:rgba(74,222,128,.05); }
+    .csv-zone input { display:none; }
+
+    /* ── QUESTION POOL ── */
+    .q-pool-header { display:flex; align-items:center; gap:.75rem; margin-bottom:.75rem; flex-wrap:wrap; }
+    .q-pool-header input { flex:1; min-width:140px; }
+    #q-pool { max-height:420px; overflow-y:auto; display:flex; flex-direction:column; gap:.4rem; }
+    #q-pool::-webkit-scrollbar { width:3px; }
+    #q-pool::-webkit-scrollbar-thumb { background:rgba(124,58,237,.3); border-radius:99px; }
+
+    .q-item {
+      display:flex; align-items:center; gap:.75rem; padding:.65rem .9rem;
+      border-radius:9px; background:var(--bg-elevated,#0d1117);
+      border:1px solid var(--border); cursor:pointer; transition:all .15s;
+    }
+    .q-item:hover   { border-color:rgba(124,58,237,.4); }
+    .q-item.selected{ border-color:#7c3aed; background:rgba(124,58,237,.1); }
+    .q-check {
+      width:18px; height:18px; border-radius:5px; flex-shrink:0;
+      border:2px solid var(--border); display:flex; align-items:center; justify-content:center;
+      font-size:.7rem;
+    }
+    .q-item.selected .q-check { background:#7c3aed; border-color:#7c3aed; color:#fff; }
+    .q-item.selected .q-check::after { content:'✓'; }
+    .q-title { font-size:.83rem; font-weight:600; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .q-diff  { font-size:.65rem; font-family:'Space Mono',monospace; color:var(--text-3); flex-shrink:0; }
+    .diff-easy   { color:#4ade80; }
+    .diff-medium { color:#f59e0b; }
+    .diff-hard   { color:#f87171; }
+
+    /* source badge */
+    .src-badge {
+      font-size:.6rem; font-family:'Space Mono',monospace;
+      padding:2px 6px; border-radius:4px; flex-shrink:0;
+    }
+    .src-ai  { background:rgba(59,130,246,.15); color:#60a5fa; }
+    .src-csv { background:rgba(74,222,128,.12); color:#4ade80; }
+    .src-db  { background:rgba(124,58,237,.12); color:#a78bfa; }
+
+    /* ── PROGRESS BAR ── */
+    .gen-progress { height:4px; background:var(--border); border-radius:99px; overflow:hidden; margin:.75rem 0; display:none; }
+    .gen-progress-fill { height:100%; background:linear-gradient(90deg,#7c3aed,#3b82f6); border-radius:99px; transition:width .4s; }
+
+    /* ── ERROR LIST ── */
+    .error-list { background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25); border-radius:8px; padding:.75rem 1rem; margin-top:.75rem; font-size:.78rem; color:#fca5a5; display:none; }
+    .error-list li { margin:.2rem 0; }
+
+    /* ── SETTINGS SIDEBAR ── */
+    .settings-panel { position:sticky; top:1rem; }
+    .sel-count-badge {
+      display:inline-flex; align-items:center; gap:.35rem;
+      background:rgba(124,58,237,.15); border:1px solid rgba(124,58,237,.35);
+      color:#a78bfa; border-radius:99px; padding:3px 10px;
+      font-size:.72rem; font-family:'Space Mono',monospace; font-weight:700;
+    }
+    .sel-preview { max-height:200px; overflow-y:auto; font-size:.78rem; }
+    .sel-preview::-webkit-scrollbar { width:3px; }
+    .sel-preview::-webkit-scrollbar-thumb { background:rgba(124,58,237,.3); border-radius:99px; }
+    .sel-item { padding:.4rem 0; border-bottom:1px solid var(--border); display:flex; gap:.5rem; align-items:flex-start; }
+    .sel-num  { font-family:'Space Mono',monospace; font-size:.65rem; color:var(--text-3); flex-shrink:0; margin-top:2px; }
+
+    /* ── CSV FORMAT HINT ── */
+    .format-hint {
+      background:rgba(124,58,237,.06); border:1px solid rgba(124,58,237,.18);
+      border-radius:8px; padding:.85rem 1rem; font-size:.75rem;
+      color:var(--text-2); font-family:'Space Mono',monospace; line-height:1.8;
+    }
+
+    /* ── LOBBY ── */
+    .room-code { font-family:'Space Mono',monospace; font-size:4rem; font-weight:700; letter-spacing:.15em; background:linear-gradient(135deg,#a78bfa,#60a5fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:1rem 0; }
+    .players-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:.75rem; margin-top:1.5rem; }
+    .player-chip { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:.6rem 1rem; text-align:center; font-size:.88rem; font-weight:600; animation:pop .3s ease; }
+    @keyframes pop { from{transform:scale(.8);opacity:0;} to{transform:scale(1);opacity:1;} }
+
+    /* ── QUESTION PHASE ── */
+    .q-display { background:var(--surface); border:1px solid rgba(124,58,237,.3); border-radius:16px; padding:2.5rem; margin-bottom:1.5rem; }
+    .q-num  { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; color:#a78bfa; margin-bottom:.75rem; }
+    .q-text { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:700; margin-bottom:.5rem; }
+    .options-show { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-top:1.25rem; }
+    .opt-show { padding:1rem; border-radius:10px; font-weight:600; font-size:.9rem; }
+    .opt-A { background:#ef4444; }
+    .opt-B { background:#3b82f6; }
+    .opt-C { background:#f59e0b; }
+    .opt-D { background:#10b981; }
+    .opt-show.correct { border:3px solid white; box-shadow:0 0 20px rgba(255,255,255,.3); }
+    .answer-bar { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1rem 1.5rem; display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+    .timer-ring { width:80px; height:80px; border-radius:50%; background:conic-gradient(#7c3aed 0deg,rgba(255,255,255,.06) 0deg); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; }
+
+    /* ── PODIUM ── */
+    .podium { display:flex; align-items:flex-end; justify-content:center; gap:.5rem; margin:2rem 0; }
+    .podium-place { display:flex; flex-direction:column; align-items:center; gap:.4rem; }
+    .podium-block { border-radius:8px 8px 0 0; display:flex; align-items:flex-end; justify-content:center; padding:1rem 1.5rem; font-weight:800; font-size:1.5rem; }
+    .p1 { background:linear-gradient(180deg,#fbbf24,#f59e0b); height:140px; }
+    .p2 { background:linear-gradient(180deg,#94a3b8,#64748b); height:110px; }
+    .p3 { background:linear-gradient(180deg,#b45309,#92400e); height:90px; }
+    .podium-name  { font-size:.88rem; font-weight:700; }
+    .podium-score { font-family:'Space Mono',monospace; font-size:.75rem; color:var(--text-2); }
+  </style>
+</head>
+<body>
+
+<nav class="mc-nav">
+  <a href="/teacher" class="mc-nav__logo"><div class="mc-nav__logo-mark">T</div> Teacher Hub</a>
+  <div class="mc-nav__actions">
+    <a href="/teacher" class="btn btn-ghost btn-sm">← Back</a>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════
+     PHASE 1: SETUP
+════════════════════════════════════ -->
+<div class="phase active" id="phase-setup">
+  <div style="margin-top:2rem;">
+    <div class="section-label">Live Quiz</div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.4rem;">Host a Live Quiz</h1>
+    <p style="color:var(--text-2);">Build your question set — from the DB, AI-generated, or CSV upload. Then launch.</p>
+  </div>
+
+  <div class="setup-layout">
+    <!-- LEFT: Question Builder -->
+    <div>
+
+      <!-- Builder Tabs -->
+      <div class="builder-tabs">
+        <button class="btab active" onclick="switchTab('db',this)">📚 Question Bank</button>
+        <button class="btab"        onclick="switchTab('ai',this)">🤖 AI Generate</button>
+        <button class="btab"        onclick="switchTab('csv',this)">📄 CSV Upload</button>
+      </div>
+
+      <!-- ── TAB: DB Bank ── -->
+      <div id="tab-db" class="tab-pane">
+        <div class="panel">
+          <h3>📚 Challenge Bank <span class="sel-count-badge" id="db-count">0 questions</span></h3>
+          <div class="q-pool-header">
+            <input class="form-input" type="text" id="q-search" placeholder="🔍 Search title or question..." oninput="filterPool()" style="font-size:.82rem;">
+            <select class="form-input" id="diff-filter" onchange="filterPool()" style="width:120px;font-size:.82rem;">
+              <option value="">All levels</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="selectAllVisible()">Select All</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearSelection()">Clear</button>
+          </div>
+          <div id="q-pool"><div style="color:var(--text-3);text-align:center;padding:2rem;">Loading...</div></div>
+        </div>
+      </div>
+
+      <!-- ── TAB: AI Generate ── -->
+      <div id="tab-ai" class="tab-pane" style="display:none;">
+        <div class="panel">
+          <h3>🤖 AI Bulk Generator</h3>
+          <p style="color:var(--text-2);font-size:.83rem;margin-bottom:1rem;">
+            Pick topics, set difficulty and count — AI generates all questions at once. Mix multiple topics freely.
+          </p>
+
+          <!-- Topic picker -->
+          <div class="form-group" style="margin-bottom:.75rem;">
+            <label style="font-size:.73rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;">Topics (click to add)</label>
+            <div class="topic-tags" id="preset-topics">
+              <!-- populated by JS -->
+            </div>
+          </div>
+
+          <!-- Custom topic input -->
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label style="font-size:.73rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;">Selected Topics</label>
+            <div class="topic-input-row">
+              <input class="form-input" type="text" id="custom-topic-input" placeholder="Type a topic and press Enter..." style="font-size:.83rem;" onkeydown="if(event.key==='Enter'){addCustomTopic();event.preventDefault();}">
+              <button class="btn btn-ghost btn-sm" onclick="addCustomTopic()">+ Add</button>
+            </div>
+            <div class="topic-tags" id="selected-topics" style="margin-top:.5rem;">
+              <span style="color:var(--text-3);font-size:.75rem;">No topics selected yet</span>
+            </div>
+          </div>
+
+          <!-- Count + Difficulty -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-bottom:1rem;">
+            <div class="form-group">
+              <label style="font-size:.73rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;">Questions</label>
+              <input class="form-input" type="number" id="ai-count" value="10" min="1" max="30" style="font-size:.9rem;">
+              <span style="font-size:.7rem;color:var(--text-3);">Max 30</span>
+            </div>
+            <div class="form-group">
+              <label style="font-size:.73rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;">Difficulty</label>
+              <select class="form-input" id="ai-difficulty" style="font-size:.83rem;">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+                <option value="mixed">Mixed</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label style="font-size:.73rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;">Save to Bank?</label>
+              <div style="display:flex;align-items:center;gap:.5rem;margin-top:.4rem;">
+                <input type="checkbox" id="ai-save" style="accent-color:#7c3aed;width:16px;height:16px;">
+                <label for="ai-save" style="font-size:.82rem;cursor:pointer;">Save to DB</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="gen-progress"><div class="gen-progress-fill" id="ai-progress-fill" style="width:0%"></div></div>
+
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="ai-gen-btn" onclick="aiGenerateBulk()">⚡ Generate Questions</button>
+            <button class="btn btn-ghost btn-sm" id="ai-add-all-btn" style="display:none;" onclick="addAllAIToSelection()">✅ Add All to Quiz</button>
+          </div>
+
+          <div id="ai-result" style="display:none;margin-top:.75rem;"></div>
+          <ul class="error-list" id="ai-errors"></ul>
+
+          <!-- Preview of generated questions -->
+          <div id="ai-preview-list" style="margin-top:1rem;"></div>
+        </div>
+      </div>
+
+      <!-- ── TAB: CSV Upload ── -->
+      <div id="tab-csv" class="tab-pane" style="display:none;">
+        <div class="panel">
+          <h3>📄 CSV Question Upload</h3>
+
+          <div class="format-hint" style="margin-bottom:1rem;">
+<strong>Accepted formats (header row optional):</strong><br><br>
+<strong>Format A</strong> (full, 10 cols):<br>
+Title, Question, OptionA, OptionB, OptionC, OptionD, CorrectIndex(0–3), Difficulty, Points, Solution<br><br>
+<strong>Format B</strong> (simple, 6+ cols):<br>
+Question, OptionA, OptionB, OptionC, OptionD, CorrectIndex(0–3 or A/B/C/D)<br><br>
+<strong>Correct column</strong>: accepts <code>0</code> or <code>A</code>, <code>1</code> or <code>B</code>, etc.<br>
+<strong>Difficulty</strong>: easy / medium / hard (default: medium)<br>
+<strong>Mix topics freely</strong> — no limit on rows
+          </div>
+
+          <!-- Download sample -->
+          <button class="btn btn-ghost btn-sm" style="margin-bottom:1rem;" onclick="downloadSampleCSV()">⬇ Download Sample CSV</button>
+
+          <div class="csv-zone" id="csv-zone" onclick="document.getElementById('csv-file').click()"
+               ondragover="event.preventDefault();this.classList.add('ok')"
+               ondrop="csvDrop(event)" ondragleave="this.classList.remove('ok')">
+            <input type="file" id="csv-file" accept=".csv,.txt" onchange="handleCSVUpload(this.files[0])">
+            <div style="font-size:2rem;margin-bottom:.5rem;">📄</div>
+            <div style="font-size:.88rem;font-weight:600;" id="csv-zone-label">Drop CSV here or click to browse</div>
+            <div style="font-size:.75rem;color:var(--text-3);margin-top:.3rem;">Any number of questions · any topics</div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:.75rem;margin-top:.75rem;">
+            <input type="checkbox" id="csv-save" style="accent-color:#7c3aed;width:16px;height:16px;">
+            <label for="csv-save" style="font-size:.83rem;cursor:pointer;">Also save to challenge bank (DB)</label>
+          </div>
+
+          <div id="csv-result" style="display:none;margin-top:.75rem;"></div>
+          <ul class="error-list" id="csv-errors"></ul>
+          <div id="csv-preview-list" style="margin-top:1rem;"></div>
+        </div>
+      </div>
+
+    </div><!-- /left -->
+
+    <!-- RIGHT: Settings & Selected -->
+    <div class="settings-panel">
+      <div class="panel">
+        <h3>⚙️ Session Settings</h3>
+        <div class="form-group" style="margin-bottom:.85rem;">
+          <label style="font-size:.73rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;">Default time / question</label>
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <input class="form-input" type="number" id="default-time" value="30" min="10" max="120" style="width:70px;text-align:center;">
+            <span style="color:var(--text-2);font-size:.85rem;">seconds</span>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:1.25rem;">
+          <label style="font-size:.73rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;">Your display name</label>
+          <input class="form-input" type="text" id="host-name" placeholder="Prof. Sharma" style="font-size:.85rem;">
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="createSession()">
+          ⚡ Create Room &amp; Start
+        </button>
+      </div>
+
+      <div class="panel">
+        <h3>
+          ✅ Selected
+          <span class="sel-count-badge" id="sel-count-badge">0</span>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:.7rem;" onclick="clearSelection()">Clear all</button>
+        </h3>
+        <div class="sel-preview" id="selected-preview">
+          <div style="color:var(--text-3);font-size:.8rem;">Nothing selected yet</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /setup-layout -->
+</div>
+
+
+<!-- ════════════════════════════════════
+     PHASE 2: LOBBY
+════════════════════════════════════ -->
+<div class="phase" id="phase-lobby">
+  <div style="text-align:center;margin-top:2rem;">
+    <div class="section-label">Room Code</div>
+    <div class="room-code" id="display-code">——</div>
+    <p style="color:var(--text-2);margin-bottom:.75rem;">
+      Students go to <strong style="font-family:'Space Mono',monospace;color:#a78bfa;" id="quiz-url">…/quiz-play</strong> and enter this code
+    </p>
+
+    <!-- ── QR PANEL ── -->
+    <div id="lobby-qr-panel" style="display:inline-flex;flex-direction:column;align-items:center;gap:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.5rem 2rem;margin:.5rem auto 1rem;">
+      <div style="font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:#a78bfa;">Scan to Join</div>
+      <div id="lobby-qr" style="background:#fff;border-radius:10px;padding:10px;line-height:0;"></div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;">
+        <button onclick="copyQuizLink()" id="copy-link-btn" class="btn btn-ghost btn-sm" style="font-size:.78rem;">
+          📋 Copy Link
+        </button>
+        <button onclick="downloadQR()" class="btn btn-ghost btn-sm" style="font-size:.78rem;">
+          ⬇ Save QR
+        </button>
+      </div>
+    </div>
+
+    <div id="player-count-badge" style="display:inline-flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:6px 16px;font-family:'Space Mono',monospace;font-size:.8rem;margin-top:.25rem;">
+      👥 <span id="lobby-count">0</span> players joined
+    </div>
+  </div>
+  <div class="players-grid" id="lobby-players"></div>
+  <div style="text-align:center;margin-top:2rem;">
+    <button class="btn btn-primary btn-lg" onclick="startQuiz()" id="start-btn" disabled>
+      Start Quiz (waiting for players...)
+    </button>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     PHASE 3: QUESTION
+════════════════════════════════════ -->
+<div class="phase" id="phase-question">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <div class="section-label" id="q-progress">Question 1 / 10</div>
+      <h2 style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;margin:0;">Live Question</h2>
+    </div>
+    <div class="timer-ring" id="timer-ring"><span id="timer-display">30</span></div>
+  </div>
+  <div class="answer-bar">
+    <span style="font-size:.88rem;color:var(--text-2);">Answers received</span>
+    <span id="answered-count" style="font-family:'Space Mono',monospace;font-weight:700;color:#a78bfa;">0 / 0</span>
+  </div>
+  <div class="q-display">
+    <div class="q-num" id="q-num-display">Q1</div>
+    <div class="q-text" id="q-text-display"></div>
+    <div class="options-show">
+      <div class="opt-show opt-A" id="host-opt-0"></div>
+      <div class="opt-show opt-B" id="host-opt-1"></div>
+      <div class="opt-show opt-C" id="host-opt-2"></div>
+      <div class="opt-show opt-D" id="host-opt-3"></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:1rem;justify-content:center;">
+    <button class="btn btn-ghost" onclick="revealAnswer()">👁 Reveal Answer</button>
+    <button class="btn btn-primary" id="next-q-btn" onclick="nextQuestion()" style="display:none;">Next Question →</button>
+    <button class="btn btn-primary" id="finish-btn"  onclick="finishQuiz()"  style="display:none;">🏁 Finish Quiz</button>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     PHASE 4: PODIUM (after each Q)
+════════════════════════════════════ -->
+<div class="phase" id="phase-podium">
+  <div style="text-align:center;margin:2rem 0 1rem;">
+    <div class="section-label">After Answer</div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:.5rem;">🏆 Top Players</h2>
+  </div>
+  <div class="podium" id="podium-display"></div>
+  <div id="podium-solution" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin:1rem 0;">
+    <div style="font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#a78bfa;margin-bottom:.5rem;">Solution</div>
+    <div id="podium-solution-text" style="color:var(--text-2);font-size:.9rem;line-height:1.7;"></div>
+  </div>
+  <div style="text-align:center;margin-top:1.5rem;">
+    <button class="btn btn-primary btn-lg" id="continue-btn" onclick="nextQuestion()">Next Question →</button>
+    <button class="btn btn-primary btn-lg" id="end-btn" style="display:none;" onclick="finishQuiz()">🏁 End Quiz</button>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     PHASE 5: FINAL LEADERBOARD
+════════════════════════════════════ -->
+<div class="phase" id="phase-final">
+  <div style="text-align:center;margin:2rem 0;">
+    <div style="font-size:4rem;margin-bottom:1rem;">🎉</div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:2.5rem;font-weight:800;margin-bottom:.5rem;">Quiz Complete!</h1>
+    <p style="color:var(--text-2);">Final leaderboard</p>
+  </div>
+  <div id="final-lb" style="max-width:500px;margin:0 auto;"></div>
+  <div style="text-align:center;margin-top:2rem;">
+    <a href="/live-quiz" class="btn btn-primary btn-lg">🔄 Host New Quiz</a>
+    <a href="/teacher"   class="btn btn-ghost   btn-lg" style="margin-left:1rem;">← Teacher Hub</a>
+  </div>
+</div>
+
+
+<script>
+/* ════════ STATE ════════ */
+const socket = io();
+let dbQuestions  = [];       // from challenge bank
+let sessionPool  = [];       // all questions in current session (DB + AI + CSV)
+let selectedIds  = new Set();// set of question IDs or temp IDs
+let sessionCode  = null;
+let timerInterval = null;
+let isLastQ      = false;
+
+const PRESET_TOPICS = [
+  "Matrices","Differential Calculus","Integral Calculus","Probability",
+  "Discrete Math","Graph Theory","Boolean Algebra","Differential Equations",
+  "Laplace Transforms","Fourier Series","Numerical Methods","Vector Calculus",
+  "Eigenvalues","Linear Algebra","Statistics","Complex Numbers",
+  "Trigonometry","Number Theory","Sequences & Series","Set Theory",
+];
+let selectedTopics = [];
+
+/* ════════ INIT ════════ */
+async function init() {
+  const state = await getAuthState();
+  if (!state.loggedIn || (state.user?.role !== "teacher" && state.user?.role !== "admin")) {
+    window.location.href = "/login"; return;
+  }
+  document.getElementById("host-name").value = state.user.name?.split(" ")[0] || "Teacher";
+  document.getElementById("quiz-url").textContent = window.location.origin + "/quiz-play";
+  renderPresetTopics();
+  loadDBQuestions();
+}
+
+/* ════════ TABS ════════ */
+function switchTab(name, btn) {
+  document.querySelectorAll(".btab").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-pane").forEach(p => p.style.display = "none");
+  btn.classList.add("active");
+  document.getElementById("tab-" + name).style.display = "block";
+}
+
+/* ════════ DB QUESTIONS ════════ */
+async function loadDBQuestions() {
+  const res = await fetch("/api/quiz/challenges");
+  dbQuestions = await res.json();
+  document.getElementById("db-count").textContent = dbQuestions.length + " questions";
+  // Merge into pool (tag source)
+  dbQuestions.forEach(q => { if (!q._src) q._src = "db"; });
+  mergeIntoPool(dbQuestions);
+  renderPool();
+}
+
+function mergeIntoPool(qs) {
+  qs.forEach(q => {
+    if (!sessionPool.find(p => p.id === q.id)) sessionPool.push(q);
+  });
+}
+
+function renderPool() {
+  const search = (document.getElementById("q-search")?.value || "").toLowerCase();
+  const diff   = document.getElementById("diff-filter")?.value || "";
+  const list   = document.getElementById("q-pool");
+
+  let filtered = sessionPool.filter(q => {
+    const matchSearch = !search || q.title.toLowerCase().includes(search) || q.question.toLowerCase().includes(search);
+    const matchDiff   = !diff   || q.difficulty === diff;
+    return matchSearch && matchDiff;
+  });
+
+  if (!filtered.length) {
+    list.innerHTML = `<div style="color:var(--text-3);text-align:center;padding:2rem;">No questions found.</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(q => {
+    const sel  = selectedIds.has(q.id);
+    const diff = q.difficulty || "medium";
+    const src  = q._src || "db";
+    return `
+      <div class="q-item ${sel ? "selected" : ""}" onclick="toggleQ('${q.id}')">
+        <div class="q-check"></div>
+        <div class="q-title" title="${q.question}">${q.title}</div>
+        <span class="q-diff diff-${diff}">${diff.toUpperCase()}</span>
+        <span class="src-badge src-${src}">${src.toUpperCase()}</span>
+      </div>
+    `;
+  }).join("");
+}
+
+function filterPool() { renderPool(); }
+
+function toggleQ(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  renderPool();
+  updateSelectedPanel();
+}
+
+function selectAllVisible() {
+  const search = (document.getElementById("q-search")?.value || "").toLowerCase();
+  const diff   = document.getElementById("diff-filter")?.value || "";
+  sessionPool
+    .filter(q => (!search || q.title.toLowerCase().includes(search) || q.question.toLowerCase().includes(search)) &&
+                 (!diff || q.difficulty === diff))
+    .forEach(q => selectedIds.add(q.id));
+  renderPool();
+  updateSelectedPanel();
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  renderPool();
+  updateSelectedPanel();
+}
+
+function updateSelectedPanel() {
+  const count = selectedIds.size;
+  document.getElementById("sel-count-badge").textContent = count;
+
+  const selected = sessionPool.filter(q => selectedIds.has(q.id));
+  const preview  = document.getElementById("selected-preview");
+  if (!selected.length) {
+    preview.innerHTML = `<div style="color:var(--text-3);font-size:.8rem;">Nothing selected yet</div>`;
+  } else {
+    preview.innerHTML = selected.map((q, i) => `
+      <div class="sel-item">
+        <span class="sel-num">${i+1}.</span>
+        <span style="font-size:.79rem;line-height:1.4;">${q.title}</span>
+      </div>
+    `).join("");
+  }
+}
+
+/* ════════ PRESET TOPICS ════════ */
+function renderPresetTopics() {
+  const wrap = document.getElementById("preset-topics");
+  wrap.innerHTML = PRESET_TOPICS.map(t => `
+    <button class="topic-tag" onclick="togglePresetTopic('${t}',this)">${t}</button>
+  `).join("");
+}
+
+function togglePresetTopic(topic, el) {
+  const idx = selectedTopics.indexOf(topic);
+  if (idx > -1) {
+    selectedTopics.splice(idx, 1);
+    el.classList.remove("selected");
+  } else {
+    selectedTopics.push(topic);
+    el.classList.add("selected");
+  }
+  renderSelectedTopics();
+}
+
+function addCustomTopic() {
+  const inp = document.getElementById("custom-topic-input");
+  const val = inp.value.trim();
+  if (!val) return;
+  if (!selectedTopics.includes(val)) {
+    selectedTopics.push(val);
+    renderSelectedTopics();
+  }
+  inp.value = "";
+}
+
+function renderSelectedTopics() {
+  const wrap = document.getElementById("selected-topics");
+  if (!selectedTopics.length) {
+    wrap.innerHTML = `<span style="color:var(--text-3);font-size:.75rem;">No topics selected yet</span>`;
+    return;
+  }
+  wrap.innerHTML = selectedTopics.map((t, i) => `
+    <span class="topic-tag selected">
+      ${t}
+      <span class="rm" onclick="removeTopic(${i});event.stopPropagation()">✕</span>
+    </span>
+  `).join("");
+}
+
+function removeTopic(i) {
+  selectedTopics.splice(i, 1);
+  renderSelectedTopics();
+  // Deselect preset button if it matches
+  document.querySelectorAll("#preset-topics .topic-tag").forEach(el => {
+    if (!selectedTopics.includes(el.textContent.trim())) el.classList.remove("selected");
+  });
+}
+
+/* ════════ AI BULK GENERATE ════════ */
+async function aiGenerateBulk() {
+  if (!selectedTopics.length) { alert("Select at least one topic first."); return; }
+
+  const count    = Math.min(30, Math.max(1, parseInt(document.getElementById("ai-count").value) || 10));
+  let difficulty = document.getElementById("ai-difficulty").value;
+  const saveToBank = document.getElementById("ai-save").checked;
+
+  const btn      = document.getElementById("ai-gen-btn");
+  const progress = document.querySelector(".gen-progress");
+  const fill     = document.getElementById("ai-progress-fill");
+  const resultEl = document.getElementById("ai-result");
+  const errEl    = document.getElementById("ai-errors");
+
+  btn.disabled = true;
+  btn.textContent = `⏳ Generating ${count} questions...`;
+  progress.style.display = "block";
+  fill.style.width = "10%";
+  resultEl.style.display = "none";
+  errEl.style.display = "none";
+  document.getElementById("ai-preview-list").innerHTML = "";
+  document.getElementById("ai-add-all-btn").style.display = "none";
+
+  // If mixed difficulty, pick random for each
+  const topics = [];
+  const diffs  = [];
+  for (let i = 0; i < count; i++) {
+    topics.push(selectedTopics[i % selectedTopics.length]);
+    if (difficulty === "mixed") {
+      diffs.push(["easy","medium","hard"][i % 3]);
+    } else {
+      diffs.push(difficulty);
+    }
+  }
+
+  try {
+    fill.style.width = "40%";
+    const res  = await fetch("/api/quiz/ai-generate-bulk", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topics, difficulty: difficulty === "mixed" ? "medium" : difficulty, count, saveToBank }),
+    });
+    fill.style.width = "90%";
+    const data = await res.json();
+    fill.style.width = "100%";
+
+    if (!res.ok) {
+      resultEl.className = "alert alert-error";
+      resultEl.textContent = "❌ " + data.error;
+      resultEl.style.display = "block";
+      return;
+    }
+
+    // Tag + add to pool
+    const generated = data.questions.map((q, i) => ({
+      ...q,
+      id:   q.id || ("ai_" + Date.now() + "_" + i),
+      _src: "ai",
+    }));
+    mergeIntoPool(generated);
+    renderPool();
+
+    // Show result
+    resultEl.className = "alert alert-success";
+    resultEl.innerHTML = `✅ ${data.generated} questions generated${saveToBank ? ` · ${data.saved} saved to bank` : ""}`;
+    resultEl.style.display = "block";
+
+    // Show errors
+    if (data.errors?.length) {
+      errEl.innerHTML = data.errors.map(e => `<li>${e.topic}: ${e.error}</li>`).join("");
+      errEl.style.display = "block";
+    }
+
+    // Show preview cards
+    renderGeneratedPreview(generated, "ai-preview-list");
+    document.getElementById("ai-add-all-btn").style.display = "inline-flex";
+
+  } catch (err) {
+    resultEl.className = "alert alert-error";
+    resultEl.textContent = "❌ Network error: " + err.message;
+    resultEl.style.display = "block";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "⚡ Generate Questions";
+    setTimeout(() => { progress.style.display = "none"; fill.style.width = "0%"; }, 1000);
+  }
+}
+
+function addAllAIToSelection() {
+  sessionPool.filter(q => q._src === "ai").forEach(q => selectedIds.add(q.id));
+  renderPool();
+  updateSelectedPanel();
+  switchTab("db", document.querySelector(".btab"));
+}
+
+/* ════════ CSV UPLOAD ════════ */
+function csvDrop(e) {
+  e.preventDefault();
+  document.getElementById("csv-zone").classList.remove("ok");
+  const f = e.dataTransfer.files[0];
+  if (f) handleCSVUpload(f);
+}
+
+async function handleCSVUpload(file) {
+  if (!file) return;
+  const saveToBank = document.getElementById("csv-save").checked;
+  const label      = document.getElementById("csv-zone-label");
+  const resultEl   = document.getElementById("csv-result");
+  const errEl      = document.getElementById("csv-errors");
+
+  label.textContent = "⏳ Uploading & parsing...";
+  resultEl.style.display = "none";
+  errEl.style.display    = "none";
+  document.getElementById("csv-preview-list").innerHTML = "";
+
+  const formData = new FormData();
+  formData.append("csv", file);
+
+  try {
+    const res  = await fetch(`/api/quiz/upload-csv?save=${saveToBank}`, { method: "POST", body: formData });
+    const data = await res.json();
+
+    if (!res.ok) {
+      resultEl.className = "alert alert-error";
+      resultEl.textContent = "❌ " + data.error;
+      resultEl.style.display = "block";
+      label.textContent = "Drop CSV here or click to browse";
+      return;
+    }
+
+    // Tag + add to pool
+    const imported = data.questions.map((q, i) => ({
+      ...q,
+      id:   q.id || ("csv_" + Date.now() + "_" + i),
+      _src: "csv",
+    }));
+    mergeIntoPool(imported);
+    renderPool();
+
+    resultEl.className = "alert alert-success";
+    resultEl.innerHTML = `✅ ${data.total} questions imported from CSV${saveToBank ? ` · ${data.saved} saved to bank` : ""}`;
+    resultEl.style.display = "block";
+
+    if (data.errors?.length) {
+      errEl.innerHTML = data.errors.map(e => `<li>${e}</li>`).join("");
+      errEl.style.display = "block";
+    }
+
+    label.textContent = `✅ "${file.name}" — ${data.total} questions loaded`;
+    document.getElementById("csv-zone").classList.add("ok");
+
+    renderGeneratedPreview(imported, "csv-preview-list");
+
+    // Auto-select all imported
+    imported.forEach(q => selectedIds.add(q.id));
+    updateSelectedPanel();
+
+  } catch (err) {
+    resultEl.className = "alert alert-error";
+    resultEl.textContent = "❌ " + err.message;
+    resultEl.style.display = "block";
+    label.textContent = "Drop CSV here or click to browse";
+  }
+}
+
+/* ════════ PREVIEW CARDS ════════ */
+function renderGeneratedPreview(questions, containerId) {
+  const wrap = document.getElementById(containerId);
+  if (!questions.length) { wrap.innerHTML = ""; return; }
+  wrap.innerHTML = `
+    <div style="font-size:.73rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">
+      Preview (${questions.length} questions) — click any to toggle selection
+    </div>
+    ${questions.map(q => `
+      <div class="q-item" id="prev_${q.id}" onclick="toggleQ('${q.id}');this.classList.toggle('selected')" style="margin-bottom:.4rem;">
+        <div class="q-check" id="prevck_${q.id}"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.82rem;font-weight:600;">${q.title}</div>
+          <div style="font-size:.75rem;color:var(--text-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${q.question}</div>
+          <div style="display:flex;gap:.5rem;margin-top:3px;">
+            ${q.options.map((o, i) => `<span style="font-size:.65rem;background:rgba(255,255,255,.05);padding:2px 6px;border-radius:4px;${i===q.correct_index?'color:#4ade80;':'color:var(--text-3);'}">${["A","B","C","D"][i]}. ${o}</span>`).join("")}
+          </div>
+        </div>
+        <span class="q-diff diff-${q.difficulty||'medium'}">${(q.difficulty||'medium').toUpperCase()}</span>
+      </div>
+    `).join("")}
+  `;
+}
+
+/* ════════ SAMPLE CSV DOWNLOAD ════════ */
+function downloadSampleCSV() {
+  const rows = [
+    "Title,Question,OptionA,OptionB,OptionC,OptionD,CorrectIndex,Difficulty,Points,Solution",
+    '"Eigenvalue Basics","What is the eigenvalue of matrix [[2,0],[0,3]] corresponding to eigenvector [1,0]?","1","2","3","0","1","medium","50","The eigenvalue is the diagonal element corresponding to that eigenvector."',
+    '"Derivative Rule","What is d/dx(x^3)?","3x","3x^2","x^2","2x","1","easy","20","Power rule: d/dx(x^n) = nx^(n-1)"',
+    '"Probability","A fair coin is tossed twice. P(exactly one head)?","0.25","0.5","0.75","1","1","easy","20","P(HT or TH) = 2*(0.5*0.5) = 0.5"',
+  ];
+  const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+  const a    = document.createElement("a");
+  a.href     = URL.createObjectURL(blob);
+  a.download = "quiz_sample.csv";
+  a.click();
+}
+
+/* ════════ CREATE SESSION ════════ */
+function createSession() {
+  if (!selectedIds.size) { alert("Select at least 1 question first."); return; }
+  const defaultTime = Number(document.getElementById("default-time").value) || 30;
+  const hostName    = document.getElementById("host-name").value || "Teacher";
+
+  const questions = sessionPool
+    .filter(q => selectedIds.has(q.id))
+    .map(q => ({ ...q, timeLimit: defaultTime }));
+
+  socket.emit("create_session", { teacherName: hostName, questions });
+}
+
+/* ════════ SOCKET EVENTS ════════ */
+socket.on("session_created", ({ code }) => {
+  sessionCode = code;
+  document.getElementById("display-code").textContent = code;
+  generateLobbyQR(code);
+  showPhase("lobby");
+});
+
+/* ════════ QR HELPERS ════════ */
+let _lobbyQRInstance = null;
+
+function generateLobbyQR(code) {
+  const joinUrl = `${window.location.origin}/quiz-play?code=${code}`;
+  const container = document.getElementById("lobby-qr");
+  container.innerHTML = "";
+  _lobbyQRInstance = new QRCode(container, {
+    text:           joinUrl,
+    width:          180,
+    height:         180,
+    colorDark:      "#1a1a2e",
+    colorLight:     "#ffffff",
+    correctLevel:   QRCode.CorrectLevel.H,
+  });
+}
+
+function copyQuizLink() {
+  const code = sessionCode;
+  if (!code) return;
+  const url = `${window.location.origin}/quiz-play?code=${code}`;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById("copy-link-btn");
+    btn.textContent = "✅ Copied!";
+    setTimeout(() => { btn.textContent = "📋 Copy Link"; }, 2000);
+  });
+}
+
+function downloadQR() {
+  const canvas = document.querySelector("#lobby-qr canvas");
+  if (!canvas) return;
+  const a    = document.createElement("a");
+  a.download = `quiz-${sessionCode}-qr.png`;
+  a.href     = canvas.toDataURL("image/png");
+  a.click();
+}
+
+socket.on("player_joined", ({ players }) => {
+  const count = players.length;
+  document.getElementById("lobby-count").textContent = count;
+  document.getElementById("lobby-players").innerHTML =
+    players.map(p => `<div class="player-chip">${p.name}</div>`).join("");
+  const btn = document.getElementById("start-btn");
+  if (count > 0) {
+    btn.disabled    = false;
+    btn.textContent = `▶ Start Quiz (${count} player${count>1?"s":""})`;
+  }
+});
+
+socket.on("lobby_update", ({ players, count }) => {
+  document.getElementById("lobby-count").textContent = count;
+  document.getElementById("lobby-players").innerHTML =
+    players.map(n => `<div class="player-chip">${n}</div>`).join("");
+});
+
+socket.on("answer_update", ({ answered, total }) => {
+  document.getElementById("answered-count").textContent = `${answered} / ${total}`;
+});
+
+socket.on("question_start", ({ questionNumber, total, question, options, timeLimit }) => {
+  document.getElementById("q-progress").textContent    = `Question ${questionNumber} / ${total}`;
+  document.getElementById("q-num-display").textContent  = `Q${questionNumber}`;
+  document.getElementById("q-text-display").textContent = question;
+  document.getElementById("answered-count").textContent = "0 / ?";
+  document.getElementById("next-q-btn").style.display   = "none";
+  document.getElementById("finish-btn").style.display   = "none";
+  options.forEach((opt, i) => {
+    const el = document.getElementById("host-opt-" + i);
+    el.textContent = opt;
+    el.classList.remove("correct");
+  });
+  let remaining = timeLimit;
+  document.getElementById("timer-display").textContent = remaining;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    remaining--;
+    document.getElementById("timer-display").textContent = remaining;
+    const pct = (remaining / timeLimit) * 360;
+    document.getElementById("timer-ring").style.background =
+      `conic-gradient(#7c3aed ${pct}deg, rgba(255,255,255,.06) ${pct}deg)`;
+    if (remaining <= 0) clearInterval(timerInterval);
+  }, 1000);
+  showPhase("question");
+});
+
+socket.on("question_result", ({ correctIndex, solution, podium, isLast }) => {
+  isLastQ = isLast;
+  clearInterval(timerInterval);
+  ["host-opt-0","host-opt-1","host-opt-2","host-opt-3"].forEach((id, i) => {
+    if (i === correctIndex) document.getElementById(id).classList.add("correct");
+  });
+  renderPodium(podium, solution, isLast);
+  showPhase("podium");
+});
+
+socket.on("quiz_finished", ({ leaderboard }) => {
+  renderFinalLB(leaderboard);
+  showPhase("final");
+});
+
+function startQuiz()    { socket.emit("next_question", { code: sessionCode }); showPhase("question"); }
+function nextQuestion() { socket.emit("next_question", { code: sessionCode }); showPhase("question"); }
+function revealAnswer() { socket.emit("reveal_answer", { code: sessionCode }); }
+function finishQuiz()   { socket.emit("next_question", { code: sessionCode }); }
+
+/* ════════ PODIUM & LEADERBOARD ════════ */
+function renderPodium(podium, solution, isLast) {
+  const order   = [podium[1]||null, podium[0]||null, podium[2]||null];
+  const classes = ["p2","p1","p3"];
+  const medals  = ["🥈","🥇","🥉"];
+  const heights = ["110px","140px","90px"];
+  document.getElementById("podium-display").innerHTML = order.map((p, i) => p ? `
+    <div class="podium-place">
+      <div class="podium-name">${p.name}</div>
+      <div class="podium-score">${p.score} pts</div>
+      <div class="podium-block ${classes[i]}" style="height:${heights[i]}">${medals[i]}</div>
+    </div>
+  ` : "").join("");
+  if (solution) {
+    document.getElementById("podium-solution").style.display = "block";
+    document.getElementById("podium-solution-text").textContent = solution;
+  } else {
+    document.getElementById("podium-solution").style.display = "none";
+  }
+  document.getElementById("continue-btn").style.display = isLast ? "none"        : "inline-flex";
+  document.getElementById("end-btn").style.display      = isLast ? "inline-flex" : "none";
+}
+
+function renderFinalLB(lb) {
+  const medals = ["🥇","🥈","🥉"];
+  document.getElementById("final-lb").innerHTML = lb.map((p, i) => `
+    <div style="display:flex;align-items:center;gap:1rem;padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:.75rem;">
+      <span style="font-size:1.5rem;">${medals[i] || "#"+(i+1)}</span>
+      <div style="flex:1;font-weight:700;">${p.name}</div>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;color:#a78bfa;">${p.score} pts</div>
+    </div>
+  `).join("");
+}
+
+function showPhase(name) {
+  document.querySelectorAll(".phase").forEach(p => p.classList.remove("active"));
+  document.getElementById("phase-" + name).classList.add("active");
+}
+
+init();
+</script>
+</body>
+</html>

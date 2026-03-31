@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certificate Generator | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js"></script>
+  <style>
+    body { max-width: 1080px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+
+    /* ── STEPPER ── */
+    .stepper { display:flex; align-items:center; gap:0; margin:2rem 0 2.5rem; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:.75rem 1.5rem; overflow-x:auto; }
+    .step { display:flex; align-items:center; gap:.55rem; flex-shrink:0; font-size:.78rem; font-weight:600; color:var(--text-3); padding:.35rem .7rem; border-radius:8px; cursor:pointer; transition:all .2s; }
+    .step.active { color:#a78bfa; background:rgba(124,58,237,.12); }
+    .step.done   { color:#4ade80; }
+    .step-n { width:22px; height:22px; border-radius:50%; background:rgba(255,255,255,.07); border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:'Space Mono',monospace; font-size:.68rem; font-weight:700; flex-shrink:0; }
+    .step.active .step-n { background:#7c3aed; border-color:#7c3aed; color:#fff; }
+    .step.done   .step-n { background:rgba(74,222,128,.2); border-color:#4ade80; color:#4ade80; }
+    .step-sep { flex:1; height:1px; background:var(--border); min-width:12px; margin:0 3px; }
+
+    /* ── PAGES ── */
+    .page { display:none; }
+    .page.active { display:block; }
+
+    /* ── CARDS ── */
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.75rem; margin-bottom:1.5rem; }
+    .card h2 { font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:700; margin-bottom:1.25rem; display:flex; align-items:center; gap:.6rem; }
+
+    /* ── FORM ── */
+    .fg { display:flex; flex-direction:column; gap:.4rem; margin-bottom:.9rem; }
+    .fg label { font-size:.73rem; font-weight:700; color:var(--text-2); text-transform:uppercase; letter-spacing:.04em; }
+    .fg small  { font-size:.68rem; color:var(--text-3); margin-top:.15rem; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .form-full { grid-column:1/-1; }
+
+    /* ── LOGO SLOTS ── */
+    .logo-row { display:flex; gap:.75rem; flex-wrap:wrap; }
+    .logo-slot {
+      width:90px; flex-shrink:0;
+      border:2px dashed rgba(124,58,237,.35); border-radius:10px;
+      padding:.6rem; text-align:center; cursor:pointer; transition:all .2s;
+      background:rgba(124,58,237,.02); position:relative;
+    }
+    .logo-slot:hover { border-color:rgba(124,58,237,.65); background:rgba(124,58,237,.07); }
+    .logo-slot.filled { border-style:solid; border-color:rgba(74,222,128,.5); background:rgba(74,222,128,.04); }
+    .logo-slot input { display:none; }
+    .logo-icon  { font-size:1.6rem; margin-bottom:.25rem; }
+    .logo-label { font-size:.64rem; color:var(--text-3); line-height:1.3; }
+    .logo-preview { width:60px; height:50px; object-fit:contain; margin:0 auto .2rem; display:none; border-radius:4px; }
+    .logo-rm { position:absolute; top:3px; right:4px; background:rgba(239,68,68,.2); border:none; border-radius:4px; color:#f87171; font-size:.6rem; cursor:pointer; padding:1px 4px; display:none; }
+    .logo-slot.filled .logo-rm { display:block; }
+    .add-logo-btn { width:90px; flex-shrink:0; border:2px dashed rgba(255,255,255,.1); border-radius:10px; padding:.6rem; text-align:center; cursor:pointer; color:var(--text-3); font-size:.72rem; display:flex; flex-direction:column; align-items:center; gap:.3rem; transition:all .2s; background:none; }
+    .add-logo-btn:hover { border-color:rgba(124,58,237,.4); color:#a78bfa; }
+
+    /* ── SIG ROWS ── */
+    .sig-row { display:grid; grid-template-columns:1fr 1fr 120px 44px; gap:.65rem; align-items:end; margin-bottom:.65rem; }
+    .sig-img-slot { border:1.5px dashed rgba(124,58,237,.3); border-radius:8px; padding:.4rem; text-align:center; cursor:pointer; font-size:.7rem; color:var(--text-3); height:38px; display:flex; align-items:center; justify-content:center; gap:.35rem; transition:all .2s; }
+    .sig-img-slot:hover { border-color:rgba(124,58,237,.6); color:#a78bfa; }
+    .sig-img-slot.filled { border-color:rgba(74,222,128,.5); color:#4ade80; }
+    .sig-rm { height:38px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); color:#f87171; border-radius:8px; cursor:pointer; font-size:.9rem; display:flex; align-items:center; justify-content:center; }
+
+    /* ── RECIPIENT / CSV ── */
+    .recipient-row { display:flex; gap:.5rem; margin-bottom:.5rem; align-items:center; }
+    .recipient-row input { flex:1; }
+    .rm-btn { width:32px; height:32px; flex-shrink:0; border-radius:8px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); color:#f87171; cursor:pointer; font-size:.9rem; display:flex; align-items:center; justify-content:center; }
+    .csv-zone { border:2px dashed rgba(124,58,237,.3); border-radius:10px; padding:1.25rem; text-align:center; cursor:pointer; transition:all .2s; background:rgba(124,58,237,.02); }
+    .csv-zone:hover { border-color:rgba(124,58,237,.6); background:rgba(124,58,237,.07); }
+    .csv-zone input { display:none; }
+
+    /* ── SUMMARY CARDS ── */
+    .summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.75rem; margin-bottom:1.5rem; }
+    .sum-card { border-radius:10px; padding:.9rem; text-align:center; }
+    .sum-icon { font-size:1.4rem; margin-bottom:.25rem; }
+    .sum-val  { font-size:.9rem; font-weight:700; }
+    .sum-lbl  { font-size:.68rem; color:var(--text-3); margin-top:2px; }
+
+    /* ── PREVIEW MODAL ── */
+    #prev-modal { display:none; position:fixed; inset:0; background:rgba(2,8,23,.92); backdrop-filter:blur(8px); z-index:2000; align-items:center; justify-content:center; padding:1.5rem; }
+    #prev-modal.open { display:flex; }
+    .prev-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.5rem; max-width:900px; width:100%; max-height:92vh; overflow-y:auto; }
+    .prev-box h3 { font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:700; margin-bottom:1rem; }
+
+    /* ── NAV ── */
+    .page-nav { display:flex; gap:.75rem; margin-top:1.5rem; justify-content:space-between; }
+
+    /* ── COLOR PICKERS ── */
+    .color-row { display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:.5rem; }
+    .color-pick { display:flex; align-items:center; gap:.5rem; }
+    .color-pick input[type=color] { width:40px; height:34px; border-radius:6px; border:1px solid var(--border); cursor:pointer; padding:2px; }
+    .color-pick input[type=text]  { width:90px; font-family:'Space Mono',monospace; font-size:.78rem; }
+
+    @media(max-width:640px) {
+      .form-grid, .summary-grid { grid-template-columns:1fr; }
+      .sig-row { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="mc-nav">
+  <a href="/" class="mc-nav__logo"><div class="mc-nav__logo-mark">Σ</div>Math Collective</a>
+  <ul class="mc-nav__links"><li><a href="/teacher">Teacher Hub</a></li></ul>
+  <div class="mc-nav__actions">
+    <div class="mc-nav__user" id="nav-user-pill" style="display:none;">
+      <div class="mc-nav__avatar">T</div>
+      <span class="mc-nav__username">Teacher</span>
+      <span style="color:var(--text-3);font-size:.75rem;margin-left:4px;cursor:pointer;" onclick="logout()">↩</span>
+    </div>
+    <a href="/login" class="btn btn-ghost btn-sm" id="nav-login-btn">Log In</a>
+  </div>
+</nav>
+
+<div style="margin:2rem 0 .5rem;">
+  <div class="section-label">Certificate Generator</div>
+  <h1 style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.35rem;">🎓 Issue Certificates</h1>
+  <p style="color:var(--text-2);font-size:.9rem;">Upload logos, add signatories, preview the real LaTeX-compiled PDF, then issue to everyone at once.</p>
+</div>
+
+<!-- STEPPER -->
+<div class="stepper">
+  <div class="step active" onclick="goTo(0)" id="st-0"><span class="step-n">1</span> Event</div>
+  <div class="step-sep"></div>
+  <div class="step" onclick="goTo(1)" id="st-1"><span class="step-n">2</span> Logos</div>
+  <div class="step-sep"></div>
+  <div class="step" onclick="goTo(2)" id="st-2"><span class="step-n">3</span> Signatories</div>
+  <div class="step-sep"></div>
+  <div class="step" onclick="goTo(3)" id="st-3"><span class="step-n">4</span> Recipients</div>
+  <div class="step-sep"></div>
+  <div class="step" onclick="goTo(4)" id="st-4"><span class="step-n">5</span> Preview &amp; Issue</div>
+</div>
+
+
+<!-- ════ PAGE 0: EVENT ════ -->
+<div class="page active" id="page-0">
+  <div class="card">
+    <h2>📋 Event & Certificate Details</h2>
+    <div class="form-grid">
+      <div class="fg">
+        <label>Event / Hackathon Name <span style="color:#f87171">*</span></label>
+        <input class="form-input" id="p-event" placeholder="e.g. SPRINTX 2K25">
+      </div>
+      <div class="fg">
+        <label>Certificate Type</label>
+        <select class="form-input" id="p-subtitle">
+          <option value="OF PARTICIPATION">Of Participation</option>
+          <option value="OF EXCELLENCE">Of Excellence</option>
+          <option value="OF ACHIEVEMENT">Of Achievement</option>
+          <option value="OF APPRECIATION">Of Appreciation</option>
+          <option value="OF COMPLETION">Of Completion</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Organised By Line</label>
+        <input class="form-input" id="p-organiser" placeholder="e.g. ORGANISED BY DEPT OF AI&amp;ML">
+        <small>Appears with arrow dividers ← like this →</small>
+      </div>
+      <div class="fg">
+        <label>Event Date</label>
+        <input class="form-input" id="p-date" placeholder="e.g. 21-22 November 2025">
+      </div>
+      <div class="fg">
+        <label>Institution / Issued By</label>
+        <input class="form-input" id="p-org" value="BMSIT&amp;M" placeholder="BMS Institute of Technology &amp; Management">
+      </div>
+      <div class="fg">
+        <label>Batch Title (internal records)</label>
+        <input class="form-input" id="p-title" placeholder="e.g. SPRINTX 2K25 Certificates">
+      </div>
+      <div class="fg form-full">
+        <label>Certificate Body Text</label>
+        <textarea class="form-input" id="p-body" rows="3"
+          placeholder="This is to certify that the individual participated in SPRINTX 2K25, the AIML Department Internal Hackathon held on 21-22 November 2025 at BMSIT&M, demonstrating dedication, problem-solving skills, and innovation."></textarea>
+        <small>Use {name} to insert recipient's name dynamically anywhere in the text.</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Color override -->
+  <div class="card">
+    <h2>🎨 Colors <span style="font-size:.75rem;font-weight:400;color:var(--text-3);">(auto-detected from logos — override here if needed)</span></h2>
+    <p style="font-size:.82rem;color:var(--text-2);margin-bottom:1rem;">The system extracts dominant colors from your logos and matches the certificate automatically. Override only if needed.</p>
+    <div class="color-row">
+      <div class="fg">
+        <label>Primary (navy/corner triangles)</label>
+        <div class="color-pick">
+          <input type="color" id="c-primary" value="#1a3a5c" oninput="document.getElementById('c-primary-hex').value=this.value">
+          <input class="form-input" type="text" id="c-primary-hex" value="#1a3a5c" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value))document.getElementById('c-primary').value=this.value">
+        </div>
+      </div>
+      <div class="fg">
+        <label>Accent (gold triangles / box)</label>
+        <div class="color-pick">
+          <input type="color" id="c-accent" value="#c9a84c" oninput="document.getElementById('c-accent-hex').value=this.value">
+          <input class="form-input" type="text" id="c-accent-hex" value="#c9a84c" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value))document.getElementById('c-accent').value=this.value">
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:.5rem;">
+        <label style="font-size:.73rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.4rem;">Auto-detect from logos</label>
+        <input type="checkbox" id="c-auto" checked style="width:16px;height:16px;accent-color:#7c3aed;margin-bottom:.5rem;">
+      </div>
+    </div>
+  </div>
+
+  <div class="page-nav">
+    <span></span>
+    <button class="btn btn-primary" onclick="goTo(1)">Next: Upload Logos →</button>
+  </div>
+</div>
+
+
+<!-- ════ PAGE 1: LOGOS ════ -->
+<div class="page" id="page-1">
+  <div class="card">
+    <h2>🖼️ Upload Logos</h2>
+    <p style="color:var(--text-2);font-size:.83rem;margin-bottom:1.25rem;">
+      Upload up to <strong>7 logos</strong> — college seal, dept logo, sponsors, partners, etc.
+      They appear in a strip across the top, exactly like SPRINTX. PNG with transparent background is best.
+      Colors are auto-extracted to match the certificate.
+    </p>
+    <div class="logo-row" id="logo-row">
+      <!-- Slots injected by JS -->
+    </div>
+    <div style="margin-top:.75rem;font-size:.75rem;color:var(--text-3);">
+      💡 Logos with transparent backgrounds work best. Light logos on white background: the system will adjust border/corner colors to contrast properly.
+    </div>
+  </div>
+  <div class="page-nav">
+    <button class="btn btn-ghost" onclick="goTo(0)">← Back</button>
+    <button class="btn btn-primary" onclick="goTo(2)">Next: Signatories →</button>
+  </div>
+</div>
+
+
+<!-- ════ PAGE 2: SIGNATORIES ════ -->
+<div class="page" id="page-2">
+  <div class="card">
+    <h2>✍️ Signatories <span style="font-size:.75rem;font-weight:400;color:var(--text-3);">(up to 3)</span></h2>
+    <p style="color:var(--text-2);font-size:.83rem;margin-bottom:1.25rem;">
+      Add name, designation, and optionally upload a signature image (PNG recommended).
+      Signatures appear above the line, exactly like the SPRINTX certificate.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 120px 44px;gap:.65rem;margin-bottom:.4rem;">
+      <span style="font-size:.7rem;font-weight:700;color:var(--text-3);text-transform:uppercase;">Name</span>
+      <span style="font-size:.7rem;font-weight:700;color:var(--text-3);text-transform:uppercase;">Title / Designation</span>
+      <span style="font-size:.7rem;font-weight:700;color:var(--text-3);text-transform:uppercase;">Signature Image</span>
+      <span></span>
+    </div>
+    <div id="sig-rows"></div>
+    <button class="btn btn-ghost btn-sm" id="add-sig-btn" onclick="addSig()" style="margin-top:.5rem;">+ Add Signatory</button>
+  </div>
+  <div class="page-nav">
+    <button class="btn btn-ghost" onclick="goTo(1)">← Back</button>
+    <button class="btn btn-primary" onclick="goTo(3)">Next: Recipients →</button>
+  </div>
+</div>
+
+
+<!-- ════ PAGE 3: RECIPIENTS ════ -->
+<div class="page" id="page-3">
+  <div class="card">
+    <h2>👥 Recipients</h2>
+    <p style="color:var(--text-2);font-size:.83rem;margin-bottom:1rem;">Import from CSV or add manually. Email enables delivery and student portal linking.</p>
+
+    <div class="csv-zone" onclick="document.getElementById('csv-inp').click()" id="csv-zone">
+      <input type="file" id="csv-inp" accept=".csv,.txt" onchange="handleCSV(this)">
+      <div style="font-size:1.4rem;margin-bottom:.4rem;">📄</div>
+      <div style="font-size:.85rem;font-weight:600;">Drop CSV or click to import</div>
+      <div style="font-size:.75rem;color:var(--text-3);margin-top:.2rem;">Format: Name, Email (email optional)</div>
+    </div>
+
+    <div style="text-align:center;color:var(--text-3);font-size:.8rem;margin:1rem 0;">— or enter manually —</div>
+
+    <div id="recipient-rows">
+      <div class="recipient-row">
+        <input class="form-input" type="text"  placeholder="Full Name" style="flex:2;" oninput="updateCount()">
+        <input class="form-input" type="email" placeholder="Email (optional)" oninput="updateCount()">
+        <button class="rm-btn" onclick="removeRecipient(this)">×</button>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:.5rem;" onclick="addRecipient()">+ Add Row</button>
+
+    <div style="margin-top:1rem;padding:.65rem 1rem;border-radius:8px;font-size:.82rem;background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.2);" id="count-info">
+      <span id="count-pill" style="color:#a78bfa;">0 recipients</span>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:1.5rem;">
+    <input type="checkbox" id="send-email-cb" style="width:16px;height:16px;accent-color:#7c3aed;">
+    <label for="send-email-cb" style="font-size:.88rem;cursor:pointer;">Send certificates via email to recipients that have an email address</label>
+  </div>
+
+  <div class="page-nav">
+    <button class="btn btn-ghost" onclick="goTo(2)">← Back</button>
+    <button class="btn btn-primary" onclick="goTo(4)">Next: Preview &amp; Issue →</button>
+  </div>
+</div>
+
+
+<!-- ════ PAGE 4: PREVIEW & ISSUE ════ -->
+<div class="page" id="page-4">
+  <div class="card">
+    <h2>👁️ Preview &amp; Issue</h2>
+    <p style="color:var(--text-2);font-size:.84rem;margin-bottom:1.25rem;">
+      Click <strong>Preview PDF</strong> to compile a real LaTeX certificate and see exactly what recipients will get.
+      The first compile may take ~30s while MiKTeX downloads packages — every compile after is fast.
+    </p>
+
+    <!-- Summary -->
+    <div class="summary-grid" id="sum-grid">
+      <div class="sum-card" style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);">
+        <div class="sum-icon">🖼️</div>
+        <div class="sum-val" id="s-logos">0</div>
+        <div class="sum-lbl">Logos</div>
+      </div>
+      <div class="sum-card" style="background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.2);">
+        <div class="sum-icon">✍️</div>
+        <div class="sum-val" id="s-sigs">0</div>
+        <div class="sum-lbl">Signatories</div>
+      </div>
+      <div class="sum-card" style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);">
+        <div class="sum-icon">👥</div>
+        <div class="sum-val" id="s-recs">0</div>
+        <div class="sum-lbl">Recipients</div>
+      </div>
+      <div class="sum-card" style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);">
+        <div class="sum-icon">⚡</div>
+        <div class="sum-val">LaTeX</div>
+        <div class="sum-lbl">Engine</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+      <button class="btn btn-ghost" id="prev-btn" onclick="previewCert()">👁 Preview Sample PDF</button>
+      <button class="btn btn-primary" id="issue-btn" onclick="issueCerts()">🎓 Generate &amp; Issue All</button>
+    </div>
+
+    <div id="issue-result" style="display:none;margin-top:1.25rem;"></div>
+  </div>
+
+  <!-- History -->
+  <div class="card">
+    <h2>📋 Past Batches
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="loadHistory()">🔄</button>
+    </h2>
+    <div id="history-list"><div style="color:var(--text-3);text-align:center;padding:2rem;">Loading...</div></div>
+  </div>
+
+  <div class="page-nav">
+    <button class="btn btn-ghost" onclick="goTo(3)">← Back</button>
+    <span></span>
+  </div>
+</div>
+
+
+<!-- PREVIEW MODAL -->
+<div id="prev-modal" onclick="if(event.target===this)closePrev()">
+  <div class="prev-box">
+    <h3>📄 Certificate Preview — LaTeX Compiled</h3>
+    <div id="prev-frame"></div>
+    <div style="display:flex;gap:.75rem;margin-top:1rem;justify-content:flex-end;align-items:center;">
+      <span id="prev-dl"></span>
+      <button class="btn btn-ghost btn-sm" onclick="closePrev()">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ══ STATE ══ */
+const logos      = [];      // [{filename, url, slot}]
+const signatories= [];      // [{name, title, signatureFilename}]
+let   csvRecips  = [];
+let   prevURL    = null;
+let   sigCount   = 0;
+let   logoCount  = 0;
+const MAX_LOGOS  = 7;
+
+/* ══ AUTH ══ */
+async function init() {
+  const s = await getAuthState();
+  if (!s.loggedIn) { window.location.href = "/login"; return; }
+  if (s.user?.role !== "teacher" && s.user?.role !== "admin") { window.location.href = "/dashboard"; return; }
+  renderLogoRow();
+  addSig();
+  loadHistory();
+}
+
+/* ══ STEPPER ══ */
+function goTo(n) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".step").forEach((s, i) => {
+    s.classList.remove("active","done");
+    if (i < n) s.classList.add("done");
+    if (i === n) s.classList.add("active");
+  });
+  document.getElementById("page-" + n).classList.add("active");
+  if (n === 4) updateSummary();
+  window.scrollTo({ top:0, behavior:"smooth" });
+}
+
+/* ══ LOGO MANAGEMENT ══ */
+function renderLogoRow() {
+  const row = document.getElementById("logo-row");
+  row.innerHTML = "";
+
+  logos.forEach((l, i) => {
+    const slot = document.createElement("div");
+    slot.className = "logo-slot filled";
+    slot.innerHTML = `
+      <button class="logo-rm" onclick="removeLogo(${i});event.stopPropagation()">✕</button>
+      <img src="${l.url}" class="logo-preview" style="display:block;">
+      <div class="logo-label" style="font-size:.6rem;color:#4ade80;">✓ Uploaded</div>
+    `;
+    row.appendChild(slot);
+  });
+
+  if (logos.length < MAX_LOGOS) {
+    const addBtn = document.createElement("label");
+    addBtn.className = "add-logo-btn";
+    addBtn.innerHTML = `<span style="font-size:1.5rem;">＋</span><span>Add Logo</span><input type="file" accept="image/*" style="display:none;" onchange="handleLogoUpload(this)">`;
+    row.appendChild(addBtn);
+  }
+}
+
+async function handleLogoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (logos.length >= MAX_LOGOS) { alert("Max 7 logos allowed."); return; }
+
+  const fd = new FormData();
+  fd.append("asset", file);
+
+  try {
+    const res  = await fetch("/api/certificates/upload-asset?type=logo", { method:"POST", body:fd });
+    const data = await res.json();
+    if (!res.ok) { alert("Upload failed: " + data.error); return; }
+    logos.push({ filename: data.filename, url: data.url });
+    renderLogoRow();
+  } catch (e) { alert("Upload error: " + e.message); }
+}
+
+function removeLogo(i) {
+  logos.splice(i, 1);
+  renderLogoRow();
+}
+
+/* ══ SIGNATORIES ══ */
+function addSig() {
+  if (sigCount >= 3) return;
+  const idx = signatories.length;
+  signatories.push({ name:"", title:"", signatureFilename:null });
+  sigCount++;
+
+  const row = document.createElement("div");
+  row.className = "sig-row";
+  row.id = `sr-${idx}`;
+
+  const fileId = `sig-file-${idx}`;
+  row.innerHTML = `
+    <input class="form-input" type="text" placeholder="Name (e.g. Dr. Anupama H S)"
+           oninput="signatories[${idx}].name=this.value" style="font-size:.83rem;">
+    <input class="form-input" type="text" placeholder="Title (e.g. HOD, AI&amp;ML dept)"
+           oninput="signatories[${idx}].title=this.value" style="font-size:.83rem;">
+    <label class="sig-img-slot" id="sil-${idx}" for="${fileId}">
+      <input type="file" id="${fileId}" accept="image/*" style="display:none;"
+             onchange="uploadSigImg(${idx},this)">
+      📝 Signature
+    </label>
+    <button class="sig-rm" onclick="removeSig(${idx})">🗑</button>
+  `;
+  document.getElementById("sig-rows").appendChild(row);
+
+  if (sigCount >= 3) document.getElementById("add-sig-btn").style.display = "none";
+}
+
+async function uploadSigImg(idx, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append("asset", file);
+  try {
+    const res  = await fetch("/api/certificates/upload-asset?type=signature", { method:"POST", body:fd });
+    const data = await res.json();
+    if (!res.ok) { alert("Upload failed: " + data.error); return; }
+    signatories[idx].signatureFilename = data.filename;
+    const lbl = document.getElementById(`sil-${idx}`);
+    lbl.classList.add("filled");
+    lbl.innerHTML = `<input type="file" id="sig-file-${idx}" accept="image/*" style="display:none;" onchange="uploadSigImg(${idx},this)">✅ Uploaded`;
+  } catch (e) { alert("Error: " + e.message); }
+}
+
+function removeSig(idx) {
+  document.getElementById(`sr-${idx}`)?.remove();
+  signatories[idx] = { name:"", title:"", signatureFilename:null };
+  sigCount--;
+  document.getElementById("add-sig-btn").style.display = "";
+}
+
+/* ══ CSV ══ */
+function handleCSV(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split("\n").filter(l => l.trim());
+    csvRecips = lines.map(l => {
+      const p = l.split(",").map(x => x.trim().replace(/^"|"$/g,""));
+      return { name: p[0], email: p[1] || "" };
+    }).filter(r => r.name);
+    updateCount();
+    const z = document.getElementById("csv-zone");
+    z.style.borderColor = "rgba(74,222,128,.5)";
+    z.style.background  = "rgba(74,222,128,.05)";
+    z.querySelector("div").textContent = `✅ ${csvRecips.length} recipients loaded`;
+  };
+  reader.readAsText(file);
+}
+
+function addRecipient() {
+  const row = document.createElement("div");
+  row.className = "recipient-row";
+  row.innerHTML = `
+    <input class="form-input" type="text"  placeholder="Full Name" style="flex:2;" oninput="updateCount()">
+    <input class="form-input" type="email" placeholder="Email (optional)" oninput="updateCount()">
+    <button class="rm-btn" onclick="removeRecipient(this)">×</button>
+  `;
+  document.getElementById("recipient-rows").appendChild(row);
+  row.querySelector("input").focus();
+  updateCount();
+}
+
+function removeRecipient(btn) {
+  const rows = document.querySelectorAll("#recipient-rows .recipient-row");
+  if (rows.length > 1) { btn.closest(".recipient-row").remove(); updateCount(); }
+}
+
+function getManualRecipients() {
+  return [...document.querySelectorAll("#recipient-rows .recipient-row")]
+    .map(r => ({ name: r.querySelectorAll("input")[0].value.trim(), email: r.querySelectorAll("input")[1].value.trim() }))
+    .filter(r => r.name);
+}
+
+function getAllRecipients() { return [...csvRecips, ...getManualRecipients()]; }
+
+function updateCount() {
+  const t = getAllRecipients().length;
+  document.getElementById("count-pill").textContent = `${t} recipient${t!==1?"s":""}`;
+  document.getElementById("count-pill").style.color = t > 0 ? "#4ade80" : "#a78bfa";
+}
+
+/* ══ BUILD PAYLOAD ══ */
+function buildPayload() {
+  const autoColor = document.getElementById("c-auto").checked;
+  return {
+    eventName:     document.getElementById("p-event").value.trim()     || "Event",
+    certTitle:     "CERTIFICATE",
+    certSubtitle:  document.getElementById("p-subtitle").value,
+    organiserLine: document.getElementById("p-organiser").value.trim() || "",
+    bodyText:      document.getElementById("p-body").value.trim()      || "",
+    eventDate:     document.getElementById("p-date").value.trim()      || "",
+    issuedBy:      document.getElementById("p-org").value.trim()       || "",
+    primaryColor:  autoColor ? null : document.getElementById("c-primary-hex").value,
+    accentColor:   autoColor ? null : document.getElementById("c-accent-hex").value,
+    logoFilenames: logos.map(l => l.filename),
+    signatories:   signatories.filter(s => s.name),
+  };
+}
+
+/* ══ SUMMARY ══ */
+function updateSummary() {
+  document.getElementById("s-logos").textContent = logos.length;
+  document.getElementById("s-sigs").textContent  = signatories.filter(s => s.name).length;
+  document.getElementById("s-recs").textContent  = getAllRecipients().length;
+}
+
+/* ══ PREVIEW ══ */
+async function previewCert() {
+  const btn = document.getElementById("prev-btn");
+  btn.disabled = true;
+  btn.textContent = "⏳ Compiling LaTeX...";
+
+  try {
+    const res = await fetch("/api/certificates/preview", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(buildPayload()),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(()=>({}));
+      alert("Compile failed: " + (d.error || res.statusText));
+      return;
+    }
+    if (prevURL) URL.revokeObjectURL(prevURL);
+    const blob = await res.blob();
+    prevURL = URL.createObjectURL(blob);
+
+    document.getElementById("prev-frame").innerHTML = `
+      <object data="${prevURL}#toolbar=1&navpanes=0" type="application/pdf"
+              style="width:100%;height:500px;border-radius:8px;background:#111;">
+        <p style="color:#a78bfa;padding:2rem;text-align:center;">
+          Browser can't embed PDF inline.
+          <a href="${prevURL}" target="_blank" class="btn btn-ghost btn-sm" style="margin-left:.5rem;">Open PDF →</a>
+        </p>
+      </object>
+    `;
+    document.getElementById("prev-dl").innerHTML =
+      `<a href="${prevURL}" download="preview_certificate.pdf" class="btn btn-ghost btn-sm">⬇ Download Preview</a>`;
+    document.getElementById("prev-modal").classList.add("open");
+  } catch (e) { alert("Error: " + e.message); }
+  finally { btn.disabled = false; btn.textContent = "👁 Preview Sample PDF"; }
+}
+
+function closePrev() { document.getElementById("prev-modal").classList.remove("open"); }
+
+/* ══ ISSUE CERTIFICATES ══ */
+async function issueCerts() {
+  const eventName = document.getElementById("p-event").value.trim();
+  const title     = document.getElementById("p-title").value.trim() || eventName + " Certificates";
+  let   recipients = getAllRecipients();
+  const sendEmail  = document.getElementById("send-email-cb").checked;
+
+  if (!eventName)        { alert("Fill in Event Name first (Step 1)."); goTo(0); return; }
+  if (!recipients.length){ alert("Add at least one recipient (Step 4)."); goTo(3); return; }
+
+  const btn = document.getElementById("issue-btn");
+  btn.disabled = true;
+  showResult("🔍 Matching registered students...", "info");
+
+  // Auto-link by email
+  const emails = recipients.filter(r => r.email).map(r => r.email.toLowerCase());
+  if (emails.length) {
+    try {
+      const mr = await fetch("/api/certificates/match-students", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ emails }),
+      });
+      const md = await mr.json();
+      const m  = md.matches || {};
+      recipients = recipients.map(r => ({
+        ...r, userId: r.email ? (m[r.email.toLowerCase()]?.userId || null) : null,
+      }));
+      const linked = recipients.filter(r => r.userId).length;
+      showResult(linked > 0 ? `⏳ Matched ${linked} students. Compiling certificates via LaTeX...` : "⏳ Compiling certificates via LaTeX...", "info");
+    } catch { showResult("⏳ Compiling certificates...", "info"); }
+  } else {
+    showResult("⏳ Compiling certificates via LaTeX...", "info");
+  }
+
+  try {
+    const res  = await fetch("/api/certificates/create", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ title, recipients, sendEmail, ...buildPayload() }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showResult("❌ " + data.error, "error"); return; }
+
+    const linked   = recipients.filter(r => r.userId).length;
+    const emailMsg = sendEmail ? ` · ${data.emailsSent} email${data.emailsSent!==1?"s":""} sent` : "";
+    const notifMsg = linked > 0 ? ` · ${linked} notified` : "";
+    showResult(`✅ ${data.total} certificate${data.total>1?"s":""} issued${emailMsg}${notifMsg}!`, "success");
+    loadHistory();
+  } finally { btn.disabled = false; }
+}
+
+function showResult(msg, type) {
+  const el = document.getElementById("issue-result");
+  el.style.display = "block"; el.className = "alert alert-" + type; el.innerHTML = msg;
+}
+
+/* ══ HISTORY ══ */
+async function loadHistory() {
+  const list = document.getElementById("history-list");
+  try {
+    const res  = await fetch("/api/certificates/batches");
+    const data = await res.json();
+    if (!data.length) { list.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:2rem;">No certificates issued yet.</div>'; return; }
+    list.innerHTML = data.map(b => `
+      <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+        ${b.template_image
+          ? `<img src="${b.template_image}" style="width:48px;height:34px;object-fit:contain;border-radius:5px;border:1px solid var(--border);" onerror="this.style.display='none'">`
+          : `<div style="width:48px;height:34px;border-radius:5px;background:rgba(124,58,237,.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">🎓</div>`}
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:.88rem;">${b.event_name}</div>
+          <div style="font-size:.73rem;color:var(--text-3);font-family:'Space Mono',monospace;margin-top:2px;">${b.count} recipients · ${b.template_type} · ${new Date(b.created_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</div>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-shrink:0;">
+          <a href="/api/certificates/batch/${b.id}/zip" class="btn btn-ghost btn-sm" download>⬇ ZIP</a>
+          <button class="btn btn-ghost btn-sm" style="color:#f87171;" onclick="deleteBatch('${b.id}')">🗑</button>
+        </div>
+      </div>
+    `).join("");
+  } catch { list.innerHTML = '<div style="color:#f87171;text-align:center;padding:2rem;">Failed to load.</div>'; }
+}
+
+async function deleteBatch(id) {
+  if (!confirm("Delete this batch?")) return;
+  await fetch("/api/certificates/batches/" + id, { method:"DELETE" });
+  loadHistory();
+}
+
+init();
+</script>
+</body>
+</html>

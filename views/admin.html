@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js" defer></script>
+  <style>
+    :root { --sidebar-w: 220px; }
+    body { display: flex; min-height: 100vh; }
+    .sidebar { width: var(--sidebar-w); background: var(--bg-elevated, #0d1117); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; padding: 1.5rem 0; }
+    .sb-logo { display: flex; align-items: center; gap: 10px; padding: 0 1.25rem 1.5rem; font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+    .sb-logo-mark { width: 30px; height: 30px; background: linear-gradient(135deg, var(--purple,#7c3aed), var(--blue,#3b82f6)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 0.85rem; }
+    .sb-badge { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: #ef4444; font-family: 'Space Mono', monospace; margin-left: auto; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); padding: 2px 7px; border-radius: 4px; }
+    .sb-nav { flex: 1; padding: 0 0.75rem; display: flex; flex-direction: column; gap: 3px; }
+    .sb-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; border-radius: 6px; color: var(--text-2,#94a3b8); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s; background: none; border: none; text-align: left; width: 100%; }
+    .sb-item:hover { background: rgba(255,255,255,0.05); color: var(--text,#f1f5f9); }
+    .sb-item.active { background: rgba(124,58,237,0.15); color: #a78bfa; }
+    .sb-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+    .sb-bottom { padding: 1rem 0.75rem; border-top: 1px solid var(--border); }
+    .sb-user { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: 6px; }
+    .sb-avatar { width: 32px; height: 32px; background: linear-gradient(135deg, var(--purple,#7c3aed), var(--blue,#3b82f6)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+    .sb-uname { font-size: 0.82rem; font-weight: 600; }
+    .sb-email { font-size: 0.72rem; color: var(--text-3,#64748b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+    .admin-main { margin-left: var(--sidebar-w); flex: 1; padding: 2rem 2.5rem; min-height: 100vh; }
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; }
+    .page-header p { color: var(--text-2,#94a3b8); font-size: 0.88rem; margin-top: 0.25rem; }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .stat-box { background: var(--surface,#1e293b); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; }
+    .stat-box .lbl { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3,#64748b); margin-bottom: 0.5rem; }
+    .stat-box .val { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, white, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .section-card { background: var(--surface,#1e293b); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section-card h2 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .admin-table th { text-align: left; padding: 0.75rem 1rem; font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3,#64748b); border-bottom: 1px solid var(--border); }
+    .admin-table td { padding: 0.875rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .admin-table tr:last-child td { border-bottom: none; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .form-full { grid-column: 1 / -1; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group label { font-size: 0.78rem; font-weight: 600; color: var(--text-2,#94a3b8); text-transform: uppercase; letter-spacing: 0.04em; }
+    .chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 3px 10px; border-radius: 99px; font-size: 0.72rem; font-weight: 600; font-family: 'Space Mono', monospace; }
+    .chip-easy   { background: rgba(74,222,128,0.12); color: #4ade80; }
+    .chip-medium { background: rgba(124,58,237,0.15); color: #a78bfa; }
+    .chip-hard   { background: rgba(239,68,68,0.12); color: #f87171; }
+    .chip-admin  { background: rgba(245,158,11,0.12); color: #fbbf24; }
+    .chip-student { background: rgba(255,255,255,0.06); color: var(--text-2,#94a3b8); }
+    .ai-panel { background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3); border-radius: 16px; padding: 1.75rem; margin-bottom: 1.5rem; }
+    .ai-panel h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .ai-panel p  { color: var(--text-2,#94a3b8); font-size: 0.85rem; margin-bottom: 1.25rem; }
+    .ai-controls { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
+    .ai-preview { background: var(--surface,#1e293b); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-top: 1rem; display: none; }
+    .ai-preview h4 { font-family: 'Space Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #a78bfa; margin-bottom: 0.75rem; }
+    .ai-preview pre { font-size: 0.82rem; color: var(--text-2,#94a3b8); white-space: pre-wrap; word-break: break-word; }
+    #admin-toast { display: none; position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; padding: 0.875rem 1.25rem; border-radius: 8px; font-size: 0.88rem; font-weight: 600; min-width: 260px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(2,8,23,0.85); backdrop-filter: blur(8px); z-index: 200; align-items: center; justify-content: center; padding: 1.5rem; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: var(--surface,#1e293b); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 480px; width: 100%; }
+    .modal-box h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 1.25rem; }
+    .modal-footer { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem; }
+    .auth-gate { display: none; position: fixed; inset: 0; background: rgba(2,8,23,0.95); backdrop-filter: blur(12px); z-index: 500; align-items: center; justify-content: center; }
+    .auth-gate.visible { display: flex; }
+    .auth-gate-card { background: var(--surface,#1e293b); border: 1px solid rgba(124,58,237,0.3); border-radius: 16px; padding: 3rem; text-align: center; max-width: 400px; }
+    .auth-gate-card h2 { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; margin-bottom: 0.75rem; }
+    .auth-gate-card p { color: var(--text-2,#94a3b8); margin-bottom: 1.5rem; }
+    .options-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+    .option-input-row { display: flex; align-items: center; gap: 0.5rem; }
+    .option-radio { accent-color: #7c3aed; width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+    select.form-input { appearance: none; }
+    @media (max-width: 900px) { .stat-grid { grid-template-columns: 1fr 1fr; } .form-grid { grid-template-columns: 1fr; } .sidebar { transform: translateX(-100%); } .admin-main { margin-left: 0; } }
+  </style>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+<!-- Auth Gate -->
+<div class="auth-gate" id="authGate">
+  <div class="auth-gate-card">
+    <div style="font-size:3rem;margin-bottom:1rem;">🛡</div>
+    <h2>Admin Access Only</h2>
+    <p>This page is restricted to administrators. Make sure you have run the migration and set yourself as admin.</p>
+    <a href="/" class="btn btn-primary">← Go Home</a>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="admin-toast"></div>
+
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal-box">
+    <h3>🔑 Reset Password</h3>
+    <p style="color:var(--text-2,#94a3b8);font-size:0.85rem;margin-bottom:1rem;" id="reset-user-label"></p>
+    <div class="form-group">
+      <label>New Password (min 8 chars)</label>
+      <input class="form-input" type="password" id="reset-new-pass" placeholder="New password">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('resetModal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="doResetPassword()">Reset Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete User Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <h3>⚠️ Delete User</h3>
+    <p id="delete-user-label" style="color:var(--text-2,#94a3b8);margin-bottom:1.25rem;"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('deleteModal')">Cancel</button>
+      <button class="btn btn-sm" style="background:#ef4444;color:white;" onclick="doDeleteUser()">Delete User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">Σ</div>
+    Admin Panel
+    <span class="sb-badge">ADMIN</span>
+  </div>
+  <nav class="sb-nav">
+    <button class="sb-item active" onclick="showSection('overview')"  id="nav-overview"><span class="sb-icon">📊</span> Overview</button>
+    <button class="sb-item"        onclick="showSection('challenges')" id="nav-challenges"><span class="sb-icon">🧩</span> Challenges</button>
+    <button class="sb-item"        onclick="showSection('users')"      id="nav-users"><span class="sb-icon">👥</span> Students</button>
+    <button class="sb-item"        onclick="showSection('teachers')"   id="nav-teachers"><span class="sb-icon">🎓</span> Teachers</button>
+    <button class="sb-item"        onclick="showSection('events')"     id="nav-events"><span class="sb-icon">📅</span> Events</button>
+    <button class="sb-item"        onclick="showSection('announcements')" id="nav-announcements"><span class="sb-icon">📢</span> Announcements</button>
+    <button class="sb-item"        onclick="showSection('data')"       id="nav-data"><span class="sb-icon">🗃</span> Data Mgmt</button>
+    <hr style="border:none;border-top:1px solid var(--border);margin:0.5rem 0;">
+    <button class="sb-item" onclick="location='/certificates'"><span class="sb-icon">🎓</span> Certificates</button>
+    <button class="sb-item" onclick="location='/arena'"><span class="sb-icon">⚔</span> Arena</button>
+    <button class="sb-item" onclick="location='/dashboard'"><span class="sb-icon">📈</span> Dashboard</button>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">A</div>
+      <div>
+        <div class="sb-uname" id="sb-name">Admin</div>
+        <div class="sb-email" id="sb-email">—</div>
+      </div>
+    </div>
+    <button class="sb-item" onclick="logout()" style="width:100%;margin-top:0.25rem;"><span class="sb-icon">↩</span> Logout</button>
+  </div>
+</aside>
+
+<main class="admin-main">
+
+  <!-- OVERVIEW -->
+  <section class="section active" id="section-overview">
+    <div class="page-header"><h1>Overview</h1><p>Platform stats at a glance.</p></div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="lbl">Students</div><div class="val" id="ov-students">—</div></div>
+      <div class="stat-box"><div class="lbl">Challenges</div><div class="val" id="ov-challenges">—</div></div>
+      <div class="stat-box"><div class="lbl">Attempts</div><div class="val" id="ov-attempts">—</div></div>
+      <div class="stat-box"><div class="lbl">Events</div><div class="val" id="ov-events">—</div></div>
+    </div>
+
+    <!-- Live Users Panel -->
+    <div class="section-card" style="margin-bottom:1.5rem;border-color:rgba(74,222,128,0.25);background:linear-gradient(135deg,rgba(74,222,128,0.05),rgba(59,130,246,0.03));">
+      <h2 style="display:flex;align-items:center;gap:.75rem;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;box-shadow:0 0 8px #4ade80;animation:pulse-green 1.5s infinite;"></span>
+        Live Users
+        <span id="live-count" style="font-family:'Space Mono',monospace;font-size:.75rem;color:#4ade80;font-weight:400;margin-left:auto;">0 online</span>
+      </h2>
+      <style>
+        @keyframes pulse-green { 0%,100%{opacity:1;box-shadow:0 0 8px #4ade80} 50%{opacity:.5;box-shadow:0 0 3px #4ade80} }
+        .live-row { display:flex;align-items:center;gap:.85rem;padding:.65rem .85rem;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);margin-bottom:.4rem; }
+        .live-avatar { width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:800;flex-shrink:0; }
+        .live-name { font-weight:600;font-size:.85rem;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+        .live-page { font-family:'Space Mono',monospace;font-size:.7rem;color:#a78bfa;background:rgba(124,58,237,.12);padding:2px 8px;border-radius:99px;flex-shrink:0; }
+        .live-dur  { font-family:'Space Mono',monospace;font-size:.7rem;color:var(--text-3,#64748b);flex-shrink:0;min-width:52px;text-align:right; }
+        .live-empty { color:var(--text-3,#64748b);font-size:.85rem;text-align:center;padding:1.5rem;font-style:italic; }
+      </style>
+      <div id="live-users-list"><div class="live-empty">No users online right now.</div></div>
+    </div>
+    <!-- Weekly Reset Card -->
+    <div class="section-card" style="background:linear-gradient(135deg,rgba(251,191,36,0.08),rgba(245,158,11,0.05));border-color:rgba(251,191,36,0.3);margin-bottom:1.5rem;">
+      <h2 style="color:#fbbf24;">
+        ⏱ Weekly Leaderboard
+        <a href="/winners" target="_blank" class="btn btn-ghost btn-sm">🏆 Hall of Fame</a>
+      </h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+        <div>
+          <p style="color:var(--text-2);font-size:0.88rem;margin-bottom:0.25rem;">Last reset: <span id="admin-last-reset" style="font-family:'Space Mono',monospace;color:#fbbf24;">Loading...</span></p>
+          <p style="color:var(--text-3);font-size:0.78rem;">Auto-reset is <strong style="color:#f87171;">disabled</strong> — you control when the week resets.</p>
+        </div>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="location='/winners'">View Hall of Fame</button>
+          <button class="btn btn-sm" style="background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;" onclick="doWeeklyReset()">
+            🔄 Reset Week Now
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+      <div class="section-card"><h2>🥇 Top Students</h2><div id="ov-top">Loading...</div></div>
+      <div class="section-card"><h2>⚡ Recent Activity</h2><div id="ov-recent">Loading...</div></div>
+    </div>
+  </section>
+
+
+  <!-- CHALLENGES -->
+  <section class="section" id="section-challenges">
+    <div class="page-header"><h1>Challenges</h1><p>AI-generate or manually add math challenges.</p></div>
+
+    <!-- AI Generator -->
+    <div class="ai-panel">
+      <h3>🤖 AI Question Generator</h3>
+      <p>Auto-generate a question using DeepSeek AI via OpenRouter, review it, then save to DB.</p>
+      <div class="ai-controls">
+        <div class="form-group">
+          <label>Difficulty</label>
+          <select class="form-input" id="ai-difficulty" style="width:140px;">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="ai-gen-btn" onclick="generateAI()">⚡ Generate Question</button>
+        <button class="btn btn-ghost" id="ai-save-btn" style="display:none;" onclick="saveAI()">💾 Save to DB</button>
+        <button class="btn btn-ghost btn-sm" id="ai-regen-btn" style="display:none;" onclick="generateAI()">🔄 Regenerate</button>
+      </div>
+      <div class="ai-preview" id="ai-preview">
+        <h4>Preview</h4>
+        <pre id="ai-preview-text"></pre>
+      </div>
+    </div>
+
+    <!-- Manual Create -->
+    <div class="section-card">
+      <h2>➕ Add Challenge Manually</h2>
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label>Title</label>
+          <input class="form-input" type="text" id="ch-title" placeholder="e.g. Sum of First N Numbers">
+        </div>
+        <div class="form-group form-full">
+          <label>Question</label>
+          <textarea class="form-input" id="ch-question" rows="3" placeholder="Full question text..."></textarea>
+        </div>
+      </div>
+      <div style="margin: 1rem 0 0.5rem;">
+        <label style="font-size:0.78rem;font-weight:600;color:var(--text-2,#94a3b8);text-transform:uppercase;letter-spacing:0.04em;">Options (● = correct answer)</label>
+      </div>
+      <div class="options-inputs">
+        <div class="option-input-row"><input class="option-radio" type="radio" name="correct_idx" value="0" checked><input class="form-input" id="opt-0" placeholder="Option A" style="flex:1;"></div>
+        <div class="option-input-row"><input class="option-radio" type="radio" name="correct_idx" value="1"><input class="form-input" id="opt-1" placeholder="Option B" style="flex:1;"></div>
+        <div class="option-input-row"><input class="option-radio" type="radio" name="correct_idx" value="2"><input class="form-input" id="opt-2" placeholder="Option C" style="flex:1;"></div>
+        <div class="option-input-row"><input class="option-radio" type="radio" name="correct_idx" value="3"><input class="form-input" id="opt-3" placeholder="Option D" style="flex:1;"></div>
+      </div>
+      <div class="form-grid cols-3">
+        <div class="form-group">
+          <label>Difficulty</label>
+          <select class="form-input" id="ch-difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Points</label>
+          <input class="form-input" type="number" id="ch-points" value="50" min="10" max="500">
+        </div>
+        <div class="form-group form-full">
+          <label>Solution / Explanation (optional)</label>
+          <input class="form-input" type="text" id="ch-solution" placeholder="Brief explanation of the correct answer">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:1rem;" onclick="createChallenge()">➕ Add Challenge</button>
+    </div>
+
+    <!-- List -->
+    <div class="section-card">
+      <h2>All Challenges <button class="btn btn-ghost btn-sm" onclick="loadChallenges()">🔄 Refresh</button></h2>
+      <div style="overflow-x:auto;">
+        <table class="admin-table">
+          <thead><tr><th>Title</th><th>Difficulty</th><th>Points</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="ch-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text-3,#64748b);padding:2rem;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- USERS -->
+  <section class="section" id="section-users">
+    <div class="page-header"><h1>Students</h1><p>Create, manage, and reset passwords.</p></div>
+
+    <!-- Create User -->
+    <div class="section-card">
+      <h2>➕ Create New User</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name</label>
+          <input class="form-input" type="text" id="nu-name" placeholder="Full Name">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input class="form-input" type="email" id="nu-email" placeholder="student@bmsit.in">
+        </div>
+        <div class="form-group">
+          <label>Password (min 8 chars)</label>
+          <input class="form-input" type="password" id="nu-password" placeholder="Password">
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select class="form-input" id="nu-role">
+            <option value="student">Student</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:1rem;" onclick="createUser()">Create User</button>
+    </div>
+
+    <!-- Users Table -->
+    <div class="section-card">
+      <h2>
+        All Students (<span id="user-count">0</span>)
+        <div style="display:flex;gap:0.75rem;">
+          <input class="form-input" type="text" id="user-search" placeholder="Search name / email..." style="width:220px;" oninput="filterUsers()">
+          <button class="btn btn-ghost btn-sm" onclick="loadUsers()">🔄 Refresh</button>
+        </div>
+      </h2>
+      <div style="overflow-x:auto;">
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Email</th><th>XP</th><th>Role</th><th>Actions</th></tr></thead>
+          <tbody id="users-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text-3,#64748b);padding:2rem;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- TEACHERS -->
+  <section class="section" id="section-teachers">
+    <div class="page-header"><h1>Teachers <span class="chip" style="background:rgba(124,58,237,0.15);color:#a78bfa;" id="teacher-count">0</span></h1><p>Create and manage teacher accounts.</p></div>
+
+    <!-- Create Teacher -->
+    <div class="section-card">
+      <h2>➕ Add Teacher</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input class="form-input" type="text" id="t-name" placeholder="e.g. Dr. Jane Smith">
+        </div>
+        <div class="form-group">
+          <label>Email <span style="color:#f87171;">*</span></label>
+          <input class="form-input" type="email" id="t-email" placeholder="teacher@school.edu">
+        </div>
+        <div class="form-group">
+          <label>Password <span style="color:#f87171;">*</span></label>
+          <input class="form-input" type="password" id="t-password" placeholder="Min. 8 characters">
+        </div>
+        <div class="form-group">
+          <label>Department</label>
+          <input class="form-input" type="text" id="t-dept" placeholder="e.g. Mathematics">
+        </div>
+        <div class="form-group form-full">
+          <label>Subject</label>
+          <input class="form-input" type="text" id="t-subject" placeholder="e.g. Calculus, Number Theory">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:1rem;" onclick="createTeacher()">Create Teacher Account</button>
+    </div>
+
+    <!-- Teachers List -->
+    <div class="section-card">
+      <h2>All Teachers <button class="btn btn-ghost btn-sm" onclick="loadTeachers()">🔄 Refresh</button></h2>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);color:var(--text-2,#94a3b8);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;">
+              <th style="text-align:left;padding:0.6rem 0.75rem;">Name</th>
+              <th style="text-align:left;padding:0.6rem 0.75rem;">Email</th>
+              <th style="text-align:left;padding:0.6rem 0.75rem;">Department</th>
+              <th style="text-align:left;padding:0.6rem 0.75rem;">Subject</th>
+              <th style="text-align:left;padding:0.6rem 0.75rem;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="teachers-tbody">
+            <tr><td colspan="5" style="text-align:center;color:var(--text-3,#64748b);padding:2rem;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- EVENTS -->
+  <section class="section" id="section-events">
+    <div class="page-header"><h1>Events</h1><p>Manage workshops, competitions, hackathons — with Google Form registration &amp; deadlines.</p></div>
+
+    <!-- Site Settings -->
+    <div class="section-card" style="background:linear-gradient(135deg,rgba(251,191,36,0.07),rgba(245,158,11,0.04));border-color:rgba(251,191,36,0.25);">
+      <h2>⚙️ Site Controls</h2>
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;">
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <span style="font-size:.88rem;font-weight:600;">Website Registrations</span>
+          <button id="reg-toggle-btn" onclick="toggleSiteSetting('registrations_open')"
+            style="padding:6px 18px;border-radius:99px;border:none;cursor:pointer;font-size:.8rem;font-weight:700;transition:all .2s;">
+            Loading...
+          </button>
+          <span id="reg-status-text" style="font-size:.78rem;color:var(--text-3,#64748b);"></span>
+        </div>
+      </div>
+
+      <!-- Message shown to students when registrations are closed -->
+      <div style="margin-top:1.25rem;">
+        <label style="font-size:.78rem;font-weight:700;color:var(--text-2,#94a3b8);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.5rem;">
+          Message shown to students when registrations are closed
+        </label>
+        <div style="display:flex;gap:.5rem;align-items:flex-start;">
+          <textarea class="form-input" id="reg-message-inp" rows="2"
+            placeholder="e.g. Registrations will open in January 2027. Stay tuned on our Instagram @mathcollective_bmsit!"
+            style="flex:1;font-size:.85rem;resize:vertical;"></textarea>
+          <button class="btn btn-ghost btn-sm" onclick="saveRegMessage()" style="flex-shrink:0;margin-top:2px;">Save</button>
+        </div>
+        <small style="color:var(--text-3,#64748b);font-size:.72rem;margin-top:.3rem;display:block;">
+          This message appears on the registration page when you close registrations. You can include dates, social media handles, contact info etc.
+        </small>
+      </div>
+
+      <!-- Site Notice Banner -->
+      <div style="margin-top:1.25rem;">
+        <label style="font-size:.78rem;font-weight:700;color:var(--text-2,#94a3b8);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.5rem;">
+          Global Site Notice Banner (shown on Events page)
+        </label>
+        <div style="display:flex;gap:.5rem;">
+          <input class="form-input" type="text" id="site-notice-inp"
+            placeholder="e.g. Registration closed for this semester"
+            style="flex:1;font-size:.85rem;">
+          <button class="btn btn-ghost btn-sm" onclick="saveSiteNotice()">Save</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearSiteNotice()">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Event -->
+    <div class="section-card">
+      <h2>📅 Create Event</h2>
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label>Title *</label>
+          <input class="form-input" type="text" id="ev-title" placeholder="e.g. SPRINTX 2K26 — 36hr Hackathon">
+        </div>
+        <div class="form-group form-full">
+          <label>Description</label>
+          <textarea class="form-input" id="ev-desc" rows="2" placeholder="What is this event about?"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Event Type</label>
+          <select class="form-input" id="ev-type">
+            <option value="general">General</option>
+            <option value="hackathon">Hackathon</option>
+            <option value="workshop">Workshop</option>
+            <option value="competition">Competition</option>
+            <option value="seminar">Seminar</option>
+            <option value="lecture">Lecture</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Organiser</label>
+          <input class="form-input" type="text" id="ev-organiser" placeholder="e.g. Dept of AI&amp;ML">
+        </div>
+        <div class="form-group">
+          <label>Location</label>
+          <input class="form-input" type="text" id="ev-location" placeholder="e.g. Main Auditorium, BMSIT&M">
+        </div>
+        <div class="form-group">
+          <label>Event Date &amp; Time</label>
+          <input class="form-input" type="datetime-local" id="ev-date">
+        </div>
+        <div class="form-group form-full">
+          <label>Google Form / Registration URL</label>
+          <input class="form-input" type="url" id="ev-form-url" placeholder="https://forms.gle/... or any registration link">
+          <small style="color:var(--text-3,#64748b);font-size:.73rem;margin-top:.25rem;display:block;">Paste your Google Form link here. Students will see a "Register Now" button that opens this.</small>
+        </div>
+        <div class="form-group">
+          <label>Registration Deadline</label>
+          <input class="form-input" type="datetime-local" id="ev-deadline">
+          <small style="color:var(--text-3,#64748b);font-size:.73rem;margin-top:.25rem;display:block;">After this time, button changes to "Closed"</small>
+        </div>
+        <div class="form-group">
+          <label>Tags (comma-separated)</label>
+          <input class="form-input" type="text" id="ev-tags" placeholder="e.g. math, hackathon, aiml">
+        </div>
+        <div class="form-group">
+          <label>Accent Color</label>
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <input type="color" id="ev-color" value="#7c3aed" style="width:40px;height:34px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:2px;">
+            <input class="form-input" type="text" id="ev-color-hex" value="#7c3aed" style="width:90px;font-family:'Space Mono',monospace;font-size:.8rem;" oninput="document.getElementById('ev-color').value=this.value">
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:1rem;" onclick="createEvent()">📅 Create Event</button>
+    </div>
+
+    <!-- Events List -->
+    <div class="section-card">
+      <h2>All Events <button class="btn btn-ghost btn-sm" onclick="loadEvents()">🔄 Refresh</button></h2>
+      <div id="events-list" style="color:var(--text-3,#64748b);padding:1rem 0;">Loading...</div>
+    </div>
+  </section>
+
+  <!-- ANNOUNCEMENTS -->
+  <section class="section" id="section-announcements">
+    <div class="page-header">
+      <h1>📢 Announcements</h1>
+      <p>Broadcast messages to all students, teachers, or everyone instantly via in-app notifications.</p>
+    </div>
+
+    <!-- Create Announcement -->
+    <div class="section-card">
+      <h2>➕ New Announcement</h2>
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label>Title *</label>
+          <input class="form-input" type="text" id="ann-title" placeholder="e.g. Arena maintenance scheduled for Sunday">
+        </div>
+        <div class="form-group form-full">
+          <label>Message *</label>
+          <textarea class="form-input" id="ann-body" rows="3" placeholder="Full announcement text..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Target Audience</label>
+          <select class="form-input" id="ann-target">
+            <option value="all">Everyone (students + teachers)</option>
+            <option value="student">Students only</option>
+            <option value="teacher">Teachers only</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select class="form-input" id="ann-type">
+            <option value="announcement">📢 Announcement</option>
+            <option value="info">💬 Info</option>
+            <option value="warning">⚠️ Warning</option>
+            <option value="success">✅ Good News</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="createAnnouncement()">📢 Broadcast Now</button>
+        <button class="btn btn-ghost btn-sm" onclick="sendNotificationToAll()">🔔 Also push real-time notification</button>
+      </div>
+    </div>
+
+    <!-- Active Announcements -->
+    <div class="section-card">
+      <h2>Active Announcements <button class="btn btn-ghost btn-sm" onclick="loadAnnouncements()">🔄 Refresh</button></h2>
+      <div id="ann-list" style="color:var(--text-3,#64748b);padding:1rem 0;">Loading...</div>
+    </div>
+  </section>
+
+  <!-- DATA MANAGEMENT -->
+  <section class="section" id="section-data">
+    <div class="page-header">
+      <h1>🗃 Data Management</h1>
+      <p>Manage platform data — teams, projects, tests, and user records.</p>
+    </div>
+
+    <div class="section-card" style="border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.04);margin-bottom:1.5rem;">
+      <h2 style="color:#f87171;">⚠️ Danger Zone</h2>
+      <p style="color:var(--text-2);font-size:0.88rem;margin-bottom:1.25rem;">These actions are irreversible. Use with caution.</p>
+      <button class="btn btn-sm" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;" onclick="clearAllAttempts()">
+        🗑 Clear ALL Arena Attempts + Reset All XP
+      </button>
+    </div>
+
+    <div class="section-card" style="margin-bottom:1.5rem;">
+      <h2>🚀 Teams & Projects (<span id="dm-team-count">0</span>) <button class="btn btn-ghost btn-sm" onclick="loadTeamsData()">🔄 Refresh</button></h2>
+      <div id="dm-teams-list"><div style="color:var(--text-3);text-align:center;padding:2rem;">Loading...</div></div>
+    </div>
+
+    <div class="section-card" style="margin-bottom:1.5rem;">
+      <h2>📋 Scheduled Tests (<span id="dm-test-count">0</span>) <button class="btn btn-ghost btn-sm" onclick="loadTestsData()">🔄 Refresh</button></h2>
+      <div id="dm-tests-list"><div style="color:var(--text-3);text-align:center;padding:2rem;">Loading...</div></div>
+    </div>
+
+    <div class="section-card">
+      <h2>👤 Per-User Data Actions</h2>
+      <p style="color:var(--text-2);font-size:0.85rem;margin-bottom:1rem;">Find a student by email to reset their data individually.</p>
+      <div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;">
+        <input class="form-input" type="email" id="dm-user-email" placeholder="student@bmsit.in" style="flex:1;min-width:200px;">
+        <button class="btn btn-ghost btn-sm" onclick="findUserForData()">Find Student</button>
+      </div>
+      <div id="dm-user-result"></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  let allUsers      = [];
+  let currentAIData = null;
+  let resetUserId   = null;
+  let deleteUserId  = null;
+
+  /* ══ INIT ══ */
+  async function init() {
+    const state = await getAuthState();
+    if (!state.loggedIn) { document.getElementById('authGate').classList.add('visible'); return; }
+
+    const prof = await fetch('/api/user/profile').then(r => r.json()).catch(() => ({}));
+    if (prof.role !== 'admin') { document.getElementById('authGate').classList.add('visible'); return; }
+
+    document.getElementById('sb-avatar').textContent = (prof.name || 'A').charAt(0).toUpperCase();
+    document.getElementById('sb-name').textContent   = prof.name  || 'Admin';
+    document.getElementById('sb-email').textContent  = prof.email || '';
+    loadOverview();
+  }
+
+  /* ══ NAVIGATION ══ */
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    document.getElementById('nav-' + name)?.classList.add('active');
+    if (name === 'overview')   loadOverview();
+    if (name === 'challenges') loadChallenges();
+    if (name === 'users')      loadUsers();
+    if (name === 'events')         { loadEvents(); loadSiteSettings(); }
+    if (name === 'teachers')       loadTeachers();
+    if (name === 'announcements')  loadAnnouncements();
+    if (name === 'data')           { loadTeamsData(); loadTestsData(); }
+  }
+
+  /* ══ TOAST ══ */
+  function toast(msg, type = 'success') {
+    const el = document.getElementById('admin-toast');
+    el.className = 'alert alert-' + type;
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 3500);
+  }
+
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  /* ══ OVERVIEW ══ */
+  async function loadOverview() {
+    const res  = await fetch('/api/admin/stats').catch(() => null);
+    if (!res?.ok) return;
+    const data = await res.json();
+    document.getElementById('ov-students')  .textContent = data.totalStudents   || 0;
+    document.getElementById('ov-challenges').textContent = data.totalChallenges || 0;
+    document.getElementById('ov-attempts')  .textContent = data.totalAttempts   || 0;
+    document.getElementById('ov-events')    .textContent = data.totalEvents     || 0;
+
+    const medals = ['🥇','🥈','🥉'];
+    document.getElementById('ov-top').innerHTML = data.topStudents?.length
+      ? data.topStudents.map((s,i) => `<div style="display:flex;gap:0.75rem;padding:0.75rem 0;border-bottom:1px solid var(--border);">
+          <span>${medals[i]}</span>
+          <div><div style="font-size:0.88rem;font-weight:600;">${s.name||'—'}</div><div style="font-size:0.75rem;color:var(--text-3,#64748b);">${s.xp||0} XP</div></div>
+        </div>`).join('')
+      : '<div style="padding:1rem 0;color:var(--text-3,#64748b);">No data yet.</div>';
+
+    document.getElementById('ov-recent').innerHTML = data.recentActivity?.length
+      ? data.recentActivity.map(a => `<div style="display:flex;gap:0.5rem;padding:0.5rem 0;border-bottom:1px solid var(--border);">
+          <span>${a.correct ? '✅' : '❌'}</span>
+          <span style="font-size:0.82rem;color:var(--text-2,#94a3b8);">${a.correct ? '+'+a.xp_earned+' XP' : 'Incorrect'}</span>
+        </div>`).join('')
+      : '<div style="padding:1rem 0;color:var(--text-3,#64748b);">No activity yet.</div>';
+  }
+
+  /* ══ CHALLENGES ══ */
+  async function loadChallenges() {
+    const res  = await fetch('/api/challenge/all').catch(() => null);
+    const data = res?.ok ? await res.json() : [];
+    const tbody = document.getElementById('ch-tbody');
+
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-3,#64748b);padding:2rem;">No challenges yet.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(c => `
+      <tr>
+        <td style="font-weight:600;font-size:0.88rem;max-width:280px;">${c.title}</td>
+        <td><span class="chip chip-${(c.difficulty||'medium').toLowerCase()}">${(c.difficulty||'MEDIUM').toUpperCase()}</span></td>
+        <td style="font-family:'Space Mono',monospace;font-size:0.82rem;">${c.points} XP</td>
+        <td>
+          <button onclick="toggleChallenge('${c.id}',${c.is_active})" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:0.78rem;color:${c.is_active?'#4ade80':'#64748b'};cursor:pointer;">
+            ${c.is_active ? '● Active' : '○ Inactive'}
+          </button>
+        </td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="deleteChallenge('${c.id}','${c.title.replace(/'/g,"\\'")}')">🗑 Delete</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  async function createChallenge() {
+    const title    = document.getElementById('ch-title').value.trim();
+    const question = document.getElementById('ch-question').value.trim();
+    const options  = [0,1,2,3].map(i => document.getElementById('opt-'+i).value.trim());
+    const correct  = Number(document.querySelector('input[name="correct_idx"]:checked')?.value || 0);
+    const diff     = document.getElementById('ch-difficulty').value;
+    const points   = Number(document.getElementById('ch-points').value) || 50;
+    const solution = document.getElementById('ch-solution').value.trim() || null;
+
+    if (!title || !question || options.some(o => !o)) return toast('Fill all required fields.', 'error');
+
+    const res  = await fetch('/api/challenge/', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, question, options, correct_index: correct, difficulty: diff, points, solution }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+
+    toast('Challenge created!');
+    ['ch-title','ch-question','ch-solution'].forEach(id => document.getElementById(id).value = '');
+    [0,1,2,3].forEach(i => document.getElementById('opt-'+i).value = '');
+    loadChallenges();
+  }
+
+  async function toggleChallenge(id, cur) {
+    const res = await fetch(`/api/challenge/${id}/toggle`, { method: 'PATCH' });
+    if (!res.ok) return toast('Toggle failed.', 'error');
+    toast('Status updated.');
+    loadChallenges();
+  }
+
+  async function deleteChallenge(id, title) {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    const res = await fetch(`/api/challenge/${id}`, { method: 'DELETE' });
+    if (!res.ok) return toast('Delete failed.', 'error');
+    toast('Challenge deleted.');
+    loadChallenges();
+  }
+
+  /* ── AI ── */
+  async function generateAI() {
+    const btn  = document.getElementById('ai-gen-btn');
+    const diff = document.getElementById('ai-difficulty').value;
+    btn.disabled    = true;
+    btn.textContent = '⏳ Generating...';
+    document.getElementById('ai-preview').style.display = 'none';
+    document.getElementById('ai-save-btn').style.display  = 'none';
+    document.getElementById('ai-regen-btn').style.display = 'none';
+
+    try {
+      const res  = await fetch(`/api/admin/generate?difficulty=${diff}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      currentAIData = data;
+      const prev = document.getElementById('ai-preview');
+      document.getElementById('ai-preview-text').textContent =
+        `Title: ${data.title}\n\nQuestion: ${data.question}\n\nOptions:\n` +
+        data.options.map((o,i) => `  ${String.fromCharCode(65+i)}. ${o}${i===data.correct_index?' ✓':''}`).join('\n') +
+        `\n\nDifficulty: ${data.difficulty} | Points: ${data.points}` +
+        (data.solution ? `\n\nSolution: ${data.solution}` : '');
+
+      prev.style.display = 'block';
+      document.getElementById('ai-save-btn').style.display  = 'inline-flex';
+      document.getElementById('ai-regen-btn').style.display = 'inline-flex';
+      toast('Question generated! Review and save.');
+    } catch (e) {
+      toast('AI failed: ' + e.message, 'error');
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = '⚡ Generate Question';
+    }
+  }
+
+  async function saveAI() {
+    if (!currentAIData) return;
+    const res  = await fetch('/api/admin/save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(currentAIData),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Save failed: ' + data.error, 'error');
+
+    toast('Question saved!');
+    currentAIData = null;
+    document.getElementById('ai-preview').style.display = 'none';
+    document.getElementById('ai-save-btn').style.display  = 'none';
+    document.getElementById('ai-regen-btn').style.display = 'none';
+    loadChallenges();
+  }
+
+  /* ══ USERS ══ */
+  async function loadUsers() {
+    const res  = await fetch('/api/admin/users?limit=200').catch(() => null);
+    if (!res?.ok) return;
+    const data = await res.json();
+    allUsers = data.users || [];
+    document.getElementById('user-count').textContent = data.total || 0;
+    renderUsers(allUsers);
+  }
+
+  function renderUsers(users) {
+    const tbody = document.getElementById('users-tbody');
+    if (!users.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-3,#64748b);padding:2rem;">No students found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td style="font-weight:600;font-size:0.88rem;">${u.name || '—'}</td>
+        <td style="color:var(--text-2,#94a3b8);font-size:0.85rem;">${u.email}</td>
+        <td style="font-family:'Space Mono',monospace;font-size:0.82rem;color:#a78bfa;">${u.xp || 0} XP</td>
+        <td><span class="chip chip-${u.role==='admin'?'admin':'student'}">${u.role||'student'}</span></td>
+        <td>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="openResetModal('${u.user_id}','${u.email}')">🔑 Reset</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleRole('${u.user_id}','${u.role||'student'}')">
+              ${u.role==='admin'?'↓ Demote':'↑ Make Admin'}
+            </button>
+            <button class="btn btn-ghost btn-sm" style="color:#f87171;" onclick="openDeleteModal('${u.user_id}','${u.email}')">🗑</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function filterUsers() {
+    const q = document.getElementById('user-search').value.toLowerCase();
+    renderUsers(q ? allUsers.filter(u => (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q)) : allUsers);
+  }
+
+  async function createUser() {
+    const name     = document.getElementById('nu-name').value.trim();
+    const email    = document.getElementById('nu-email').value.trim();
+    const password = document.getElementById('nu-password').value;
+    const role     = document.getElementById('nu-role').value;
+
+    if (!email || !password) return toast('Email and password required.', 'error');
+    if (password.length < 8) return toast('Password must be at least 8 characters.', 'error');
+
+    const res  = await fetch('/api/admin/users/create', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+
+    toast(`User ${email} created!`);
+    ['nu-name','nu-email','nu-password'].forEach(id => document.getElementById(id).value = '');
+    loadUsers();
+  }
+
+  function openResetModal(userId, email) {
+    resetUserId = userId;
+    document.getElementById('reset-user-label').textContent = `Reset password for: ${email}`;
+    document.getElementById('reset-new-pass').value = '';
+    document.getElementById('resetModal').classList.add('open');
+  }
+
+  async function doResetPassword() {
+    const newPassword = document.getElementById('reset-new-pass').value.trim();
+    if (!newPassword || newPassword.length < 8) return toast('Password must be 8+ chars.', 'error');
+
+    const res  = await fetch(`/api/admin/users/${resetUserId}/reset-password`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newPassword }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast('Password reset!');
+    closeModal('resetModal');
+  }
+
+  async function toggleRole(userId, currentRole) {
+    const newRole = currentRole === 'admin' ? 'student' : 'admin';
+    if (!confirm(`Change role to "${newRole}"?`)) return;
+
+    const res = await fetch(`/api/admin/users/${userId}/role`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: newRole }),
+    });
+    if (!res.ok) return toast('Role update failed.', 'error');
+    toast(`Role → ${newRole}`);
+    loadUsers();
+  }
+
+  function openDeleteModal(userId, email) {
+    deleteUserId = userId;
+    document.getElementById('delete-user-label').textContent =
+      `Are you sure you want to permanently delete "${email}"? This removes them from Auth and the students table.`;
+    document.getElementById('deleteModal').classList.add('open');
+  }
+
+  async function doDeleteUser() {
+    const res = await fetch(`/api/admin/users/${deleteUserId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) return toast('Delete failed: ' + data.error, 'error');
+    toast('User deleted.');
+    closeModal('deleteModal');
+    loadUsers();
+  }
+
+  /* ══ EVENTS ══ */
+  async function loadEvents() {
+    const res  = await fetch('/api/events').catch(() => null);
+    const data = res?.ok ? await res.json() : [];
+    const list = document.getElementById('events-list');
+
+    if (!data.length) {
+      list.innerHTML = '<div style="color:var(--text-3,#64748b);padding:1rem 0;">No events yet. Create one above.</div>';
+      return;
+    }
+
+    const STATUS_LABELS = {
+      registering: { label:'🟢 Registration Open', color:'#4ade80' },
+      upcoming:    { label:'🔵 Coming Soon',        color:'#60a5fa' },
+      closed:      { label:'🔴 Registration Closed',color:'#f87171' },
+      past:        { label:'⚫ Past',               color:'#94a3b8' },
+      cancelled:   { label:'❌ Cancelled',           color:'#f87171' },
+    };
+
+    list.innerHTML = data.map(ev => {
+      const dateStr = ev.date ? new Date(ev.date).toLocaleString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+      const deadlineStr = ev.registration_deadline ? new Date(ev.registration_deadline).toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : null;
+      const st = STATUS_LABELS[ev.status] || STATUS_LABELS.upcoming;
+      return `
+        <div style="display:flex;align-items:flex-start;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--border);">
+          <div style="width:4px;min-height:60px;border-radius:2px;background:${ev.banner_color||'#7c3aed'};flex-shrink:0;margin-top:2px;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;margin-bottom:.35rem;">
+              <span style="font-weight:700;font-size:.9rem;">${ev.title}</span>
+              <span style="font-size:.68rem;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.07);color:${st.color};">${st.label}</span>
+              ${ev.event_type !== 'general' ? `<span style="font-size:.68rem;color:var(--text-3,#64748b);font-family:'Space Mono',monospace;">${ev.event_type}</span>` : ''}
+            </div>
+            <div style="font-size:.78rem;color:var(--text-3,#64748b);font-family:'Space Mono',monospace;margin-bottom:.35rem;">
+              📅 ${dateStr}${ev.location ? ' · 📍 '+ev.location : ''}${ev.organiser ? ' · 🏛️ '+ev.organiser : ''}
+            </div>
+            ${deadlineStr ? `<div style="font-size:.75rem;color:#f59e0b;">⏰ Registration deadline: ${deadlineStr}</div>` : ''}
+            ${ev.registration_form_url ? `<div style="font-size:.75rem;margin-top:.25rem;"><a href="${ev.registration_form_url}" target="_blank" style="color:#a78bfa;text-decoration:none;">📝 Form link ↗</a></div>` : '<div style="font-size:.75rem;color:var(--text-3,#64748b);">No registration form</div>'}
+          </div>
+          <div style="display:flex;gap:.4rem;flex-shrink:0;flex-direction:column;align-items:flex-end;">
+            <button class="btn btn-ghost btn-sm" onclick="toggleEventReg('${ev.id}', ${ev.registration_open})" style="font-size:.72rem;">
+              ${ev.registration_open ? '🔴 Close Reg' : '🟢 Open Reg'}
+            </button>
+            <button class="btn btn-ghost btn-sm" style="color:#f87171;font-size:.72rem;" onclick="deleteEvent('${ev.id}')">🗑 Delete</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  async function createEvent() {
+    const title    = document.getElementById('ev-title').value.trim();
+    const desc     = document.getElementById('ev-desc').value.trim()         || null;
+    const location = document.getElementById('ev-location').value.trim()     || null;
+    const date     = document.getElementById('ev-date').value                || null;
+    const formUrl  = document.getElementById('ev-form-url').value.trim()     || null;
+    const deadline = document.getElementById('ev-deadline').value            || null;
+    const organiser= document.getElementById('ev-organiser').value.trim()    || null;
+    const evType   = document.getElementById('ev-type').value;
+    const color    = document.getElementById('ev-color-hex').value           || '#7c3aed';
+    const tagsRaw  = document.getElementById('ev-tags').value.trim();
+    const tags     = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+    if (!title) return toast('Title required.', 'error');
+
+    const res  = await fetch('/api/events', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title, description: desc, location, date,
+        registration_form_url:  formUrl,
+        registration_deadline:  deadline,
+        organiser, event_type: evType,
+        banner_color: color, tags,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast('✅ Event created!');
+    ['ev-title','ev-desc','ev-location','ev-form-url','ev-deadline','ev-organiser','ev-tags'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('ev-date').value = '';
+    document.getElementById('ev-type').value = 'general';
+    loadEvents();
+  }
+
+  async function toggleEventReg(id, currentlyOpen) {
+    const res = await fetch(`/api/events/${id}/toggle-reg`, { method: 'PATCH' });
+    if (!res.ok) return toast('Failed.', 'error');
+    const data = await res.json();
+    toast(data.registration_open ? '🟢 Registration opened' : '🔴 Registration closed');
+    loadEvents();
+  }
+
+  async function deleteEvent(id) {
+    if (!confirm('Delete this event?')) return;
+    const res = await fetch(`/api/events/${id}`, { method: 'DELETE' });
+    if (!res.ok) return toast('Delete failed.', 'error');
+    toast('Event deleted.');
+    loadEvents();
+  }
+
+  /* ── SITE SETTINGS ── */
+  let siteSettings = {};
+
+  async function loadSiteSettings() {
+    try {
+      const res = await fetch('/api/events/settings');
+      siteSettings = await res.json();
+      updateRegToggleBtn();
+      if (siteSettings.site_notice) {
+        document.getElementById('site-notice-inp').value = siteSettings.site_notice;
+      }
+      if (siteSettings.registration_message) {
+        const el = document.getElementById('reg-message-inp');
+        if (el) el.value = siteSettings.registration_message;
+      }
+    } catch {}
+  }
+
+  async function saveRegMessage() {
+    const val = document.getElementById('reg-message-inp').value.trim();
+    if (!val) return toast('Message cannot be empty.', 'error');
+    const res = await fetch('/api/events/settings/registration_message', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: val }),
+    });
+    if (res.ok) toast('✅ Message saved — students will see this when registrations are closed.');
+    else toast('Failed to save.', 'error');
+  }
+
+  function updateRegToggleBtn() {
+    const isOpen = siteSettings.registrations_open !== 'false';
+    const btn    = document.getElementById('reg-toggle-btn');
+    const txt    = document.getElementById('reg-status-text');
+    if (!btn) return;
+    btn.textContent   = isOpen ? '🟢 OPEN — Click to Close' : '🔴 CLOSED — Click to Open';
+    btn.style.background  = isOpen ? 'rgba(74,222,128,.15)'  : 'rgba(239,68,68,.15)';
+    btn.style.color       = isOpen ? '#4ade80'               : '#f87171';
+    btn.style.border      = isOpen ? '1px solid rgba(74,222,128,.3)' : '1px solid rgba(239,68,68,.3)';
+    txt.textContent   = isOpen
+      ? 'New students can register on the website'
+      : 'Registration page is disabled — existing members still work';
+  }
+
+  async function toggleSiteSetting(key) {
+    const current = siteSettings[key] !== 'false';
+    const newVal  = (!current).toString();
+    const res = await fetch(`/api/events/settings/${key}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: newVal }),
+    });
+    if (!res.ok) return toast('Failed to update setting.', 'error');
+    siteSettings[key] = newVal;
+    updateRegToggleBtn();
+    toast(newVal === 'true' ? '🟢 Registrations opened' : '🔴 Registrations closed');
+  }
+
+  async function saveSiteNotice() {
+    const val = document.getElementById('site-notice-inp').value.trim();
+    await fetch('/api/events/settings/site_notice', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: val }),
+    });
+    toast(val ? '📢 Notice saved' : 'Notice cleared');
+  }
+
+  async function clearSiteNotice() {
+    document.getElementById('site-notice-inp').value = '';
+    await saveSiteNotice();
+  }
+
+  /* ══ WEEKLY RESET ══ */
+  async function doWeeklyReset() {
+    if (!confirm('Reset the weekly leaderboard now?\n\nThis will:\n• Record the current leader as this week\'s winner\n• Reset all weekly XP to 0\n• Start a new week')) return;
+
+    const btn = event.target;
+    btn.disabled    = true;
+    btn.textContent = '⏳ Resetting...';
+
+    const res  = await fetch('/api/admin/reset-week', { method: 'POST' });
+    const data = await res.json();
+
+    if (!res.ok) { toast('Reset failed: ' + data.error, 'error'); }
+    else {
+      const msg = data.winner
+        ? `✓ Reset done! This week's winner: ${data.winner.name} (${data.winner.xp} XP)`
+        : '✓ Reset done! No XP earned this week.';
+      toast(msg);
+    }
+
+    btn.disabled    = false;
+    btn.textContent = '🔄 Reset Leaderboard Now';
+    loadAdminCountdown();
+  }
+
+  async function loadAdminCountdown() {
+    try {
+      const res  = await fetch('/api/leaderboard/week-info');
+      const data = await res.json();
+      const el   = document.getElementById('admin-last-reset');
+      if (el && data.weekStart) {
+        const d = new Date(data.weekStart);
+        el.textContent = d.toLocaleString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      } else if (el) {
+        el.textContent = 'Never reset yet';
+      }
+    } catch (e) {}
+  }
+
+
+  /* ══ TEACHERS ══ */
+  async function loadTeachers() {
+    try {
+      const res  = await fetch('/api/admin/users?limit=200');
+      const data = await res.json();
+      const teachers = (data.users || []).filter(u => u.role === 'teacher');
+      document.getElementById('teacher-count').textContent = teachers.length;
+
+      const tbody = document.getElementById('teachers-tbody');
+      if (!teachers.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-3,#64748b);padding:2rem;">No teachers yet. Add one above.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = teachers.map(t => `
+        <tr>
+          <td style="font-weight:600;font-size:0.88rem;">${t.name || '—'}</td>
+          <td style="color:var(--text-2,#94a3b8);font-size:0.85rem;">${t.email}</td>
+          <td style="font-size:0.82rem;">${t.department || '—'}</td>
+          <td style="font-size:0.82rem;">${t.subject || '—'}</td>
+          <td>
+            <div style="display:flex;gap:0.5rem;">
+              <button class="btn btn-ghost btn-sm" onclick="openResetModal('${t.user_id}','${t.email}')">🔑 Reset</button>
+              <button class="btn btn-ghost btn-sm" style="color:#f87171;" onclick="openDeleteModal('${t.user_id}','${t.email}')">🗑</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    } catch (e) { console.error('Load teachers error:', e); }
+  }
+
+  async function createTeacher() {
+    const name     = document.getElementById('t-name').value.trim();
+    const email    = document.getElementById('t-email').value.trim();
+    const password = document.getElementById('t-password').value;
+    const dept     = document.getElementById('t-dept').value.trim() || null;
+    const subject  = document.getElementById('t-subject').value.trim() || null;
+
+    if (!email || !password) return toast('Email and password required.', 'error');
+    if (password.length < 8) return toast('Password must be at least 8 chars.', 'error');
+
+    const res  = await fetch('/api/admin/users/create', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role: 'teacher', department: dept, subject }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+
+    toast(`✓ Teacher account created for ${email}`);
+    ['t-name','t-email','t-password','t-dept','t-subject'].forEach(id => document.getElementById(id).value = '');
+    loadTeachers();
+  }
+
+
+  /* ══ DATA MANAGEMENT ══ */
+
+  async function loadTeamsData() {
+    const res  = await fetch('/api/admin/data/teams');
+    const data = await res.json();
+    document.getElementById('dm-team-count').textContent = data.length;
+    const el = document.getElementById('dm-teams-list');
+
+    if (!data.length) {
+      el.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:2rem;">No teams created yet.</div>';
+      return;
+    }
+
+    el.innerHTML = data.map(t => `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:1rem 0;border-bottom:1px solid var(--border);gap:1rem;flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:700;font-size:0.9rem;">🤝 ${t.name}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--text-3);">Members: ${(t.member_names||[]).join(', ')}</div>
+          ${t.project ? `<div style="font-size:0.82rem;color:var(--text-2);margin-top:3px;">Project: <strong>${t.project.title}</strong> · ${t.project.category} · ${t.project.is_approved ? '✅ Approved' : '⏳ Pending'} · ${t.project.total_points || 0} pts</div>` : '<div style="font-size:0.78rem;color:var(--text-3);">No project submitted</div>'}
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          ${t.project ? `<button class="btn btn-ghost btn-sm" style="color:#f87171;" onclick="deleteProjectAdmin('${t.project.id}')">🗑 Delete Project</button>` : ''}
+          <button class="btn btn-ghost btn-sm" style="color:#f87171;" onclick="deleteTeamAdmin('${t.id}')">🗑 Delete Team</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function deleteTeamAdmin(id) {
+    if (!confirm('Delete this team AND their project? This cannot be undone.')) return;
+    const res = await fetch('/api/admin/data/teams/' + id, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast('Team deleted.');
+    loadTeamsData();
+  }
+
+  async function deleteProjectAdmin(id) {
+    if (!confirm('Delete this project? All votes will be removed too.')) return;
+    const res = await fetch('/api/admin/data/projects/' + id, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast('Project deleted.');
+    loadTeamsData();
+  }
+
+  async function loadTestsData() {
+    const res  = await fetch('/api/admin/data/tests');
+    const data = await res.json();
+    document.getElementById('dm-test-count').textContent = data.length;
+    const el = document.getElementById('dm-tests-list');
+
+    if (!data.length) {
+      el.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:2rem;">No scheduled tests yet.</div>';
+      return;
+    }
+
+    const now = new Date();
+    el.innerHTML = data.map(t => {
+      const start = new Date(t.starts_at), end = new Date(t.ends_at);
+      const status = now < start ? '⏱ Upcoming' : now > end ? '✓ Ended' : '● Live';
+      const fmt = d => d.toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.875rem 0;border-bottom:1px solid var(--border);gap:1rem;flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:600;font-size:0.9rem;">${t.title} <span style="font-size:0.72rem;color:var(--text-3);">${status}</span></div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--text-3);">${fmt(start)} → ${fmt(end)} · ${(t.challenge_ids||[]).length} questions</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="color:#f87171;" onclick="deleteTestAdmin('${t.id}')">🗑 Delete</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function deleteTestAdmin(id) {
+    if (!confirm('Delete this test and all student attempts for it?')) return;
+    const res = await fetch('/api/admin/data/tests/' + id, { method: 'DELETE' });
+    if (!res.ok) return toast('Error deleting test.', 'error');
+    toast('Test deleted.');
+    loadTestsData();
+  }
+
+  async function clearAllAttempts() {
+    if (!confirm('⚠️ DANGER\n\nThis will:\n• Delete ALL arena attempts from every student\n• Reset ALL student XP to 0\n• Reset ALL weekly XP to 0\n\nThis CANNOT be undone. Type YES to confirm.')) return;
+    const confirm2 = prompt('Type YES to confirm clearing all arena data:');
+    if (confirm2 !== 'YES') { toast('Cancelled.'); return; }
+
+    const res  = await fetch('/api/admin/data/all-attempts', { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast('All arena data cleared and XP reset.');
+  }
+
+  async function findUserForData() {
+    const email = document.getElementById('dm-user-email').value.trim();
+    if (!email) return toast('Enter an email.', 'error');
+
+    const res   = await fetch('/api/admin/users?limit=500');
+    const data  = await res.json();
+    const user  = (data.users || []).find(u => u.email === email);
+    const el    = document.getElementById('dm-user-result');
+
+    if (!user) {
+      el.innerHTML = '<div style="color:#f87171;font-size:0.85rem;padding:0.5rem 0;">No student found with that email.</div>';
+      return;
+    }
+
+    el.innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-top:0.5rem;">
+        <div style="font-weight:700;margin-bottom:0.25rem;">${user.name || '—'}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:0.78rem;color:var(--text-2);margin-bottom:1rem;">${user.email} · XP: ${user.xp || 0} · Role: ${user.role}</div>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="clearUserAttemptsAdmin('${user.user_id}','${user.email}')">🗑 Clear Arena Attempts</button>
+          <button class="btn btn-ghost btn-sm" onclick="resetUserXPAdmin('${user.user_id}','${user.email}')">⚡ Reset XP to 0</button>
+          <button class="btn btn-ghost btn-sm" style="color:#f87171;" onclick="openDeleteModal('${user.user_id}','${user.email}')">🗑 Delete Account</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function clearUserAttemptsAdmin(userId, email) {
+    if (!confirm('Clear all arena attempts for ' + email + '?')) return;
+    const res = await fetch('/api/admin/data/attempts/' + userId, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast('Arena attempts cleared for ' + email);
+  }
+
+  async function resetUserXPAdmin(userId, email) {
+    if (!confirm('Reset XP to 0 for ' + email + '?')) return;
+    const res = await fetch('/api/admin/data/reset-xp/' + userId, { method: 'PATCH' });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast('XP reset for ' + email);
+  }
+
+  /* ══ START ══ */
+  /* ══ ANNOUNCEMENTS ══ */
+  async function loadAnnouncements() {
+    const res  = await fetch('/api/announcements');
+    const data = await res.json();
+    const list = document.getElementById('ann-list');
+    if (!data.length) {
+      list.innerHTML = '<div style="color:var(--text-3,#64748b);">No active announcements.</div>';
+      return;
+    }
+    const TYPE_ICONS = { announcement:'📢', info:'💬', warning:'⚠️', success:'✅' };
+    list.innerHTML = data.map(a => `
+      <div style="display:flex;align-items:flex-start;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--border);">
+        <div style="font-size:1.4rem;flex-shrink:0;">${TYPE_ICONS[a.type||'announcement']||'📢'}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:.9rem;">${a.title}</div>
+          <div style="font-size:.83rem;color:var(--text-2,#94a3b8);margin-top:.2rem;line-height:1.5;">${a.body}</div>
+          <div style="font-size:.7rem;color:var(--text-3,#64748b);font-family:'Space Mono',monospace;margin-top:.4rem;">
+            Target: ${a.target_role} · ${new Date(a.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="color:#f87171;flex-shrink:0;" onclick="deleteAnnouncement('${a.id}')">🗑</button>
+      </div>`).join('');
+  }
+
+  async function createAnnouncement() {
+    const title  = document.getElementById('ann-title').value.trim();
+    const body   = document.getElementById('ann-body').value.trim();
+    const target = document.getElementById('ann-target').value;
+    const type   = document.getElementById('ann-type').value;
+    if (!title || !body) return toast('Title and message are required.', 'error');
+
+    const res  = await fetch('/api/announcements', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, body, target_role: target, type }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast('📢 Announcement broadcast!');
+    document.getElementById('ann-title').value = '';
+    document.getElementById('ann-body').value  = '';
+    loadAnnouncements();
+  }
+
+  async function sendNotificationToAll() {
+    const title  = document.getElementById('ann-title').value.trim();
+    const body   = document.getElementById('ann-body').value.trim();
+    if (!title || !body) return toast('Fill in title and message first.', 'error');
+    const res  = await fetch('/api/notifications/broadcast', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, body, type: 'announcement' }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast(`🔔 Notification sent to ${data.sent} students!`);
+  }
+
+  async function deleteAnnouncement(id) {
+    if (!confirm('Remove this announcement?')) return;
+    await fetch('/api/announcements/' + id, { method: 'DELETE' });
+    toast('Announcement removed.');
+    loadAnnouncements();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    init();
+    loadAdminCountdown();
+    initLiveUsers();
+  });
+
+  /* ══ LIVE USERS (socket.io) ══ */
+  function initLiveUsers() {
+    // socket.io is already loaded by the page (served by server)
+    if (typeof io === 'undefined') return;
+
+    const socket = io();
+    socket.emit('join_admin');
+
+    socket.on('active_users_update', (users) => {
+      renderLiveUsers(users);
+    });
+  }
+
+  function fmtDuration(seconds) {
+    if (seconds < 60)  return seconds + 's';
+    if (seconds < 3600) return Math.floor(seconds/60) + 'm ' + (seconds%60) + 's';
+    const h = Math.floor(seconds/3600);
+    const m = Math.floor((seconds%3600)/60);
+    return h + 'h ' + m + 'm';
+  }
+
+  function renderLiveUsers(users) {
+    const list  = document.getElementById('live-users-list');
+    const count = document.getElementById('live-count');
+    if (!list) return;
+
+    count.textContent = users.length + ' online';
+
+    if (!users.length) {
+      list.innerHTML = '<div class="live-empty">No users online right now.</div>';
+      return;
+    }
+
+    // Sort by session duration descending (longest active first)
+    users.sort((a, b) => b.sessionDuration - a.sessionDuration);
+
+    list.innerHTML = users.map(u => `
+      <div class="live-row">
+        <div class="live-avatar">${(u.name||'?').charAt(0).toUpperCase()}</div>
+        <div class="live-name">${u.name}</div>
+        <div class="live-page">${u.page}</div>
+        <div class="live-dur">⏱ ${fmtDuration(u.sessionDuration)}</div>
+      </div>
+    `).join('');
+  }
+</script>
+</body>
+</html>

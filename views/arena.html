@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Arena | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js"></script>
+  <style>
+    .arena-layout {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 6rem;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 1.5rem;
+    }
+    .arena-header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .arena-title { font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.03em; }
+    .arena-title span { background: linear-gradient(90deg, var(--purple-light), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .challenge-card {
+      background: var(--surface);
+      border: 1px solid var(--border-acc);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .challenge-card::before {
+      content: ''; position: absolute; top: -80px; right: -80px;
+      width: 250px; height: 250px;
+      background: radial-gradient(circle, rgba(124,58,237,0.18), transparent 70%);
+      pointer-events: none;
+    }
+    .challenge-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.75rem; }
+    .live-indicator { display: flex; align-items: center; gap: 0.5rem; font-family: 'Space Mono', monospace; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--green); }
+    #challenge-title { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1.25rem; line-height: 1.2; }
+    .question-block { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-left: 3px solid var(--purple); border-radius: var(--radius-sm); padding: 1.25rem 1.5rem; color: var(--text-2); font-size: 1rem; line-height: 1.75; margin-bottom: 2rem; }
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 2rem; }
+    .option-btn { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; color: var(--text); font-size: 0.9rem; font-weight: 500; text-align: left; cursor: pointer; transition: all 0.2s; }
+    .option-btn:hover:not(:disabled) { border-color: var(--border-acc); background: var(--purple-dim); }
+    .option-btn.selected { border-color: var(--purple); background: var(--purple-dim); color: var(--purple-light); }
+    .option-btn.correct  { border-color: var(--green);  background: rgba(74,222,128,0.08); color: var(--green); }
+    .option-btn.wrong    { border-color: var(--red);    background: rgba(239,68,68,0.08);  color: var(--red); }
+    .option-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+    .submit-row { display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem; }
+    .xp-display { display: flex; flex-direction: column; gap: 2px; }
+    .xp-label { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); }
+    .xp-value { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; background: linear-gradient(90deg, var(--purple-light), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    #result-banner { display: none; margin-top: 1.25rem; padding: 1rem 1.25rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.95rem; }
+    #solution-box { display: none; margin-top: 1.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1.25rem 1.5rem; }
+    #solution-box h4 { font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--purple-light); margin-bottom: 0.75rem; }
+    #solution-text { color: var(--text-2); font-size: 0.9rem; line-height: 1.7; white-space: pre-line; }
+
+    /* Loading skeleton */
+    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer-skeleton 1.5s infinite; border-radius: 8px; }
+
+    @keyframes fadeUp {
+      0%   { opacity:1; transform: translateY(0); }
+      100% { opacity:0; transform: translateY(-20px); }
+    }
+    .btn-next {
+      background: linear-gradient(135deg, var(--green,#4ade80), #22c55e) !important;
+      color: #000 !important;
+    }
+    @keyframes shimmer-skeleton { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .skeleton-title { height: 2.5rem; width: 70%; margin-bottom: 1.25rem; }
+    .skeleton-question { height: 4rem; margin-bottom: 2rem; }
+    .skeleton-option { height: 3rem; }
+
+    /* No challenge state */
+    .empty-challenge { text-align: center; padding: 3rem 1.5rem; }
+    .empty-challenge .icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-challenge h3 { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .empty-challenge p { color: var(--text-2); font-size: 0.9rem; }
+
+    /* Sidebar */
+    .lb-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 2rem; position: sticky; top: 88px; align-self: start; }
+    .lb-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+    .lb-panel-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; }
+
+    /* Auth Gate */
+    .auth-gate { display: none; position: fixed; inset: 0; background: rgba(2,8,23,0.92); backdrop-filter: blur(12px); z-index: 500; align-items: center; justify-content: center; padding: 1.5rem; }
+    .auth-gate.visible { display: flex; }
+    .auth-gate-card { background: var(--surface); border: 1px solid var(--border-acc); border-radius: var(--radius-xl); padding: 3rem 2.5rem; text-align: center; max-width: 440px; width: 100%; }
+    .auth-gate-icon { width: 64px; height: 64px; background: var(--purple-dim); border: 1px solid var(--border-acc); border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.5rem; }
+    .auth-gate-card h2 { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; margin-bottom: 0.75rem; }
+    .auth-gate-card p { color: var(--text-2); font-size: 0.95rem; line-height: 1.7; margin-bottom: 2rem; }
+
+    @media (max-width: 900px) { .arena-layout { grid-template-columns: 1fr; } .lb-panel { position: static; } }
+    @media (max-width: 640px) { .options-grid { grid-template-columns: 1fr; } .arena-title { font-size: 1.6rem; } }
+  </style>
+</head>
+<body>
+
+<!-- Auth Gate -->
+<div class="auth-gate" id="authGate">
+  <div class="auth-gate-card">
+    <div class="auth-gate-icon">🔐</div>
+    <h2>Members Only</h2>
+    <p>The Arena is exclusive to Math Collective members. Log in to start solving challenges and earning XP.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;">
+      <a href="/login?redirect=/arena" class="btn btn-primary btn-lg">Log In</a>
+      <a href="/register" class="btn btn-ghost btn-lg">Join Free</a>
+    </div>
+  </div>
+</div>
+
+<!-- Navbar -->
+<nav class="mc-nav">
+  <a href="/" class="mc-nav__logo">
+    <div class="mc-nav__logo-mark">Σ</div>
+    Math Collective
+  </a>
+  <ul class="mc-nav__links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/events">Events</a></li>
+  </ul>
+  <div class="mc-nav__actions">
+    <div class="mc-nav__user" id="nav-user-pill">
+      <div class="mc-nav__avatar">A</div>
+      <span class="mc-nav__username">Member</span>
+      <span style="color:var(--text-3);font-size:0.75rem;margin-left:4px;cursor:pointer;" onclick="logout()">↩</span>
+    </div>
+    <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light">🌙</button>
+    <a href="/login" class="btn btn-ghost btn-sm" id="nav-login-btn">Log In</a>
+  </div>
+</nav>
+
+<main class="arena-layout">
+
+  <!-- Header -->
+  <div class="arena-header">
+    <div>
+      <h1 class="arena-title">⚔ <span>The Arena</span></h1>
+      <p style="color:var(--text-2);font-size:0.9rem;margin-top:0.25rem;">Solve the challenge. Earn XP. Climb the ranks.</p>
+    </div>
+    <a href="/dashboard" class="btn btn-outline btn-sm">My Dashboard →</a>
+  </div>
+
+  <!-- Left column: filter chips + challenge card -->
+  <div style="display:flex;flex-direction:column;gap:0.75rem;min-width:0;">
+
+  <!-- Topic filter chips -->
+  <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+    <button class="filter-chip active" onclick="filterTopic('all', this)">All Topics</button>
+    <button class="filter-chip" onclick="filterTopic('easy', this)">🟢 Easy</button>
+    <button class="filter-chip" onclick="filterTopic('medium', this)">🟣 Medium</button>
+    <button class="filter-chip" onclick="filterTopic('hard', this)">🔴 Hard</button>
+  </div>
+
+  <div class="challenge-card" id="challengeCard">
+    <!-- Loading skeleton shown by default -->
+    <div id="loadingState">
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-question"></div>
+      <div class="options-grid">
+        <div class="skeleton skeleton-option"></div>
+        <div class="skeleton skeleton-option"></div>
+        <div class="skeleton skeleton-option"></div>
+        <div class="skeleton skeleton-option"></div>
+      </div>
+    </div>
+
+    <!-- Challenge content (hidden until loaded) -->
+    <div id="challengeContent" style="display:none;">
+      <div class="challenge-meta">
+        <span id="remaining-count" style="font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--text-3);"></span>
+      <div class="live-indicator">
+          <span class="live-dot"></span>
+          Active Mission
+        </div>
+        <span id="difficulty-badge" class="badge badge-purple">MEDIUM</span>
+      </div>
+      <h2 id="challenge-title"></h2>
+      <div class="question-block" id="challenge-question"></div>
+      <div class="options-grid" id="options"></div>
+      <div class="submit-row">
+        <div class="xp-display">
+          <span class="xp-label">Reward</span>
+          <span class="xp-value" id="xp-display">50 XP</span>
+        </div>
+        <button class="btn btn-primary" id="submit-btn" onclick="submitAnswer()">
+          Submit Solution →
+        </button>
+      </div>
+      <div id="result-banner"></div>
+      <div id="solution-box">
+        <h4>// Solution Walkthrough</h4>
+        <div id="solution-text"></div>
+      </div>
+    </div>
+
+    <!-- Error/empty state (hidden by default) -->
+    <div id="emptyState" style="display:none;" class="empty-challenge">
+      <div class="icon">🧩</div>
+      <h3 id="emptyTitle">No active challenge</h3>
+      <p id="emptyMsg">Check back soon — your admin will post a new challenge shortly.</p>
+    </div>
+  </div>
+
+  </div><!-- end left column -->
+
+  <!-- Leaderboard -->
+  <aside class="lb-panel">
+    <div class="lb-panel-header">
+      <span class="lb-panel-title">🏆 Leaderboard</span>
+      <span class="badge badge-purple" id="lb-mode-badge">This Week</span>
+    </div>
+    <!-- Countdown timer -->
+    <div id="week-countdown" style="font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--text-3);margin-bottom:1rem;display:flex;align-items:center;gap:0.4rem;">
+      <span style="color:var(--amber,#f59e0b);">⏱</span>
+      <span id="countdown-text">Loading...</span>
+    </div>
+    <!-- Toggle weekly / alltime -->
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+      <button id="btn-weekly"  onclick="switchLeaderboard('weekly')"  style="flex:1;padding:5px;font-size:0.72rem;border-radius:6px;cursor:pointer;border:1px solid var(--purple);background:var(--purple-dim);color:var(--purple-light);">This Week</button>
+      <button id="btn-alltime" onclick="switchLeaderboard('alltime')" style="flex:1;padding:5px;font-size:0.72rem;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:none;color:var(--text-2);">All Time</button>
+    </div>
+    <div id="leaderboard-list">
+      <div style="color:var(--text-3);text-align:center;padding:2rem 0;font-size:0.85rem;">Loading...</div>
+    </div>
+    <!-- Hall of fame link -->
+    <a href="/winners" style="display:block;text-align:center;margin-top:1rem;font-size:0.78rem;color:var(--purple-light);text-decoration:none;">🏅 Hall of Fame →</a>
+  </aside>
+
+</main>
+
+<footer class="mc-footer" style="margin-top:0;">
+  <div class="mc-footer__bottom" style="max-width:1200px;margin:0 auto;">
+    <span>© 2026 Math Collective · BMSIT</span>
+    <a href="/" style="color:var(--text-3);">← Back to Home</a>
+  </div>
+</footer>
+
+
+<script>
+  let challengeId      = null;
+  let selectedIndex    = null;
+  let alreadySubmitted = false;
+  let currentXP        = 0;
+
+  /* ── Auth Check ── */
+  async function checkArenaAccess() {
+    const state = await getAuthState();
+    if (!state.loggedIn) {
+      document.getElementById('authGate').classList.add('visible');
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+    currentXP = state.user?.xp || 0;
+    loadChallenge();
+    loadLeaderboard();
+    loadWeekCountdown();
+  }
+
+  /* ── Load Challenge (random unsolved) ── */
+  async function loadChallenge() {
+    // Reset state for new question
+    challengeId      = null;
+    selectedIndex    = null;
+    alreadySubmitted = false;
+
+    // Show skeleton, hide everything else
+    document.getElementById('loadingState').style.display    = 'block';
+    document.getElementById('challengeContent').style.display = 'none';
+    document.getElementById('emptyState').style.display      = 'none';
+    document.getElementById('result-banner').style.display   = 'none';
+    document.getElementById('solution-box').style.display    = 'none';
+
+    const submitBtn = document.getElementById('submit-btn');
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Solution →'; }
+
+    try {
+      // Use /next to get a random unsolved challenge
+      const url  = currentFilter && currentFilter !== 'all' ? `/api/challenge/next?difficulty=${currentFilter}` : '/api/challenge/next';
+      const res  = await fetch(url);
+      const data = await res.json();
+
+      document.getElementById('loadingState').style.display = 'none';
+
+      if (!res.ok || data.error === 'no_challenge') {
+        showEmptyState('No active challenge', data.message || 'Check back soon!');
+        return;
+      }
+      if (data.error) { showEmptyState('Something went wrong', data.error); return; }
+
+      challengeId = data.id;
+
+      document.getElementById('challenge-title').textContent    = data.title    || 'Mystery Theorem';
+      document.getElementById('challenge-question').textContent = data.question || 'A mathematical challenge awaits.';
+      document.getElementById('xp-display').textContent         = (data.points || 50) + ' XP';
+
+      const difficulty = (data.difficulty || 'MEDIUM').toUpperCase();
+      const badge = document.getElementById('difficulty-badge');
+      badge.textContent = difficulty;
+      const diffMap = { EASY: 'badge-green', MEDIUM: 'badge-purple', HARD: 'badge-red' };
+      badge.className = 'badge ' + (diffMap[difficulty] || 'badge-purple');
+
+      // Show remaining count
+      const counter = document.getElementById('remaining-count');
+      if (counter) {
+        if (data.allSolved) {
+          counter.textContent = '🎉 All solved!';
+          counter.style.color = 'var(--green)';
+        } else {
+          counter.textContent = `${data.remaining} unsolved`;
+          counter.style.color = 'var(--text-3)';
+        }
+      }
+
+      if (Array.isArray(data.options) && data.options.length === 4) {
+        document.getElementById('options').innerHTML = data.options.map((opt, i) =>
+          `<button class="option-btn" id="opt-${i}" onclick="selectOption(${i})">${opt}</button>`
+        ).join('');
+      }
+
+      document.getElementById('challengeContent').style.display = 'block';
+
+    } catch (err) {
+      console.error('[Arena] Load error:', err);
+      document.getElementById('loadingState').style.display = 'none';
+      showEmptyState('Could not load challenge', 'Refresh the page to try again.');
+    }
+  }
+
+  function showEmptyState(title, msg) {
+    document.getElementById('emptyTitle').textContent = title;
+    document.getElementById('emptyMsg').textContent   = msg;
+    document.getElementById('emptyState').style.display = 'block';
+  }
+
+  /* ── Select Option ── */
+  function selectOption(i) {
+    if (alreadySubmitted) return;
+    selectedIndex = i;
+    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('opt-' + i)?.classList.add('selected');
+  }
+
+  /* ── Submit Answer ── */
+  async function submitAnswer() {
+    if (alreadySubmitted) return;
+    if (selectedIndex === null) { showResult('Please select an answer first.', 'info'); return; }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Submitting...';
+
+    try {
+      const res  = await fetch('/api/arena/submit', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challengeId, selectedIndex }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showResult('Error: ' + (data.error || 'Submission failed'), 'error');
+        btn.disabled = false; btn.textContent = 'Submit Solution →';
+        return;
+      }
+
+      alreadySubmitted = true;
+      document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+
+      if (data.correct) {
+        const earned = data.xpEarned || 50;
+        currentXP += earned;
+        showResult(`✓ Correct! +${earned} XP earned.`, 'success');
+        document.getElementById('opt-' + selectedIndex)?.classList.add('correct');
+        flashXP(currentXP);
+      } else {
+        showResult('✗ Incorrect. Check the solution below.', 'error');
+        document.getElementById('opt-' + selectedIndex)?.classList.add('wrong');
+        if (data.correctIndex !== undefined) {
+          document.getElementById('opt-' + data.correctIndex)?.classList.add('correct');
+        }
+      }
+
+      if (data.solution) {
+        document.getElementById('solution-text').textContent = data.solution;
+        document.getElementById('solution-box').style.display = 'block';
+      }
+
+      // 30-second cooldown before next question
+      btn.textContent = 'Submitted ✓';
+      let cooldown = 30;
+      btn.disabled = true;
+      const cdInterval = setInterval(() => {
+        cooldown--;
+        btn.textContent = `→ Next Challenge (${cooldown}s)`;
+        if (cooldown <= 0) {
+          clearInterval(cdInterval);
+          btn.disabled    = false;
+          btn.textContent = '→ Next Challenge';
+          btn.onclick     = loadChallenge;
+          btn.classList.add('btn-next');
+        }
+      }, 1000);
+
+      loadLeaderboard();
+
+    } catch (err) {
+      console.error('[Arena] Submit error:', err);
+      showResult('Submission failed. Try again.', 'error');
+      btn.disabled = false; btn.textContent = 'Submit Solution →';
+    }
+  }
+
+  /* ── Flash XP in navbar ── */
+  function flashXP(newXP) {
+    const pill = document.getElementById('nav-user-pill');
+    if (!pill) return;
+    const flash = document.createElement('span');
+    flash.textContent = `+XP`;
+    flash.style.cssText = `
+      position:absolute; right:-30px; top:-8px;
+      background: var(--green,#4ade80); color: #000;
+      font-size:0.65rem; font-weight:800; padding:2px 6px;
+      border-radius:99px; animation: fadeUp 1.5s ease forwards;
+    `;
+    pill.style.position = 'relative';
+    pill.appendChild(flash);
+    setTimeout(() => flash.remove(), 1500);
+  }
+
+  function showResult(msg, type) {
+    const el = document.getElementById('result-banner');
+    el.style.display = 'block';
+    el.className     = 'alert alert-' + type;
+    el.textContent   = msg;
+  }
+
+  /* ── Leaderboard ── */
+  let lbMode = 'weekly';
+
+  function switchLeaderboard(mode) {
+    lbMode = mode;
+    const weeklyBtn  = document.getElementById('btn-weekly');
+    const alltimeBtn = document.getElementById('btn-alltime');
+    const badge      = document.getElementById('lb-mode-badge');
+
+    if (mode === 'weekly') {
+      weeklyBtn.style.background  = 'var(--purple-dim)';
+      weeklyBtn.style.color       = 'var(--purple-light)';
+      weeklyBtn.style.borderColor = 'var(--purple)';
+      alltimeBtn.style.background = 'none';
+      alltimeBtn.style.color      = 'var(--text-2)';
+      alltimeBtn.style.borderColor = 'var(--border)';
+      badge.textContent = 'This Week';
+    } else {
+      alltimeBtn.style.background  = 'var(--purple-dim)';
+      alltimeBtn.style.color       = 'var(--purple-light)';
+      alltimeBtn.style.borderColor = 'var(--purple)';
+      weeklyBtn.style.background  = 'none';
+      weeklyBtn.style.color       = 'var(--text-2)';
+      weeklyBtn.style.borderColor = 'var(--border)';
+      badge.textContent = 'All Time';
+    }
+    loadLeaderboard();
+  }
+
+  async function loadLeaderboard() {
+    try {
+      const url  = lbMode === 'alltime' ? '/api/leaderboard/alltime' : '/api/leaderboard';
+      const res  = await fetch(url);
+      const users = await res.json();
+      const list  = document.getElementById('leaderboard-list');
+      const medals = ['🥇','🥈','🥉'];
+
+      // Filter to users with XP > 0 for this mode
+      const active = (users || []).filter(u => (lbMode === 'alltime' ? u.total_xp || u.xp : u.xp) > 0);
+
+      if (!active.length) {
+        list.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:2rem 0;font-size:0.85rem;">No XP earned this week yet — be first! 🎯</div>';
+        return;
+      }
+
+      list.innerHTML = active.slice(0, 10).map((u, i) => `
+        <div class="lb-row">
+          <span class="lb-rank">${medals[i] || '#' + (i + 1)}</span>
+          <span class="lb-name" title="${u.title || ''}">${u.name}</span>
+          <span class="lb-xp">${lbMode === "alltime" ? (u.total_xp || u.xp) : u.xp} XP</span>
+        </div>
+      `).join('');
+    } catch (e) { console.error('[Arena] Leaderboard error:', e); }
+  }
+
+  async function loadWeekCountdown() {
+    try {
+      const res  = await fetch('/api/leaderboard/week-info');
+      const data = await res.json();
+      const el   = document.getElementById('countdown-text');
+      if (el && data.timeLeftStr) {
+        el.textContent = 'Resets in ' + data.timeLeftStr;
+      }
+    } catch (e) {}
+  }
+
+  /* ── Topic Filter ── */
+  let currentFilter = 'all';
+
+  function filterTopic(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    loadChallenge();
+  }
+
+  /* ── Init ── */
+  checkArenaAccess();
+</script>
+</body>
+</html>

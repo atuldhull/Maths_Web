@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    .events-page { max-width: 1100px; margin: 5rem auto 6rem; padding: 0 1.5rem; }
+
+    .events-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 3rem; flex-wrap: wrap; gap: 1.5rem;
+    }
+    .events-header h1 {
+      font-family: 'Syne', sans-serif; font-size: 2.8rem;
+      font-weight: 800; letter-spacing: -0.03em;
+    }
+
+    /* ── FILTER TABS ── */
+    .filter-tabs { display:flex; gap:.4rem; flex-wrap:wrap; }
+    .ftab {
+      padding: 6px 16px; border-radius: 99px; font-size: .78rem;
+      font-weight: 600; cursor: pointer; border: 1px solid var(--border);
+      background: none; color: var(--text-2); transition: all .15s;
+      font-family: 'Space Mono', monospace;
+    }
+    .ftab:hover  { border-color: rgba(124,58,237,.5); color: #a78bfa; }
+    .ftab.active { background: rgba(124,58,237,.15); border-color: #7c3aed; color: #a78bfa; }
+
+    /* ── EVENT CARD ── */
+    .events-grid { display: flex; flex-direction: column; gap: 1.25rem; }
+
+    .event-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 0; overflow: hidden;
+      transition: border-color .25s, transform .25s, box-shadow .25s;
+      display: flex; flex-direction: column;
+    }
+    .event-card:hover {
+      border-color: var(--border-acc);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,.3);
+    }
+
+    /* Color accent top bar */
+    .event-accent-bar { height: 4px; width: 100%; }
+
+    .event-body { display: flex; align-items: center; gap: 2rem; padding: 1.75rem 2rem; flex-wrap: wrap; }
+
+    /* Date box */
+    .event-date {
+      flex-shrink: 0; width: 72px; height: 72px;
+      background: var(--purple-dim); border: 1px solid var(--border-acc);
+      border-radius: 12px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+    }
+    .event-date .day   { font-family: 'Syne', sans-serif; font-size: 1.7rem; font-weight: 800; line-height: 1; }
+    .event-date .month { font-family: 'Space Mono', monospace; font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--purple-light); margin-top: 2px; }
+
+    /* Info */
+    .event-info { flex: 1; min-width: 0; }
+    .event-info h3 { font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; margin-bottom: .3rem; }
+    .event-info p  { color: var(--text-2); font-size: .88rem; line-height: 1.55; margin-bottom: .6rem; }
+
+    .event-meta { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .event-meta span {
+      display: flex; align-items: center; gap: .35rem;
+      font-size: .78rem; color: var(--text-3);
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* Tags */
+    .event-tags { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .6rem; }
+    .event-tag {
+      padding: 2px 10px; border-radius: 99px; font-size: .65rem;
+      font-weight: 600; font-family: 'Space Mono', monospace;
+      background: rgba(124,58,237,.12); color: #a78bfa;
+      border: 1px solid rgba(124,58,237,.2);
+    }
+
+    /* Right side */
+    .event-actions { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: .75rem; }
+
+    /* QR toggle */
+    .qr-toggle-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; font-size: .72rem; color: var(--text-2); cursor: pointer; display: flex; align-items: center; gap: .3rem; transition: border-color .2s, color .2s; font-family: 'Space Mono', monospace; }
+    .qr-toggle-btn:hover { border-color: #a78bfa; color: #a78bfa; }
+    .qr-popup { display: none; flex-direction: column; align-items: center; gap: .5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: .9rem 1rem; margin-top: .25rem; }
+    .qr-popup.open { display: flex; }
+    .qr-popup canvas, .qr-popup img { border-radius: 6px; }
+    .qr-popup-label { font-family: 'Space Mono', monospace; font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: #a78bfa; }
+
+    /* Status badges */
+    .badge-registering { background: rgba(74,222,128,.15); color: #4ade80; border: 1px solid rgba(74,222,128,.3); }
+    .badge-upcoming    { background: rgba(59,130,246,.15);  color: #60a5fa; border: 1px solid rgba(59,130,246,.3); }
+    .badge-closed      { background: rgba(239,68,68,.12);   color: #f87171; border: 1px solid rgba(239,68,68,.25); }
+    .badge-past        { background: rgba(100,116,139,.12); color: #94a3b8; border: 1px solid rgba(100,116,139,.2); }
+    .badge-cancelled   { background: rgba(239,68,68,.08);   color: #f87171; border: 1px solid rgba(239,68,68,.15); }
+
+    /* Countdown */
+    .countdown {
+      font-family: 'Space Mono', monospace; font-size: .72rem;
+      color: var(--text-3); text-align: right; line-height: 1.5;
+    }
+    .countdown .cd-label { font-size: .6rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); }
+    .countdown .cd-time  { color: #f59e0b; font-weight: 700; font-size: .85rem; }
+    .countdown .cd-expired { color: #f87171; }
+
+    /* Register button */
+    .btn-register {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .6rem 1.25rem; border-radius: 10px; font-size: .85rem;
+      font-weight: 700; cursor: pointer; border: none; text-decoration: none;
+      background: linear-gradient(135deg, #7c3aed, #3b82f6);
+      color: white; transition: all .2s;
+      box-shadow: 0 4px 16px rgba(124,58,237,.35);
+    }
+    .btn-register:hover { transform: scale(1.03); box-shadow: 0 6px 24px rgba(124,58,237,.5); }
+    .btn-register:disabled,
+    .btn-register.disabled {
+      background: var(--surface); color: var(--text-3);
+      border: 1px solid var(--border); box-shadow: none;
+      cursor: not-allowed; transform: none; pointer-events: none;
+    }
+
+    /* Empty */
+    .empty-state { text-align: center; padding: 5rem 2rem; }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: .4; }
+    .empty-state p { color: var(--text-2); font-size: .9rem; }
+
+    /* Notice banner */
+    #site-notice {
+      display: none; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.3);
+      border-radius: 10px; padding: .75rem 1.25rem; margin-bottom: 1.5rem;
+      font-size: .88rem; color: #fbbf24; text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .event-body { flex-direction: column; align-items: flex-start; gap: 1rem; }
+      .event-actions { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="mc-nav">
+  <a href="/" class="mc-nav__logo"><div class="mc-nav__logo-mark">Σ</div>Math Collective</a>
+  <ul class="mc-nav__links">
+    <li><a href="/arena" id="nav-arena-link">Arena</a></li>
+    <li><a href="/events">Events</a></li>
+    <li><a href="/about">About</a></li>
+  </ul>
+  <div class="mc-nav__actions">
+    <div class="mc-nav__user" id="nav-user-pill" style="display:none;">
+      <div class="mc-nav__avatar">A</div>
+      <span class="mc-nav__username">Member</span>
+    </div>
+    <a href="/login"    class="btn btn-ghost btn-sm"    id="nav-login-btn">Log In</a>
+    <a href="/register" class="btn btn-primary btn-sm"  id="nav-register-btn">Join Free</a>
+  </div>
+</nav>
+
+<main class="events-page">
+
+  <!-- Site notice (shown if admin sets one) -->
+  <div id="site-notice"></div>
+
+  <div class="events-header reveal">
+    <div>
+      <div class="section-label">What's Happening</div>
+      <h1>Events &amp; Programs</h1>
+      <p style="color:var(--text-2);font-size:.95rem;margin-top:.5rem;">
+        Competitions, workshops, hackathons — register before the deadline.
+      </p>
+    </div>
+    <div class="filter-tabs">
+      <button class="ftab active" onclick="filterEvents('all',   this)">All</button>
+      <button class="ftab"        onclick="filterEvents('registering', this)">🟢 Open Now</button>
+      <button class="ftab"        onclick="filterEvents('upcoming',    this)">🔵 Upcoming</button>
+      <button class="ftab"        onclick="filterEvents('past',        this)">Past</button>
+    </div>
+  </div>
+
+  <div class="events-grid" id="events-container">
+    <div style="text-align:center;padding:4rem;color:var(--text-3);">Loading events...</div>
+  </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="mc-footer">
+  <div class="mc-footer__inner">
+    <div><div class="mc-footer__logo"><div class="mc-nav__logo-mark" style="width:28px;height:28px;font-size:.8rem;">Σ</div>Math Collective</div></div>
+    <div><h4>Platform</h4><a href="/arena">The Arena</a><a href="/login">Login</a><a href="/register" id="footer-register">Register</a></div>
+    <div><h4>Legal</h4><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
+  </div>
+</footer>
+
+<script>
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let allEvents = [];
+  let currentFilter = 'all';
+  let countdownIntervals = [];
+
+  /* ── STATUS CONFIG ── */
+  const STATUS = {
+    registering: { label: '🟢 Registration Open', cls: 'badge-registering' },
+    upcoming:    { label: '🔵 Coming Soon',        cls: 'badge-upcoming'    },
+    closed:      { label: '🔴 Registration Closed',cls: 'badge-closed'      },
+    past:        { label: '⚫ Past Event',          cls: 'badge-past'        },
+    cancelled:   { label: '❌ Cancelled',           cls: 'badge-cancelled'   },
+  };
+
+  /* ── LOAD ── */
+  async function loadEvents() {
+    try {
+      const [evRes, settingsRes] = await Promise.all([
+        fetch('/api/events'),
+        fetch('/api/events/settings'),
+      ]);
+      allEvents = await evRes.json();
+      const settings = await settingsRes.json();
+
+      // Show site notice if set
+      if (settings.site_notice) {
+        const nb = document.getElementById('site-notice');
+        nb.textContent = settings.site_notice;
+        nb.style.display = 'block';
+      }
+
+      renderEvents();
+    } catch (e) {
+      document.getElementById('events-container').innerHTML =
+        '<div class="empty-state"><div class="icon">⚠️</div><p>Could not load events. Try refreshing.</p></div>';
+    }
+  }
+
+  /* ── FILTER ── */
+  function filterEvents(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderEvents();
+  }
+
+  /* ── RENDER ── */
+  function renderEvents() {
+    // Clear old countdown intervals
+    countdownIntervals.forEach(clearInterval);
+    countdownIntervals = [];
+
+    let events = allEvents;
+    if (currentFilter !== 'all') {
+      events = allEvents.filter(e => e.status === currentFilter);
+    }
+
+    const container = document.getElementById('events-container');
+    if (!events.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📅</div>
+          <p>${currentFilter === 'all' ? 'No events yet. Check back soon!' : 'No events in this category.'}</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = events.map(ev => buildCard(ev)).join('');
+
+    // Start countdowns
+    events.forEach(ev => {
+      if (ev.registration_deadline && (ev.status === 'registering')) {
+        const id = setInterval(() => updateCountdown(ev.id, ev.registration_deadline), 1000);
+        countdownIntervals.push(id);
+        updateCountdown(ev.id, ev.registration_deadline);
+      }
+    });
+  }
+
+  /* ── BUILD CARD ── */
+  function buildCard(ev) {
+    const d      = ev.date ? new Date(ev.date) : null;
+    const day    = d ? d.getDate() : '—';
+    const month  = d ? MONTHS[d.getMonth()] : '—';
+    const status = STATUS[ev.status] || STATUS.upcoming;
+    const color  = ev.banner_color || '#7c3aed';
+
+    const tagsHtml = (ev.tags || []).length
+      ? `<div class="event-tags">${ev.tags.map(t => `<span class="event-tag">${t}</span>`).join('')}</div>`
+      : '';
+
+    const metaHtml = [
+      ev.location  ? `<span>📍 ${ev.location}</span>` : '',
+      ev.time      ? `<span>🕐 ${ev.time}</span>` : '',
+      ev.organiser ? `<span>🏛️ ${ev.organiser}</span>` : '',
+      ev.event_type !== 'general' ? `<span>🎯 ${ev.event_type}</span>` : '',
+    ].filter(Boolean).join('');
+
+    // Countdown (only if registering and has deadline)
+    const showCountdown = ev.status === 'registering' && ev.registration_deadline;
+    const countdownHtml = showCountdown
+      ? `<div class="countdown" id="cd-${ev.id}">
+           <div class="cd-label">Registration closes in</div>
+           <div class="cd-time">Loading...</div>
+         </div>`
+      : ev.registration_deadline && ev.status === 'closed'
+        ? `<div class="countdown"><div class="cd-label cd-expired">Registration closed</div></div>`
+        : '';
+
+    // Register button
+    let registerBtn = '';
+    let qrHtml = '';
+    if (ev.status === 'registering' && ev.registration_form_url) {
+      registerBtn = `<a href="${ev.registration_form_url}" target="_blank" rel="noopener" class="btn-register">
+        📝 Register Now ↗
+      </a>`;
+      qrHtml = `
+        <button class="qr-toggle-btn" onclick="toggleEventQR(event, '${ev.id}', '${encodeURIComponent(ev.registration_form_url)}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3m4-3v.01M17 21v.01M21 17v4M14 21h3"/></svg>
+          QR Code
+        </button>
+        <div class="qr-popup" id="qr-popup-${ev.id}">
+          <div class="qr-popup-label">Scan to Register</div>
+          <div id="qr-canvas-${ev.id}"></div>
+        </div>`;
+    } else if (ev.status === 'upcoming') {
+      registerBtn = `<button class="btn-register disabled" disabled>Registration opens soon</button>`;
+    } else if (ev.status === 'closed' || ev.status === 'past') {
+      registerBtn = `<button class="btn-register disabled" disabled>Registration Closed</button>`;
+    }
+
+    return `
+      <div class="event-card reveal" data-status="${ev.status}">
+        <div class="event-accent-bar" style="background:${color};"></div>
+        <div class="event-body">
+          <div class="event-date" style="border-color:${color}33;background:${color}18;">
+            <span class="day" style="color:${color};">${day}</span>
+            <span class="month">${month}</span>
+          </div>
+          <div class="event-info">
+            <h3>${ev.title}</h3>
+            <p>${ev.description || ''}</p>
+            <div class="event-meta">${metaHtml}</div>
+            ${tagsHtml}
+          </div>
+          <div class="event-actions">
+            <span class="badge ${status.cls}" style="font-size:.72rem;padding:4px 12px;">${status.label}</span>
+            ${countdownHtml}
+            ${registerBtn}
+            ${qrHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* ── COUNTDOWN UPDATER ── */
+  function updateCountdown(evId, deadlineStr) {
+    const el = document.getElementById(`cd-${evId}`);
+    if (!el) return;
+
+    const diff = new Date(deadlineStr) - new Date();
+    if (diff <= 0) {
+      el.innerHTML = '<div class="cd-label cd-expired">Registration closed</div>';
+      return;
+    }
+
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000)  / 60000);
+    const s = Math.floor((diff % 60000)    / 1000);
+
+    const parts = [];
+    if (d > 0) parts.push(`${d}d`);
+    if (h > 0) parts.push(`${h}h`);
+    if (m > 0) parts.push(`${m}m`);
+    parts.push(`${s}s`);
+
+    el.innerHTML = `
+      <div class="cd-label">Registration closes in</div>
+      <div class="cd-time">${parts.join(' ')}</div>
+    `;
+  }
+
+  loadEvents();
+
+  /* ── QR CODE TOGGLE ── */
+  const _qrGenerated = {};
+
+  function toggleEventQR(e, evId, encodedUrl) {
+    e.stopPropagation();
+    const popup = document.getElementById(`qr-popup-${evId}`);
+    if (!popup) return;
+
+    const isOpen = popup.classList.contains('open');
+    // Close all other popups first
+    document.querySelectorAll('.qr-popup.open').forEach(p => p.classList.remove('open'));
+
+    if (!isOpen) {
+      popup.classList.add('open');
+      // Generate QR only once per event
+      if (!_qrGenerated[evId]) {
+        _qrGenerated[evId] = true;
+        const url = decodeURIComponent(encodedUrl);
+        new QRCode(document.getElementById(`qr-canvas-${evId}`), {
+          text:         url,
+          width:        140,
+          height:       140,
+          colorDark:    '#1a1a2e',
+          colorLight:   '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H,
+        });
+      }
+    }
+  }
+
+  // Close QR popups when clicking outside
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.qr-popup.open').forEach(p => p.classList.remove('open'));
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hall of Fame | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js"></script>
+  <style>
+    .hof-page { max-width: 900px; margin: 4rem auto 6rem; padding: 0 1.5rem; }
+
+    .hof-hero { text-align: center; margin-bottom: 3.5rem; }
+    .hof-hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(2rem,5vw,3rem); font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.75rem; }
+    .hof-hero p  { color: var(--text-2); font-size: 1rem; max-width: 480px; margin: 0 auto 1.5rem; line-height: 1.7; }
+
+    /* Week info card */
+    .week-card {
+      background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(59,130,246,0.1));
+      border: 1px solid rgba(124,58,237,0.35);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .week-card h2 { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .week-card p  { color: var(--text-2); font-size: 0.9rem; margin-bottom: 1.25rem; }
+    .countdown-box {
+      display: inline-flex;
+      gap: 1rem;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 2rem;
+    }
+    .cd-unit { text-align: center; }
+    .cd-num  { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800;
+               background: linear-gradient(135deg, white, #a78bfa);
+               -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .cd-label { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.12em;
+                text-transform: uppercase; color: var(--text-3); }
+    .cd-sep   { color: var(--text-3); font-size: 1.5rem; align-self: center; }
+
+    /* Current week leaderboard */
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .lb-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      margin-bottom: 3rem;
+    }
+    .lb-row-hof {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .lb-row-hof:last-child { border-bottom: none; }
+    .lb-row-hof:hover { background: rgba(255,255,255,0.03); }
+    .lb-pos {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 700; flex-shrink: 0;
+    }
+    .lb-pos.gold   { background: rgba(251,191,36,0.15); }
+    .lb-pos.silver { background: rgba(148,163,184,0.12); }
+    .lb-pos.bronze { background: rgba(180,110,80,0.12); }
+    .lb-pos.other  { background: rgba(255,255,255,0.04); font-family:'Space Mono',monospace; font-size:0.78rem; color:var(--text-3); }
+    .lb-info { flex: 1; }
+    .lb-info strong { display: block; font-size: 0.92rem; font-weight: 600; }
+    .lb-info span   { font-size: 0.75rem; color: var(--text-3); font-family: 'Space Mono', monospace; }
+    .lb-score { font-family: 'Space Mono', monospace; font-size: 0.88rem; color: var(--purple-light); font-weight: 700; }
+
+    /* Winners hall */
+    .winner-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .winner-card:hover { border-color: rgba(251,191,36,0.4); transform: translateX(4px); }
+    .winner-trophy {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.1));
+      border: 1px solid rgba(251,191,36,0.35);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.75rem; flex-shrink: 0;
+    }
+    .winner-info { flex: 1; }
+    .winner-info strong { display: block; font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+    .winner-info .week-range { font-size: 0.75rem; color: var(--text-3); font-family:'Space Mono',monospace; }
+    .winner-stats { text-align: right; }
+    .winner-stats .xp { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800;
+      background:linear-gradient(135deg,#fbbf24,#f59e0b); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .winner-stats .solved { font-size:0.72rem; color:var(--text-3); font-family:'Space Mono',monospace; }
+
+    .empty-msg { text-align:center; padding:3rem 2rem; color:var(--text-3); font-size:0.9rem; }
+    .empty-msg span { font-size:2rem; display:block; margin-bottom:0.75rem; }
+  </style>
+</head>
+<body>
+
+<nav class="mc-nav">
+  <a href="/" class="mc-nav__logo">
+    <div class="mc-nav__logo-mark">Σ</div>
+    Math Collective
+  </a>
+  <ul class="mc-nav__links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/arena">Arena</a></li>
+    <li><a href="/dashboard">Dashboard</a></li>
+  </ul>
+  <div class="mc-nav__actions">
+    <div class="mc-nav__user" id="nav-user-pill">
+      <div class="mc-nav__avatar">A</div>
+      <span class="mc-nav__username">Member</span>
+      <span style="color:var(--text-3);font-size:0.75rem;margin-left:4px;cursor:pointer;" onclick="logout()">↩</span>
+    </div>
+    <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light">🌙</button>
+    <a href="/login" class="btn btn-ghost btn-sm" id="nav-login-btn">Log In</a>
+  </div>
+</nav>
+
+<div class="hof-page">
+
+  <!-- Hero -->
+  <div class="hof-hero reveal">
+    <div class="section-label">Weekly Competition</div>
+    <h1>🏆 Hall of Fame</h1>
+    <p>Every week, the top scorer is crowned champion. The leaderboard resets every Monday — can you take this week's crown?</p>
+  </div>
+
+  <!-- Current week countdown -->
+  <div class="week-card reveal">
+    <h2>⏱ Current Week Ends In</h2>
+    <p>Weekly leaderboard resets every Monday at midnight. Earn as much XP as you can before then!</p>
+    <div class="countdown-box">
+      <div class="cd-unit"><div class="cd-num" id="cd-days">—</div><div class="cd-label">Days</div></div>
+      <div class="cd-sep">:</div>
+      <div class="cd-unit"><div class="cd-num" id="cd-hours">—</div><div class="cd-label">Hours</div></div>
+      <div class="cd-sep">:</div>
+      <div class="cd-unit"><div class="cd-num" id="cd-mins">—</div><div class="cd-label">Mins</div></div>
+    </div>
+  </div>
+
+  <!-- This week's current standings -->
+  <div class="reveal">
+    <div class="section-title">📊 This Week's Standings</div>
+    <div class="lb-card" id="weekly-board">
+      <div class="empty-msg"><span>⏳</span>Loading...</div>
+    </div>
+  </div>
+
+  <!-- Past winners -->
+  <div class="reveal">
+    <div class="section-title">🥇 Past Champions</div>
+    <div id="winners-list">
+      <div class="empty-msg"><span>⏳</span>Loading past champions...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<footer class="mc-footer" style="margin-top:0;">
+  <div class="mc-footer__bottom" style="max-width:900px;margin:0 auto;">
+    <span>© 2026 Math Collective · BMSIT</span>
+    <a href="/arena" style="color:var(--purple-light);">⚔ Go to Arena →</a>
+  </div>
+</footer>
+
+<script>
+  /* ── Countdown ── */
+  async function loadCountdown() {
+    try {
+      const res  = await fetch('/api/leaderboard/week-info');
+      const data = await res.json();
+
+      const weekEnd = new Date(data.weekEnd);
+
+      function tick() {
+        const now    = new Date();
+        const msLeft = Math.max(0, weekEnd - now);
+        const days   = Math.floor(msLeft / (1000*60*60*24));
+        const hours  = Math.floor((msLeft % (1000*60*60*24)) / (1000*60*60));
+        const mins   = Math.floor((msLeft % (1000*60*60)) / (1000*60));
+
+        document.getElementById('cd-days').textContent  = String(days).padStart(2,'0');
+        document.getElementById('cd-hours').textContent = String(hours).padStart(2,'0');
+        document.getElementById('cd-mins').textContent  = String(mins).padStart(2,'0');
+      }
+
+      tick();
+      setInterval(tick, 60000); // update every minute
+    } catch (e) {}
+  }
+
+  /* ── Weekly leaderboard ── */
+  async function loadWeeklyBoard() {
+    try {
+      const res   = await fetch('/api/leaderboard');
+      const users = await res.json();
+      const board = document.getElementById('weekly-board');
+      const medals = ['🥇','🥈','🥉'];
+      const posClass = ['gold','silver','bronze'];
+
+      const active = (users || []).filter(u => u.xp > 0);
+      if (!active.length) {
+        board.innerHTML = '<div class="empty-msg"><span>🎯</span>No scores yet this week — be the first!</div>';
+        return;
+      }
+
+      board.innerHTML = active.slice(0, 10).map((u, i) => `
+        <div class="lb-row-hof">
+          <div class="lb-pos ${posClass[i] || 'other'}">${medals[i] || '#'+(i+1)}</div>
+          <div class="lb-info">
+            <strong>${u.name}</strong>
+            <span>${u.title}</span>
+          </div>
+          <div class="lb-score">${u.xp} XP</div>
+        </div>
+      `).join('');
+    } catch (e) {}
+  }
+
+  /* ── Hall of fame ── */
+  async function loadWinners() {
+    try {
+      const res     = await fetch('/api/leaderboard/winners');
+      const winners = await res.json();
+      const list    = document.getElementById('winners-list');
+
+      if (!winners.length) {
+        list.innerHTML = '<div class="empty-msg"><span>🏆</span>No past champions yet.<br>The first winner will be crowned at the end of this week!</div>';
+        return;
+      }
+
+      list.innerHTML = winners.map((w, i) => {
+        const ws  = new Date(w.week_start);
+        const we  = new Date(w.week_end);
+        const fmt = d => d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+        const weekStr = `${fmt(ws)} → ${fmt(we)}`;
+
+        return `
+          <div class="winner-card">
+            <div class="winner-trophy">${i === 0 ? '🥇' : '🏆'}</div>
+            <div class="winner-info">
+              <strong>${w.winner_name}</strong>
+              <span class="week-range">Week of ${weekStr}</span>
+            </div>
+            <div class="winner-stats">
+              <div class="xp">${w.winner_xp} XP</div>
+              <div class="solved">${w.total_solved} correct</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {}
+  }
+
+  loadCountdown();
+  loadWeeklyBoard();
+  loadWinners();
+</script>
+</body>
+</html>

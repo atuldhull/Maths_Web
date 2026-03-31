@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Dashboard | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root { --sidebar-w: 220px; }
+    body { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar { width: var(--sidebar-w); background: var(--bg-elevated, #0d1117); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; padding: 1.5rem 0; }
+    .sb-logo { display: flex; align-items: center; gap: 10px; padding: 0 1.25rem 1.5rem; font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+    .sb-logo-mark { width: 30px; height: 30px; background: linear-gradient(135deg, #059669, #10b981); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 0.85rem; }
+    .sb-badge { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: #10b981; font-family: 'Space Mono', monospace; margin-left: auto; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); padding: 2px 7px; border-radius: 4px; }
+    .sb-nav { flex: 1; padding: 0 0.75rem; display: flex; flex-direction: column; gap: 3px; }
+    .sb-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; border-radius: 6px; color: var(--text-2, #94a3b8); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s; background: none; border: none; text-align: left; width: 100%; }
+    .sb-item:hover { background: rgba(255,255,255,0.05); color: var(--text, #f1f5f9); }
+    .sb-item.active { background: rgba(16,185,129,0.12); color: #10b981; }
+    .sb-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+    .sb-bottom { padding: 1rem 0.75rem; border-top: 1px solid var(--border); }
+    .sb-user { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: 6px; }
+    .sb-avatar { width: 32px; height: 32px; background: linear-gradient(135deg, #059669, #10b981); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+    .sb-uname { font-size: 0.82rem; font-weight: 600; }
+    .sb-email { font-size: 0.72rem; color: var(--text-3, #64748b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+
+    /* ── Main ── */
+    .teacher-main { margin-left: var(--sidebar-w); flex: 1; padding: 2rem 2.5rem; min-height: 100vh; }
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; }
+    .page-header p { color: var(--text-2, #94a3b8); font-size: 0.88rem; margin-top: 0.25rem; }
+
+    /* ── Stat cards ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .stat-box { background: var(--surface, #1e293b); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; }
+    .stat-box .lbl { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3, #64748b); margin-bottom: 0.5rem; }
+    .stat-box .val { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, white, #6ee7b7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    /* ── Sections ── */
+    .section { display: none; }
+    .section.active { display: block; }
+    .section-card { background: var(--surface, #1e293b); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .section-card h2 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+
+    /* ── Table ── */
+    .t-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .t-table th { text-align: left; padding: 0.75rem 1rem; font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3, #64748b); border-bottom: 1px solid var(--border); }
+    .t-table td { padding: 0.875rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .t-table tr:last-child td { border-bottom: none; }
+
+    /* ── Chips ── */
+    .chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 99px; font-size: 0.72rem; font-weight: 600; font-family: 'Space Mono', monospace; }
+    .chip-easy   { background: rgba(74,222,128,0.12); color: #4ade80; }
+    .chip-medium { background: rgba(124,58,237,0.15); color: #a78bfa; }
+    .chip-hard   { background: rgba(239,68,68,0.12);  color: #f87171; }
+
+    /* ── AI Panel ── */
+    .ai-panel { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 1.75rem; margin-bottom: 1.5rem; }
+    .ai-panel h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: #10b981; }
+    .ai-panel p  { color: var(--text-2, #94a3b8); font-size: 0.85rem; margin-bottom: 1.25rem; }
+    .ai-controls { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
+    .ai-preview { background: var(--surface, #1e293b); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-top: 1rem; display: none; }
+    .ai-preview h4 { font-family: 'Space Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #10b981; margin-bottom: 0.75rem; }
+    .ai-preview pre { font-size: 0.82rem; color: var(--text-2, #94a3b8); white-space: pre-wrap; word-break: break-word; }
+
+    /* ── Performance bars ── */
+    .perf-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; margin-top: 4px; width: 100px; }
+    .perf-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+    .perf-high   { background: #4ade80; }
+    .perf-medium { background: #fbbf24; }
+    .perf-low    { background: #f87171; }
+
+    /* ── Leaderboard rows ── */
+    .lb-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-rank { width: 28px; text-align: center; font-size: 1rem; }
+    .lb-name { flex: 1; font-size: 0.88rem; font-weight: 600; }
+    .lb-meta { font-size: 0.78rem; color: var(--text-3, #64748b); font-family: 'Space Mono', monospace; }
+    .lb-xp   { font-family: 'Space Mono', monospace; font-size: 0.82rem; color: #6ee7b7; font-weight: 700; }
+
+    /* ── Form ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group label { font-size: 0.78rem; font-weight: 600; color: var(--text-2, #94a3b8); text-transform: uppercase; letter-spacing: 0.04em; }
+    select.form-input { appearance: none; }
+    .option-input-row { display: flex; align-items: center; gap: 0.5rem; }
+    .option-radio { accent-color: #10b981; width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+    .options-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+
+    /* ── Toast ── */
+    #teacher-toast { display: none; position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; padding: 0.875rem 1.25rem; border-radius: 8px; font-size: 0.88rem; font-weight: 600; min-width: 260px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+
+    /* ── Auth gate ── */
+    .auth-gate { display: none; position: fixed; inset: 0; background: rgba(2,8,23,0.95); backdrop-filter: blur(12px); z-index: 500; align-items: center; justify-content: center; }
+    .auth-gate.visible { display: flex; }
+    .auth-gate-card { background: var(--surface, #1e293b); border: 1px solid rgba(16,185,129,0.3); border-radius: 16px; padding: 3rem; text-align: center; max-width: 400px; }
+    .auth-gate-card h2 { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; margin-bottom: 0.75rem; }
+    .auth-gate-card p  { color: var(--text-2, #94a3b8); margin-bottom: 1.5rem; }
+
+    /* Activity feed */
+    .activity-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+    .activity-item:last-child { border-bottom: none; }
+    .act-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+    .act-icon.correct { background: rgba(74,222,128,0.12); }
+    .act-icon.wrong   { background: rgba(239,68,68,0.12); }
+
+    /* Search */
+    .search-bar { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
+    .search-bar input { flex: 1; }
+
+    @media (max-width: 900px) { .stat-grid { grid-template-columns: 1fr 1fr; } .teacher-main { margin-left: 0; } .sidebar { display: none; } }
+  </style>
+</head>
+<body>
+
+<!-- Auth Gate -->
+<div class="auth-gate" id="authGate">
+  <div class="auth-gate-card">
+    <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
+    <h2>Teacher Access Only</h2>
+    <p>This area is restricted to teachers and admins.</p>
+    <a href="/" class="btn btn-primary">← Go Home</a>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="teacher-toast"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">T</div>
+    Teacher Hub
+    <span class="sb-badge">TEACHER</span>
+  </div>
+  <nav class="sb-nav">
+    <button class="sb-item active" onclick="showSection('overview')"    id="nav-overview">   <span class="sb-icon">📊</span> Overview</button>
+    <button class="sb-item"        onclick="showSection('students')"    id="nav-students">   <span class="sb-icon">👥</span> Students</button>
+    <button class="sb-item"        onclick="showSection('performance')" id="nav-performance"><span class="sb-icon">📈</span> Performance</button>
+    <button class="sb-item"        onclick="showSection('questions')"   id="nav-questions">  <span class="sb-icon">🧩</span> Questions</button>
+    <button class="sb-item"        onclick="showSection('leaderboard')" id="nav-leaderboard"><span class="sb-icon">🏆</span> Leaderboard</button>
+    <hr style="border:none;border-top:1px solid var(--border);margin:0.5rem 0;">
+    <button class="sb-item"        onclick="showSection('quiz')"      id="nav-quiz">      <span class="sb-icon">⚡</span> Live Quiz</button>
+    <button class="sb-item"        onclick="showSection('tests')"     id="nav-tests">     <span class="sb-icon">📋</span> Schedule Test</button>
+    <button class="sb-item"        onclick="showSection('projects')"  id="nav-projects">  <span class="sb-icon">🚀</span> Projects</button>
+    <button class="sb-item"        onclick="showSection('announce')"  id="nav-announce">  <span class="sb-icon">📢</span> Announce</button>
+    <hr style="border:none;border-top:1px solid var(--border);margin:0.5rem 0;">
+    <button class="sb-item" onclick="location='/certificates'"><span class="sb-icon">🎓</span> Certificates</button>
+    <button class="sb-item" onclick="location='/arena'">    <span class="sb-icon">⚔</span> Arena</button>
+    <button class="sb-item" onclick="location='/dashboard'"><span class="sb-icon">📋</span> My Dashboard</button>
+    <button class="sb-item" onclick="location='/winners'">  <span class="sb-icon">🏅</span> Hall of Fame</button>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">T</div>
+      <div>
+        <div class="sb-uname" id="sb-name">Teacher</div>
+        <div class="sb-email" id="sb-email">—</div>
+      </div>
+    </div>
+    <button class="sb-item" onclick="logout()" style="width:100%;margin-top:0.25rem;"><span class="sb-icon">↩</span> Logout</button>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="teacher-main">
+
+  <!-- ══ OVERVIEW ══ -->
+  <section class="section active" id="section-overview">
+    <div class="page-header">
+      <h1>Welcome back, <span id="teacher-name">Teacher</span> 👋</h1>
+      <p>Here's how Math Collective is performing today.</p>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card hover-lift">
+        <div class="card__meta">Total Students</div>
+        <div class="stat-big" id="ov-students">—</div>
+        <div class="pill pill--purple" id="ov-students-note">Loading…</div>
+      </div>
+      <div class="stat-card hover-lift">
+        <div class="card__meta">Active Challenges</div>
+        <div class="stat-big" id="ov-challenges">—</div>
+        <div class="pill pill--green" id="ov-challenges-note">Up to date</div>
+      </div>
+      <div class="stat-card hover-lift">
+        <div class="card__meta">Total Attempts</div>
+        <div class="stat-big" id="ov-attempts">—</div>
+        <div class="pill pill--amber" id="ov-attempts-note">Gathering data</div>
+      </div>
+      <div class="stat-card hover-lift">
+        <div class="card__meta">Overall Accuracy</div>
+        <div class="stat-big" id="ov-accuracy">—</div>
+        <div class="pill" id="ov-accuracy-note">Needs more samples</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+      <div class="section-card">
+        <h2>⚡ Recent Activity</h2>
+        <div id="ov-activity"><div style="color:var(--text-3,#64748b);padding:1rem 0;text-align:center;">Loading...</div></div>
+      </div>
+      <div class="section-card">
+        <h2>🏆 Top 5 Students This Week</h2>
+        <div id="ov-top5"><div style="color:var(--text-3,#64748b);padding:1rem 0;text-align:center;">Loading...</div></div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ STUDENTS ══ -->
+  <section class="section" id="section-students">
+    <div class="page-header">
+      <h1>Students</h1>
+      <p>View all members and their progress.</p>
+    </div>
+    <div class="section-card">
+      <h2>
+        All Students (<span id="student-count">0</span>)
+        <div class="search-bar" style="margin:0;">
+          <input class="form-input" type="text" id="student-search" placeholder="Search name or email..." style="width:220px;" oninput="filterStudents()">
+          <button class="btn btn-ghost btn-sm" onclick="loadStudents()">🔄 Refresh</button>
+        </div>
+      </h2>
+      <div style="overflow-x:auto;">
+        <table class="t-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Total XP</th><th>Weekly XP</th><th>Title</th><th>Joined</th></tr></thead>
+          <tbody id="students-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text-3,#64748b);padding:2rem;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ PERFORMANCE ══ -->
+  <section class="section" id="section-performance">
+    <div class="page-header">
+      <h1>Challenge Performance</h1>
+      <p>See which questions students find hardest.</p>
+    </div>
+    <div class="section-card">
+      <h2>Per-Challenge Accuracy <button class="btn btn-ghost btn-sm" onclick="loadPerformance()">🔄 Refresh</button></h2>
+      <div style="overflow-x:auto;">
+        <table class="t-table">
+          <thead><tr><th>Challenge</th><th>Difficulty</th><th>Attempts</th><th>Correct</th><th>Accuracy</th></tr></thead>
+          <tbody id="perf-tbody"><tr><td colspan="5" style="text-align:center;color:var(--text-3,#64748b);padding:2rem;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ QUESTIONS ══ -->
+  <section class="section" id="section-questions">
+    <div class="page-header">
+      <h1>Questions</h1>
+      <p>Generate AI questions or manage the challenge bank.</p>
+    </div>
+
+    <!-- AI Generator -->
+    <div class="ai-panel">
+      <h3>🤖 AI Question Generator</h3>
+      <p>Generate a question on any topic instantly using DeepSeek AI, preview it, then save to the challenge bank.</p>
+      <div class="ai-controls">
+        <div class="form-group">
+          <label>Topic</label>
+          <input class="form-input" type="text" id="ai-topic" placeholder="e.g. Laplace Transforms" style="width:200px;">
+        </div>
+        <div class="form-group">
+          <label>Difficulty</label>
+          <select class="form-input" id="ai-difficulty" style="width:130px;">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        <button class="btn btn-sm" style="background:#10b981;color:#000;font-weight:700;" id="ai-gen-btn" onclick="generateQuestion()">⚡ Generate</button>
+        <button class="btn btn-ghost btn-sm" id="ai-save-btn" style="display:none;" onclick="saveQuestion()">💾 Save to Bank</button>
+        <button class="btn btn-ghost btn-sm" id="ai-regen-btn" style="display:none;" onclick="generateQuestion()">🔄 Regenerate</button>
+      </div>
+      <div class="ai-preview" id="ai-preview">
+        <h4>Preview</h4>
+        <pre id="ai-preview-text"></pre>
+      </div>
+    </div>
+
+    <!-- Manual add -->
+    <div class="section-card">
+      <h2>➕ Add Question Manually</h2>
+      <div class="form-grid">
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>Title</label>
+          <input class="form-input" type="text" id="q-title" placeholder="e.g. Eigenvalue of 2x2 matrix">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>Question</label>
+          <textarea class="form-input" id="q-question" rows="3" placeholder="Full question text..."></textarea>
+        </div>
+      </div>
+      <div style="margin:0.75rem 0 0.5rem;">
+        <label style="font-size:0.78rem;font-weight:600;color:var(--text-2,#94a3b8);text-transform:uppercase;letter-spacing:0.04em;">Options (● = correct)</label>
+      </div>
+      <div class="options-grid-2">
+        <div class="option-input-row"><input class="option-radio" type="radio" name="q_correct" value="0" checked><input class="form-input" id="q-opt0" placeholder="Option A" style="flex:1;"></div>
+        <div class="option-input-row"><input class="option-radio" type="radio" name="q_correct" value="1"><input class="form-input" id="q-opt1" placeholder="Option B" style="flex:1;"></div>
+        <div class="option-input-row"><input class="option-radio" type="radio" name="q_correct" value="2"><input class="form-input" id="q-opt2" placeholder="Option C" style="flex:1;"></div>
+        <div class="option-input-row"><input class="option-radio" type="radio" name="q_correct" value="3"><input class="form-input" id="q-opt3" placeholder="Option D" style="flex:1;"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Difficulty</label>
+          <select class="form-input" id="q-difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select>
+        </div>
+        <div class="form-group">
+          <label>Points</label>
+          <input class="form-input" type="number" id="q-points" value="50" min="10" max="500">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>Solution / Explanation (optional)</label>
+          <input class="form-input" type="text" id="q-solution" placeholder="Brief explanation of the correct answer">
+        </div>
+      </div>
+      <button class="btn btn-sm" style="background:#10b981;color:#000;font-weight:700;margin-top:1rem;" onclick="saveManualQuestion()">➕ Add to Bank</button>
+    </div>
+
+    <!-- Challenge list -->
+    <div class="section-card">
+      <h2>All Challenges (<span id="ch-count">0</span>) <button class="btn btn-ghost btn-sm" onclick="loadChallenges()">🔄 Refresh</button></h2>
+      <div style="overflow-x:auto;">
+        <table class="t-table">
+          <thead><tr><th>Title</th><th>Difficulty</th><th>Points</th><th>Status</th></tr></thead>
+          <tbody id="ch-tbody"><tr><td colspan="4" style="text-align:center;color:var(--text-3,#64748b);padding:2rem;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ LEADERBOARD ══ -->
+  <section class="section" id="section-leaderboard">
+    <div class="page-header">
+      <h1>Leaderboard</h1>
+      <p>Full rankings across all students.</p>
+    </div>
+
+    <div style="display:flex;gap:0.75rem;margin-bottom:1.5rem;">
+      <button id="btn-weekly"  onclick="switchLB('weekly')"  style="padding:8px 18px;font-size:0.82rem;border-radius:8px;cursor:pointer;border:1px solid #10b981;background:rgba(16,185,129,0.12);color:#10b981;font-weight:600;">This Week</button>
+      <button id="btn-alltime" onclick="switchLB('alltime')" style="padding:8px 18px;font-size:0.82rem;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:none;color:var(--text-2,#94a3b8);font-weight:600;">All Time</button>
+    </div>
+
+    <div class="section-card">
+      <div id="lb-list"><div style="color:var(--text-3,#64748b);padding:2rem;text-align:center;">Loading...</div></div>
+    </div>
+  </section>
+
+  <!-- ══ LIVE QUIZ ══ -->
+  <section class="section" id="section-quiz">
+    <div class="page-header">
+      <h1>⚡ Live Quiz</h1>
+      <p>Host a Kahoot-style real-time quiz. Students join with a room code on their phones.</p>
+    </div>
+    <div class="section-card" style="text-align:center;padding:3rem;">
+      <div style="font-size:4rem;margin-bottom:1.5rem;">🎮</div>
+      <h2 style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:0.75rem;">Start a Live Session</h2>
+      <p style="color:var(--text-2);max-width:420px;margin:0 auto 2rem;line-height:1.7;">
+        Select questions from the challenge bank, set a timer per question, share the room code with students — they join on their phones and answer in real-time. Kahoot-style podium after each question.
+      </p>
+      <a href="/live-quiz" class="btn btn-primary btn-lg">⚡ Launch Live Quiz →</a>
+
+      <!-- ── Static QR for quiz-play page ── -->
+      <div style="margin-top:2rem;display:inline-flex;flex-direction:column;align-items:center;gap:.6rem;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.25rem 1.75rem;">
+        <div style="font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#a78bfa;">Student Join Page</div>
+        <div id="teacher-quiz-qr" style="background:#fff;border-radius:8px;padding:8px;line-height:0;"></div>
+        <p style="color:var(--text-3);font-size:0.78rem;margin:0;">
+          Scan → <span style="font-family:'Space Mono',monospace;color:var(--purple-light);" id="teacher-quiz-url"></span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ SCHEDULE TEST ══ -->
+  <section class="section" id="section-tests">
+    <div class="page-header">
+      <h1>📋 Schedule a Test</h1>
+      <p>Create a timed test that students can attempt within a set window.</p>
+    </div>
+
+    <div class="section-card" style="border-color:rgba(59,130,246,0.3);background:rgba(59,130,246,0.04);margin-bottom:1.5rem;">
+      <h2 style="color:#60a5fa;">➕ New Scheduled Test</h2>
+      <div class="form-grid">
+        <div class="form-group"><label>Test Title</label><input class="form-input" type="text" id="st-title" placeholder="e.g. Unit 3 — Linear Algebra Quiz"></div>
+        <div class="form-group"><label>Description (optional)</label><input class="form-input" type="text" id="st-desc" placeholder="Topics covered..."></div>
+        <div class="form-group"><label>Start Date & Time</label><input class="form-input" type="datetime-local" id="st-start"></div>
+        <div class="form-group"><label>End Date & Time</label><input class="form-input" type="datetime-local" id="st-end"></div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>Select Questions (<span id="st-sel-count">0</span> selected)</label>
+          <input class="form-input" type="text" id="st-search" placeholder="Search questions..." oninput="filterTestQuestions()" style="margin-bottom:0.75rem;">
+          <div id="st-q-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:0.4rem;"></div>
+        </div>
+      </div>
+      <button class="btn btn-sm" style="background:#3b82f6;color:#fff;font-weight:700;margin-top:1.25rem;" onclick="createScheduledTest()">📅 Schedule Test</button>
+    </div>
+
+    <div class="section-card">
+      <h2>All Scheduled Tests <button class="btn btn-ghost btn-sm" onclick="loadScheduledTests()">🔄 Refresh</button></h2>
+      <div id="st-list"><div style="color:var(--text-3);text-align:center;padding:2rem;">Loading...</div></div>
+    </div>
+  </section>
+
+  <!-- ══ PROJECTS ══ -->
+  <section class="section" id="section-projects">
+    <div class="page-header">
+      <h1>🚀 Team Projects</h1>
+      <p>Review and approve student project submissions. Vote for the best ones.</p>
+    </div>
+    <div class="section-card">
+      <h2>Pending Approval (<span id="pending-count">0</span>) <button class="btn btn-ghost btn-sm" onclick="loadPendingProjects()">🔄 Refresh</button></h2>
+      <div id="pending-list"><div style="color:var(--text-3);text-align:center;padding:2rem;">Loading...</div></div>
+    </div>
+    <div class="section-card" style="margin-top:1.5rem;">
+      <h2>Manage Categories <a href="/projects" target="_blank" class="btn btn-ghost btn-sm">View Gallery →</a></h2>
+      <div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;">
+        <input class="form-input" type="text" id="cat-name" placeholder="Category name" style="flex:1;min-width:160px;">
+        <input class="form-input" type="text" id="cat-icon" placeholder="Icon (emoji)" style="width:80px;">
+        <button class="btn btn-sm" style="background:#10b981;color:#000;font-weight:700;" onclick="addCategory()">+ Add</button>
+      </div>
+      <div id="cat-list" style="display:flex;gap:0.5rem;flex-wrap:wrap;"></div>
+    </div>
+  </section>
+
+  <!-- ══ ANNOUNCEMENTS ══ -->
+  <section class="section" id="section-announce">
+    <div class="page-header">
+      <h1>📢 Announcements</h1>
+      <p>Post announcements visible to students on their dashboard.</p>
+    </div>
+    <div class="section-card" style="border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.04);margin-bottom:1.5rem;">
+      <h2 style="color:#fbbf24;">📝 New Announcement</h2>
+      <div class="form-grid">
+        <div class="form-group"><label>Title</label><input class="form-input" type="text" id="ann-title" placeholder="e.g. Inter-College Math Challenge Open!"></div>
+        <div class="form-group">
+          <label>Target</label>
+          <select class="form-input" id="ann-target">
+            <option value="all">Everyone</option>
+            <option value="student">Students only</option>
+            <option value="teacher">Teachers only</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;"><label>Message</label><textarea class="form-input" id="ann-body" rows="3" placeholder="Write your announcement here..."></textarea></div>
+      </div>
+      <button class="btn btn-sm" style="background:#fbbf24;color:#000;font-weight:700;margin-top:1rem;" onclick="postAnnouncement()">📢 Post Announcement</button>
+    </div>
+    <div class="section-card">
+      <h2>Active Announcements <button class="btn btn-ghost btn-sm" onclick="loadAnnouncements()">🔄 Refresh</button></h2>
+      <div id="ann-list"><div style="color:var(--text-3);text-align:center;padding:2rem;">Loading...</div></div>
+    </div>
+  </section>
+
+
+</main>
+
+<script>
+  let allStudents = [];
+  let currentAI   = null;
+  let lbMode      = 'weekly';
+
+  /* ══ INIT ══ */
+  async function init() {
+    const state = await getAuthState();
+    if (!state.loggedIn) { document.getElementById('authGate').classList.add('visible'); return; }
+
+    const role = state.user?.role;
+    if (role !== 'teacher' && role !== 'admin') {
+      // Double-check with server
+      const prof = await fetch('/api/teacher/profile').then(r => r.json()).catch(() => ({}));
+      if (prof.role !== 'teacher' && prof.role !== 'admin') {
+        document.getElementById('authGate').classList.add('visible');
+        return;
+      }
+    }
+
+    // Populate sidebar
+    const prof = await fetch('/api/teacher/profile').then(r => r.json()).catch(() => state.user);
+    document.getElementById('teacher-name').textContent = prof.name?.split(' ')[0] || 'Teacher';
+    document.getElementById('sb-avatar').textContent    = (prof.name || 'T').charAt(0).toUpperCase();
+    document.getElementById('sb-name').textContent      = prof.name  || 'Teacher';
+    document.getElementById('sb-email').textContent     = prof.email || '';
+
+    loadOverview();
+
+    // Generate static quiz-play QR
+    const quizPlayUrl = window.location.origin + '/quiz-play';
+    document.getElementById('teacher-quiz-url').textContent = quizPlayUrl.replace('https://', '').replace('http://', '');
+    new QRCode(document.getElementById('teacher-quiz-qr'), {
+      text:         quizPlayUrl,
+      width:        150,
+      height:       150,
+      colorDark:    '#1a1a2e',
+      colorLight:   '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+  }
+
+  /* ══ NAVIGATION ══ */
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    document.getElementById('nav-' + name)?.classList.add('active');
+
+    if (name === 'overview')    loadOverview();
+    if (name === 'students')    loadStudents();
+    if (name === 'performance') loadPerformance();
+    if (name === 'questions')   loadChallenges();
+    if (name === 'leaderboard') loadLeaderboard();
+  }
+
+  /* ══ TOAST ══ */
+  function toast(msg, type = 'success') {
+    const el = document.getElementById('teacher-toast');
+    el.className = 'alert alert-' + type;
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 3500);
+  }
+
+  /* ══ OVERVIEW ══ */
+  async function loadOverview() {
+    try {
+      const [stats, activity, lb] = await Promise.all([
+        fetch('/api/teacher/stats').then(r => r.json()),
+        fetch('/api/teacher/activity').then(r => r.json()),
+        fetch('/api/teacher/leaderboard').then(r => r.json()),
+      ]);
+
+      document.getElementById('ov-students').textContent   = stats.totalStudents   || 0;
+      document.getElementById('ov-challenges').textContent = stats.totalChallenges  || 0;
+      document.getElementById('ov-attempts').textContent   = stats.totalAttempts    || 0;
+      document.getElementById('ov-accuracy').textContent   = (stats.accuracy || 0) + '%';
+
+      document.getElementById('ov-students-note').textContent   = stats.totalStudents   ? 'Enrolled' : 'Invite students';
+      document.getElementById('ov-challenges-note').textContent = stats.totalChallenges ? 'Live now' : 'Publish one';
+      document.getElementById('ov-attempts-note').textContent   = stats.totalAttempts   ? 'Engagement recorded' : 'Awaiting attempts';
+      document.getElementById('ov-accuracy-note').textContent   = stats.accuracy        ? 'Based on submissions' : 'Need data';
+
+      // Activity feed
+      const actEl = document.getElementById('ov-activity');
+      if (!activity?.length) { actEl.innerHTML = '<div style="color:var(--text-3,#64748b);padding:1rem 0;text-align:center;">No activity yet.</div>'; }
+      else {
+        actEl.innerHTML = activity.slice(0, 8).map(a => `
+          <div class="activity-item">
+            <div class="act-icon ${a.correct ? 'correct' : 'wrong'}">${a.correct ? '✓' : '✗'}</div>
+            <div style="flex:1;">
+              <div style="font-size:0.85rem;font-weight:600;">${a.challenges?.title || 'Challenge'}</div>
+              <div style="font-size:0.72rem;color:var(--text-3,#64748b);font-family:'Space Mono',monospace;">${new Date(a.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>
+            </div>
+            <div style="font-size:0.8rem;color:${a.correct ? '#4ade80' : '#f87171'};">${a.correct ? '+'+a.xp_earned+' XP' : 'Wrong'}</div>
+          </div>
+        `).join('');
+      }
+
+      // Top 5
+      const medals = ['🥇','🥈','🥉'];
+      const topEl = document.getElementById('ov-top5');
+      const top5  = (lb || []).slice(0, 5).filter(u => u.weekly_xp > 0);
+      if (!top5.length) { topEl.innerHTML = '<div style="color:var(--text-3,#64748b);padding:1rem 0;text-align:center;">No weekly XP earned yet.</div>'; }
+      else {
+        topEl.innerHTML = top5.map((u, i) => `
+          <div class="lb-row">
+            <span class="lb-rank">${medals[i] || '#'+(i+1)}</span>
+            <span class="lb-name">${u.name}</span>
+            <span class="lb-xp">${u.weekly_xp} XP this week</span>
+          </div>
+        `).join('');
+      }
+    } catch (e) { console.error('[Teacher] Overview error:', e); }
+  }
+
+  /* ══ STUDENTS ══ */
+  async function loadStudents() {
+    const res  = await fetch('/api/teacher/students').catch(() => null);
+    if (!res?.ok) return;
+    allStudents = await res.json();
+    document.getElementById('student-count').textContent = allStudents.length;
+    renderStudents(allStudents);
+  }
+
+  function renderStudents(list) {
+    const tbody = document.getElementById('students-tbody');
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-3,#64748b);padding:2rem;">No students found.</td></tr>'; return; }
+    tbody.innerHTML = list.map(s => `
+      <tr>
+        <td style="font-weight:600;font-size:0.88rem;">${s.name || '—'}</td>
+        <td style="color:var(--text-2,#94a3b8);font-size:0.83rem;">${s.email}</td>
+        <td style="font-family:'Space Mono',monospace;font-size:0.82rem;color:#6ee7b7;">${s.xp || 0}</td>
+        <td style="font-family:'Space Mono',monospace;font-size:0.82rem;color:#fbbf24;">${s.weekly_xp || 0}</td>
+        <td style="font-size:0.78rem;color:var(--text-3,#64748b);">${s.title || 'Axiom Scout'}</td>
+        <td style="font-size:0.78rem;color:var(--text-3,#64748b);font-family:'Space Mono',monospace;">${s.created_at ? new Date(s.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—'}</td>
+      </tr>
+    `).join('');
+  }
+
+  function filterStudents() {
+    const q = document.getElementById('student-search').value.toLowerCase();
+    renderStudents(q ? allStudents.filter(s => (s.name||'').toLowerCase().includes(q) || (s.email||'').toLowerCase().includes(q)) : allStudents);
+  }
+
+  /* ══ PERFORMANCE ══ */
+  async function loadPerformance() {
+    const res  = await fetch('/api/teacher/performance').catch(() => null);
+    const data = res?.ok ? await res.json() : [];
+    const tbody = document.getElementById('perf-tbody');
+
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-3,#64748b);padding:2rem;">No attempt data yet.</td></tr>'; return; }
+
+    tbody.innerHTML = data.map(c => {
+      const pctClass = c.accuracy >= 70 ? 'perf-high' : c.accuracy >= 40 ? 'perf-medium' : 'perf-low';
+      return `
+        <tr>
+          <td style="font-weight:600;font-size:0.88rem;max-width:260px;">${c.title}</td>
+          <td><span class="chip chip-${c.difficulty.toLowerCase()}">${c.difficulty}</span></td>
+          <td style="font-family:'Space Mono',monospace;font-size:0.82rem;">${c.total}</td>
+          <td style="font-family:'Space Mono',monospace;font-size:0.82rem;color:#4ade80;">${c.correct}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <div class="perf-bar"><div class="perf-fill ${pctClass}" style="width:${c.accuracy}%"></div></div>
+              <span style="font-family:'Space Mono',monospace;font-size:0.78rem;">${c.accuracy}%</span>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  /* ══ AI QUESTION ══ */
+  async function generateQuestion() {
+    const btn   = document.getElementById('ai-gen-btn');
+    const topic = document.getElementById('ai-topic').value.trim() || 'Calculus';
+    const diff  = document.getElementById('ai-difficulty').value;
+
+    btn.disabled    = true;
+    btn.textContent = '⏳ Generating...';
+    document.getElementById('ai-preview').style.display = 'none';
+    document.getElementById('ai-save-btn').style.display  = 'none';
+    document.getElementById('ai-regen-btn').style.display = 'none';
+
+    try {
+      const res  = await fetch(`/api/teacher/generate?topic=${encodeURIComponent(topic)}&difficulty=${diff}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      currentAI = data;
+      document.getElementById('ai-preview-text').textContent =
+        `Title: ${data.title}\n\nQuestion: ${data.question}\n\nOptions:\n` +
+        data.options.map((o,i) => `  ${String.fromCharCode(65+i)}. ${o}${i===data.correct_index?' ✓':''}`).join('\n') +
+        `\n\nDifficulty: ${data.difficulty} | Points: ${data.points}` +
+        (data.solution ? `\n\nSolution: ${data.solution}` : '');
+
+      document.getElementById('ai-preview').style.display   = 'block';
+      document.getElementById('ai-save-btn').style.display  = 'inline-flex';
+      document.getElementById('ai-regen-btn').style.display = 'inline-flex';
+      toast('Question generated! Review and save.');
+    } catch (e) { toast('Generation failed: ' + e.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = '⚡ Generate'; }
+  }
+
+  async function saveQuestion() {
+    if (!currentAI) return;
+    const res  = await fetch('/api/teacher/save-question', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(currentAI),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Save failed: ' + data.error, 'error');
+    toast('Question saved to challenge bank!');
+    currentAI = null;
+    document.getElementById('ai-preview').style.display   = 'none';
+    document.getElementById('ai-save-btn').style.display  = 'none';
+    document.getElementById('ai-regen-btn').style.display = 'none';
+    loadChallenges();
+  }
+
+  async function saveManualQuestion() {
+    const title    = document.getElementById('q-title').value.trim();
+    const question = document.getElementById('q-question').value.trim();
+    const options  = [0,1,2,3].map(i => document.getElementById('q-opt'+i).value.trim());
+    const correct  = Number(document.querySelector('input[name="q_correct"]:checked')?.value || 0);
+    const diff     = document.getElementById('q-difficulty').value;
+    const points   = Number(document.getElementById('q-points').value) || 50;
+    const solution = document.getElementById('q-solution').value.trim() || null;
+
+    if (!title || !question || options.some(o => !o)) return toast('Fill all required fields.', 'error');
+
+    const res  = await fetch('/api/teacher/save-question', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, question, options, correct_index: correct, difficulty: diff, points, solution }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast('Question added!');
+    ['q-title','q-question','q-solution'].forEach(id => document.getElementById(id).value = '');
+    [0,1,2,3].forEach(i => document.getElementById('q-opt'+i).value = '');
+    loadChallenges();
+  }
+
+  async function loadChallenges() {
+    const res  = await fetch('/api/teacher/challenges').catch(() => null);
+    const data = res?.ok ? await res.json() : [];
+    document.getElementById('ch-count').textContent = data.length;
+    const tbody = document.getElementById('ch-tbody');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-3,#64748b);padding:2rem;">No challenges yet.</td></tr>'; return; }
+    tbody.innerHTML = data.map(c => `
+      <tr>
+        <td style="font-weight:600;font-size:0.88rem;max-width:280px;">${c.title}</td>
+        <td><span class="chip chip-${c.difficulty.toLowerCase()}">${c.difficulty}</span></td>
+        <td style="font-family:'Space Mono',monospace;font-size:0.82rem;">${c.points} XP</td>
+        <td>
+          <button onclick="toggleChallenge('${c.id}',${c.is_active})" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:0.78rem;color:${c.is_active?'#4ade80':'#64748b'};cursor:pointer;">
+            ${c.is_active ? '● Active' : '○ Inactive'}
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function toggleChallenge(id, cur) {
+    const res = await fetch(`/api/teacher/challenges/${id}/toggle`, { method: 'PATCH' });
+    if (!res.ok) return toast('Toggle failed.', 'error');
+    toast('Status updated.');
+    loadChallenges();
+  }
+
+  /* ══ LEADERBOARD ══ */
+  function switchLB(mode) {
+    lbMode = mode;
+    const wb = document.getElementById('btn-weekly');
+    const ab = document.getElementById('btn-alltime');
+    if (mode === 'weekly') {
+      wb.style.background = 'rgba(16,185,129,0.12)'; wb.style.color = '#10b981'; wb.style.borderColor = '#10b981';
+      ab.style.background = 'none'; ab.style.color = 'var(--text-2,#94a3b8)'; ab.style.borderColor = 'var(--border)';
+    } else {
+      ab.style.background = 'rgba(16,185,129,0.12)'; ab.style.color = '#10b981'; ab.style.borderColor = '#10b981';
+      wb.style.background = 'none'; wb.style.color = 'var(--text-2,#94a3b8)'; wb.style.borderColor = 'var(--border)';
+    }
+    loadLeaderboard();
+  }
+
+  async function loadLeaderboard() {
+    const res  = await fetch('/api/teacher/leaderboard').catch(() => null);
+    const data = res?.ok ? await res.json() : [];
+    const list = document.getElementById('lb-list');
+    const medals = ['🥇','🥈','🥉'];
+
+    const sorted = lbMode === 'alltime'
+      ? [...data].sort((a,b) => b.xp - a.xp)
+      : [...data].sort((a,b) => b.weekly_xp - a.weekly_xp);
+
+    if (!sorted.length) { list.innerHTML = '<div style="color:var(--text-3,#64748b);padding:2rem;text-align:center;">No data yet.</div>'; return; }
+
+    list.innerHTML = sorted.map((u, i) => `
+      <div class="lb-row">
+        <span class="lb-rank">${medals[i] || '#'+(i+1)}</span>
+        <div style="flex:1;">
+          <div class="lb-name">${u.name}</div>
+          <div class="lb-meta">${u.title}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="lb-xp">${lbMode === 'alltime' ? u.xp : u.weekly_xp} XP</div>
+          <div class="lb-meta">${lbMode === 'alltime' ? 'all time' : 'this week'}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+
+
+  /* ══ NAVIGATION — add new sections ══ */
+  const origShowSection = showSection;
+  // Override showSection to handle new sections
+  window.showSection = function(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
+    const sec = document.getElementById('section-' + name);
+    if (sec) sec.classList.add('active');
+    const nav = document.getElementById('nav-' + name);
+    if (nav) nav.classList.add('active');
+
+    if (name === 'overview')    loadOverview();
+    if (name === 'students')    loadStudents();
+    if (name === 'performance') loadPerformance();
+    if (name === 'questions')   { loadChallenges(); loadTestQuestions(); }
+    if (name === 'leaderboard') loadLeaderboard();
+    if (name === 'tests')       { loadTestQuestions(); loadScheduledTests(); }
+    if (name === 'projects')    { loadPendingProjects(); loadCategories(); }
+    if (name === 'announce')    loadAnnouncements();
+  };
+
+  /* ══ SCHEDULED TESTS ══ */
+  let allTestQuestions = [], selectedTestIds = new Set();
+
+  async function loadTestQuestions() {
+    if (allTestQuestions.length) { renderTestQuestions(allTestQuestions); return; }
+    const res  = await fetch('/api/quiz/challenges');
+    allTestQuestions = await res.json();
+    renderTestQuestions(allTestQuestions);
+  }
+
+  function renderTestQuestions(qs) {
+    const el = document.getElementById('st-q-list');
+    if (!el) return;
+    el.innerHTML = qs.map(q => `
+      <div class="q-card ${selectedTestIds.has(q.id) ? 'selected' : ''}" onclick="toggleTestQ('${q.id}')">
+        <div class="q-check"></div>
+        <div class="q-info">
+          <div class="q-title">${q.title}</div>
+          <div class="q-meta">${(q.difficulty||'medium').toUpperCase()} · ${q.points} pts</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterTestQuestions() {
+    const q = document.getElementById('st-search').value.toLowerCase();
+    renderTestQuestions(allTestQuestions.filter(c => c.title.toLowerCase().includes(q)));
+  }
+
+  function toggleTestQ(id) {
+    if (selectedTestIds.has(id)) selectedTestIds.delete(id);
+    else selectedTestIds.add(id);
+    document.getElementById('st-sel-count').textContent = selectedTestIds.size;
+    renderTestQuestions(allTestQuestions);
+  }
+
+  async function createScheduledTest() {
+    const title  = document.getElementById('st-title').value.trim();
+    const desc   = document.getElementById('st-desc').value.trim() || null;
+    const start  = document.getElementById('st-start').value;
+    const end    = document.getElementById('st-end').value;
+    if (!title || !start || !end) { toast('Title, start and end time required.', 'error'); return; }
+    if (!selectedTestIds.size)    { toast('Select at least 1 question.', 'error'); return; }
+    if (new Date(end) <= new Date(start)) { toast('End time must be after start time.', 'error'); return; }
+
+    const res  = await fetch('/api/quiz/scheduled', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, description: desc, challenge_ids: [...selectedTestIds], starts_at: start, ends_at: end }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast('Test scheduled!');
+    selectedTestIds.clear();
+    document.getElementById('st-sel-count').textContent = '0';
+    document.getElementById('st-title').value = '';
+    document.getElementById('st-desc').value  = '';
+    renderTestQuestions(allTestQuestions);
+    loadScheduledTests();
+  }
+
+  async function loadScheduledTests() {
+    const res  = await fetch('/api/quiz/scheduled');
+    const data = await res.json();
+    const el   = document.getElementById('st-list');
+    if (!el) return;
+    if (!data.length) { el.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:2rem;">No tests scheduled yet.</div>'; return; }
+
+    const now = new Date();
+    el.innerHTML = data.map(t => {
+      const start = new Date(t.starts_at), end = new Date(t.ends_at);
+      const isActive   = now >= start && now <= end;
+      const isUpcoming = now < start;
+      const status     = isActive ? '<span style="color:#4ade80;font-size:0.75rem;">● LIVE</span>' : isUpcoming ? '<span style="color:#a78bfa;font-size:0.75rem;">⏱ UPCOMING</span>' : '<span style="color:var(--text-3);font-size:0.75rem;">✓ ENDED</span>';
+      const fmt = d => d.toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 0;border-bottom:1px solid var(--border);gap:1rem;flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:600;font-size:0.9rem;">${t.title}</div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--text-3);">${fmt(start)} → ${fmt(end)} · ${(t.challenge_ids||[]).length} questions</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            ${status}
+            <button class="btn btn-ghost btn-sm" style="color:#f87171;" onclick="deleteTest('${t.id}')">🗑</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function deleteTest(id) {
+    if (!confirm('Delete this scheduled test?')) return;
+    await fetch('/api/quiz/scheduled/' + id, { method: 'DELETE' });
+    toast('Test deleted.');
+    loadScheduledTests();
+  }
+
+  /* ══ PROJECTS ══ */
+  async function loadPendingProjects() {
+    const res  = await fetch('/api/projects/pending');
+    const data = await res.json();
+    const el   = document.getElementById('pending-list');
+    document.getElementById('pending-count').textContent = data.length;
+    if (!el) return;
+    if (!data.length) { el.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:2rem;">No projects awaiting approval.</div>'; return; }
+    el.innerHTML = data.map(p => `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:1rem 0;border-bottom:1px solid var(--border);gap:1rem;flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:700;font-size:0.92rem;">${p.title}</div>
+          <div style="color:var(--text-2);font-size:0.82rem;margin:2px 0;">${p.description?.substring(0,100)}...</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--text-3);">Team: ${p.teams?.name} · Category: ${p.category}</div>
+          <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+            ${p.github_url ? `<a href="${p.github_url}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:0.72rem;">🔗 GitHub</a>` : ''}
+            ${p.demo_url   ? `<a href="${p.demo_url}"   target="_blank" class="btn btn-ghost btn-sm" style="font-size:0.72rem;">▶ Demo</a>`   : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn btn-sm" style="background:#4ade80;color:#000;font-weight:700;" onclick="approveProject('${p.id}')">✓ Approve</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function approveProject(id) {
+    const res = await fetch('/api/projects/' + id + '/approve', { method: 'PATCH' });
+    if (!res.ok) return toast('Failed to approve.', 'error');
+    toast('Project approved and visible in gallery!');
+    loadPendingProjects();
+  }
+
+  async function loadCategories() {
+    const res  = await fetch('/api/projects/categories');
+    const data = await res.json();
+    const el   = document.getElementById('cat-list');
+    if (!el) return;
+    el.innerHTML = data.map(c => `
+      <div style="display:inline-flex;align-items:center;gap:0.4rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:0.82rem;">
+        ${c.icon} ${c.name}
+        <button onclick="deleteCategory('${c.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:0.9rem;margin-left:3px;">×</button>
+      </div>
+    `).join('');
+  }
+
+  async function addCategory() {
+    const name = document.getElementById('cat-name').value.trim();
+    const icon = document.getElementById('cat-icon').value.trim() || '🏆';
+    if (!name) return toast('Category name required.', 'error');
+    const res = await fetch('/api/projects/categories', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, icon }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast('Category added!');
+    document.getElementById('cat-name').value = '';
+    document.getElementById('cat-icon').value = '';
+    loadCategories();
+  }
+
+  async function deleteCategory(id) {
+    await fetch('/api/projects/categories/' + id, { method: 'DELETE' });
+    toast('Category removed.');
+    loadCategories();
+  }
+
+  /* ══ ANNOUNCEMENTS ══ */
+  async function postAnnouncement() {
+    const title  = document.getElementById('ann-title').value.trim();
+    const body   = document.getElementById('ann-body').value.trim();
+    const target = document.getElementById('ann-target').value;
+    if (!title || !body) return toast('Title and message required.', 'error');
+
+    const res  = await fetch('/api/announcements', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, body, target_role: target }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast('Error: ' + data.error, 'error');
+    toast('Announcement posted!');
+    document.getElementById('ann-title').value = '';
+    document.getElementById('ann-body').value  = '';
+    loadAnnouncements();
+  }
+
+  async function loadAnnouncements() {
+    const res  = await fetch('/api/announcements');
+    const data = await res.json();
+    const el   = document.getElementById('ann-list');
+    if (!el) return;
+    if (!data.length) { el.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:2rem;">No active announcements.</div>'; return; }
+    el.innerHTML = data.map(a => `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:1rem 0;border-bottom:1px solid var(--border);gap:1rem;">
+        <div>
+          <div style="font-weight:700;font-size:0.9rem;">${a.title}</div>
+          <div style="color:var(--text-2);font-size:0.85rem;margin:3px 0;">${a.body}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--text-3);">Target: ${a.target_role} · ${new Date(a.created_at).toLocaleDateString('en-IN')}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="color:#f87171;flex-shrink:0;" onclick="deleteAnnouncement('${a.id}')">🗑</button>
+      </div>
+    `).join('');
+  }
+
+  async function deleteAnnouncement(id) {
+    await fetch('/api/announcements/' + id, { method: 'DELETE' });
+    toast('Announcement removed.');
+    loadAnnouncements();
+  }
+
+  /* ══ START ══ */
+  init();
+</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Admin Question Generator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="bg-slate-950 text-white font-sans">
+
+<div class="max-w-3xl mx-auto py-20">
+
+<h1 class="text-4xl font-bold mb-10">
+AI Question Generator
+</h1>
+
+<button
+onclick="generateQuestion()"
+class="bg-purple-600 px-6 py-3 rounded-xl font-bold">
+Generate Question
+</button>
+
+<div id="preview" class="mt-10"></div>
+
+<button
+id="saveBtn"
+onclick="saveQuestion()"
+class="hidden mt-6 bg-green-600 px-6 py-3 rounded-xl font-bold">
+Save to Database
+</button>
+
+</div>
+
+<script>
+
+let generatedQuestion = null;
+
+async function generateQuestion(){
+
+const res = await fetch("/api/admin/generate");
+const data = await res.json();
+
+generatedQuestion = data;
+
+document.getElementById("preview").innerHTML = `
+<h2 class="text-2xl font-bold">${data.title}</h2>
+
+<p class="mt-4">${data.question}</p>
+
+<ul class="mt-4">
+${data.options.map(o=>`<li>- ${o}</li>`).join("")}
+</ul>
+
+<p class="mt-4 text-green-400">
+Correct Answer: ${["A","B","C","D"][data.correct_index]} — ${data.options[data.correct_index]}
+</p>
+
+<p class="mt-4">
+<b>Theorem:</b> ${data.theorem}
+</p>
+
+<p>
+<b>Method:</b> ${data.method}
+</p>
+
+<p>
+<b>Hint:</b> ${data.hint}
+</p>
+`;
+
+document.getElementById("saveBtn").classList.remove("hidden");
+
+}
+
+async function saveQuestion(){
+
+await fetch("/api/admin/save",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(generatedQuestion)
+});
+
+alert("Question saved!");
+
+}
+
+</script>
+
+</body>
+</html>

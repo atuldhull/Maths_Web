@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tests | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js"></script>
+  <style>
+    .tests-page { max-width: 920px; margin: 4rem auto 6rem; padding: 0 1.5rem; }
+    .test-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.75rem; margin-bottom:1.25rem; transition:border-color .2s,transform .2s; }
+    .test-card:hover { border-color:var(--border-acc); transform:translateY(-2px); }
+    .test-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
+    .test-title { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:700; margin-bottom:.25rem; }
+    .test-desc  { color:var(--text-2); font-size:.88rem; }
+    .test-meta  { display:flex; gap:1.25rem; flex-wrap:wrap; margin-top:.75rem; }
+    .test-meta span { font-family:'Space Mono',monospace; font-size:.72rem; color:var(--text-3); display:flex; align-items:center; gap:.3rem; }
+    .chip { padding:4px 12px; border-radius:99px; font-family:'Space Mono',monospace; font-size:.68rem; font-weight:700; letter-spacing:.06em; flex-shrink:0; }
+    .chip-live     { background:rgba(74,222,128,.12);  color:#4ade80; border:1px solid rgba(74,222,128,.3); }
+    .chip-upcoming { background:rgba(124,58,237,.12);  color:#a78bfa; border:1px solid rgba(124,58,237,.3); }
+    .chip-ended    { background:rgba(255,255,255,.04); color:var(--text-3); border:1px solid var(--border); }
+    .test-countdown { font-family:'Space Mono',monospace; font-size:.78rem; color:#f59e0b; margin-top:.5rem; }
+
+    /* Modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(2,8,23,.92); backdrop-filter:blur(8px); z-index:500; align-items:flex-start; justify-content:center; padding:2rem 1rem; overflow-y:auto; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:2rem; max-width:720px; width:100%; margin:auto; }
+
+    /* Test top bar */
+    .test-topbar { display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,.3); border-radius:12px; padding:.75rem 1.25rem; margin-bottom:1.5rem; flex-wrap:wrap; gap:.75rem; }
+    .test-topbar-title { font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; }
+    .test-timer { font-family:'Space Mono',monospace; font-size:1rem; font-weight:700; color:#f59e0b; }
+    .test-timer.urgent { color:#f87171; animation:blink .8s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* Progress */
+    .progress-wrap { height:4px; background:var(--border); border-radius:99px; margin-bottom:1.5rem; overflow:hidden; }
+    .progress-fill { height:100%; background:linear-gradient(90deg,#7c3aed,#3b82f6); border-radius:99px; transition:width .3s; }
+
+    /* Questions */
+    .q-block { background:rgba(0,0,0,.2); border:1px solid var(--border); border-radius:12px; padding:1.25rem; margin-bottom:1rem; }
+    .q-label { font-family:'Space Mono',monospace; font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; color:#a78bfa; margin-bottom:.6rem; display:flex; justify-content:space-between; align-items:center; }
+    .q-text  { font-size:.95rem; line-height:1.65; margin-bottom:1rem; }
+    .q-opts  { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+    .q-opt { background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:8px; padding:.75rem 1rem; cursor:pointer; font-size:.88rem; font-weight:500; transition:all .15s; text-align:left; width:100%; }
+    .q-opt:hover:not(:disabled) { border-color:rgba(124,58,237,.5); background:rgba(124,58,237,.1); }
+    .q-opt.chosen  { border-color:#7c3aed; background:rgba(124,58,237,.15); color:#a78bfa; }
+    .q-opt.correct { border-color:#4ade80 !important; background:rgba(74,222,128,.12) !important; color:#4ade80 !important; }
+    .q-opt.wrong   { border-color:#f87171 !important; background:rgba(239,68,68,.1) !important; color:#f87171 !important; }
+    .q-opt:disabled { cursor:not-allowed; }
+    .ans-badge { font-size:.62rem; background:rgba(74,222,128,.15); color:#4ade80; padding:2px 8px; border-radius:99px; display:none; }
+
+    /* Score */
+    .score-screen { text-align:center; padding:2rem 1rem; }
+    .score-big { font-family:'Syne',sans-serif; font-size:4rem; font-weight:800; background:linear-gradient(135deg,white,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+    /* Warn */
+    .warn-box { background:rgba(251,191,36,.08); border:1px solid rgba(251,191,36,.25); border-radius:8px; padding:.75rem 1rem; font-size:.82rem; color:#fbbf24; margin-top:1rem; display:none; }
+
+    .modal-footer { display:flex; gap:.75rem; justify-content:flex-end; margin-top:1.5rem; padding-top:1.25rem; border-top:1px solid var(--border); }
+
+    @media(max-width:560px) { .q-opts { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+
+<nav class="mc-nav">
+  <a href="/" class="mc-nav__logo"><div class="mc-nav__logo-mark">Σ</div>Math Collective</a>
+  <ul class="mc-nav__links">
+    <li><a href="/arena">Arena</a></li>
+    <li><a href="/tests" style="color:var(--text);">Tests</a></li>
+    <li><a href="/dashboard">Dashboard</a></li>
+  </ul>
+  <div class="mc-nav__actions">
+    <div class="mc-nav__user" id="nav-user-pill" style="display:none;">
+      <div class="mc-nav__avatar">A</div>
+      <span class="mc-nav__username">Member</span>
+      <span style="color:var(--text-3);font-size:.75rem;margin-left:4px;cursor:pointer;" onclick="logout()">↩</span>
+    </div>
+    <a href="/login" class="btn btn-ghost btn-sm" id="nav-login-btn">Log In</a>
+  </div>
+</nav>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="testModal">
+  <div class="modal-box">
+    <div id="modal-content"></div>
+    <div class="warn-box" id="warn-box"></div>
+    <div class="modal-footer" id="modal-footer">
+      <button class="btn btn-ghost" onclick="confirmClose()">✕ Cancel</button>
+      <button class="btn btn-primary" id="submit-btn" onclick="submitTest(false)">Submit Test →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE -->
+<div class="tests-page">
+  <div style="margin-bottom:2.5rem;">
+    <div class="section-label">Scheduled Tests</div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem;">Your Tests</h1>
+    <p style="color:var(--text-2);">Complete tests assigned by your teachers. Earn XP for each correct answer. Timer auto-submits when time runs out.</p>
+  </div>
+  <div id="tests-list">
+    <div style="text-align:center;color:var(--text-3);padding:4rem 0;">Loading tests...</div>
+  </div>
+</div>
+
+<script>
+  let currentTest    = null;
+  let currentAnswers = {};
+  let timerInterval  = null;
+  let cardIntervals  = [];
+  let timeLeft       = 0;
+  let submitted      = false;
+
+  async function loadTests() {
+    const state = await getAuthState();
+    if (!state.loggedIn) { window.location.href = '/login?redirect=/tests'; return; }
+
+    const res   = await fetch('/api/quiz/scheduled');
+    const tests = await res.json();
+    const list  = document.getElementById('tests-list');
+    const now   = new Date();
+
+    cardIntervals.forEach(clearInterval);
+    cardIntervals = [];
+
+    if (!tests.length) {
+      list.innerHTML = `<div style="text-align:center;color:var(--text-3);padding:4rem 0;"><div style="font-size:3rem;margin-bottom:1rem;">📋</div><p>No tests scheduled yet. Check back soon!</p></div>`;
+      return;
+    }
+
+    list.innerHTML = tests.map(t => {
+      const start    = new Date(t.starts_at);
+      const end      = new Date(t.ends_at);
+      const isLive   = now >= start && now <= end;
+      const isPre    = now < start;
+      const isOver   = now > end;
+      const fmt = d => d.toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      const qc  = (t.challenge_ids||[]).length;
+
+      const chip   = isLive ? `<span class="chip chip-live">● LIVE</span>`
+                   : isPre  ? `<span class="chip chip-upcoming">⏱ UPCOMING</span>`
+                             : `<span class="chip chip-ended">✓ ENDED</span>`;
+
+      const action = isLive ? `<button class="btn btn-primary btn-sm" style="margin-top:.75rem;" onclick="openTest('${t.id}')">Take Test →</button>`
+                   : isPre  ? `<button class="btn btn-ghost btn-sm" style="margin-top:.75rem;" disabled>Opens ${fmt(start)}</button>`
+                             : `<button class="btn btn-ghost btn-sm" style="margin-top:.75rem;" disabled>Closed</button>`;
+
+      return `
+        <div class="test-card">
+          <div class="test-header">
+            <div style="flex:1;min-width:0;">
+              <div class="test-title">${t.title}</div>
+              ${t.description ? `<div class="test-desc">${t.description}</div>` : ''}
+              <div class="test-meta">
+                <span>📅 ${fmt(start)}</span>
+                <span>⏰ Closes ${fmt(end)}</span>
+                <span>🧩 ${qc} question${qc!==1?'s':''}</span>
+                <span>⚡ ${qc*50} XP</span>
+              </div>
+              ${isLive ? `<div class="test-countdown" id="cd-${t.id}">⏳ --</div>` : ''}
+              ${isPre  ? `<div class="test-countdown" id="cd-${t.id}" style="color:#a78bfa;">🔵 Opens in --</div>` : ''}
+            </div>
+            ${chip}
+          </div>
+          ${action}
+        </div>`;
+    }).join('');
+
+    // Start card countdowns
+    tests.forEach(t => {
+      const start = new Date(t.starts_at);
+      const end   = new Date(t.ends_at);
+      if (now >= start && now <= end) {
+        const iv = setInterval(() => tickCard(t.id, end, false), 1000);
+        cardIntervals.push(iv); tickCard(t.id, end, false);
+      } else if (now < start) {
+        const iv = setInterval(() => tickCard(t.id, start, true), 1000);
+        cardIntervals.push(iv); tickCard(t.id, start, true);
+      }
+    });
+  }
+
+  function tickCard(id, target, opening) {
+    const el   = document.getElementById(`cd-${id}`);
+    if (!el) return;
+    const diff = new Date(target) - new Date();
+    if (diff <= 0) {
+      el.textContent = opening ? '🟢 Now live! Refresh.' : '🔴 Ended';
+      if (!opening) loadTests();
+      return;
+    }
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    const parts = [...(h?[h+'h']:[]), ...(m?[m+'m']:[]), [s+'s']].join(' ');
+    el.innerHTML = opening
+      ? `🔵 Opens in <strong style="color:#a78bfa;">${parts}</strong>`
+      : `⏳ Closes in <strong style="color:#f59e0b;">${parts}</strong>`;
+  }
+
+  /* ── OPEN TEST ── */
+  async function openTest(testId) {
+    const res  = await fetch(`/api/quiz/scheduled/${testId}`);
+    const data = await res.json();
+    if (!res.ok) { alert(data.error); return; }
+
+    currentTest    = data;
+    currentAnswers = {};
+    submitted      = false;
+    timeLeft       = Math.max(0, Math.floor((new Date(data.ends_at) - new Date()) / 1000));
+
+    renderQuestions();
+    startTimer();
+    document.getElementById('testModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function renderQuestions() {
+    const t  = currentTest;
+    const qs = t.challenges || [];
+    document.getElementById('modal-content').innerHTML = `
+      <div class="test-topbar">
+        <div class="test-topbar-title">📝 ${t.title}</div>
+        <div class="test-timer" id="modal-timer">⏱ --:--</div>
+      </div>
+      <div class="progress-wrap"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+      <div style="font-size:.78rem;color:var(--text-3);margin-bottom:1.25rem;font-family:'Space Mono',monospace;">
+        ${qs.length} questions · answer all before time runs out
+      </div>
+      ${qs.map((ch, i) => `
+        <div class="q-block">
+          <div class="q-label">
+            <span>Q${i+1} · ${(ch.difficulty||'MEDIUM').toUpperCase()} · ${ch.points} XP</span>
+            <span class="ans-badge" id="ab-${ch.id}">✓ Answered</span>
+          </div>
+          <div class="q-text">${ch.question}</div>
+          <div class="q-opts">
+            ${ch.options.map((o,j) => `<button class="q-opt" id="opt-${ch.id}-${j}" onclick="pick('${ch.id}',${j})">${o}</button>`).join('')}
+          </div>
+        </div>`).join('')}
+    `;
+    document.getElementById('warn-box').style.display = 'none';
+    document.getElementById('submit-btn').style.display  = 'inline-flex';
+    document.getElementById('submit-btn').disabled = false;
+    document.getElementById('submit-btn').textContent = 'Submit Test →';
+    document.getElementById('submit-btn').onclick = () => submitTest(false);
+  }
+
+  function pick(chId, idx) {
+    if (submitted) return;
+    document.querySelectorAll(`[id^="opt-${chId}-"]`).forEach(b => b.classList.remove('chosen'));
+    document.getElementById(`opt-${chId}-${idx}`).classList.add('chosen');
+    currentAnswers[chId] = idx;
+    const ab = document.getElementById(`ab-${chId}`);
+    if (ab) ab.style.display = 'inline-flex';
+    const total = (currentTest.challenges||[]).length;
+    const done  = Object.keys(currentAnswers).length;
+    const prog  = document.getElementById('prog');
+    if (prog) prog.style.width = (done/total*100) + '%';
+    document.getElementById('warn-box').style.display = 'none';
+  }
+
+  function startTimer() {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      const el = document.getElementById('modal-timer');
+      if (!el) { clearInterval(timerInterval); return; }
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        el.textContent = '⏱ 00:00';
+        el.classList.add('urgent');
+        submitTest(true);
+        return;
+      }
+      const m = Math.floor(timeLeft/60);
+      const s = timeLeft % 60;
+      el.textContent = `⏱ ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      if (timeLeft <= 60) el.classList.add('urgent');
+    }, 1000);
+  }
+
+  async function submitTest(auto = false) {
+    if (!currentTest || submitted) return;
+
+    const qs         = currentTest.challenges || [];
+    const unanswered = qs.filter(ch => currentAnswers[ch.id] === undefined);
+
+    if (!auto && unanswered.length > 0) {
+      const warn = document.getElementById('warn-box');
+      warn.style.display = 'block';
+      warn.innerHTML = `⚠️ <strong>${unanswered.length}</strong> question${unanswered.length>1?'s':''} unanswered.
+        <button onclick="submitTest(true)"
+          style="margin-left:.75rem;background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:#fbbf24;border-radius:6px;padding:3px 12px;cursor:pointer;font-size:.8rem;font-weight:700;">
+          Submit anyway
+        </button>`;
+      return;
+    }
+
+    submitted = true;
+    clearInterval(timerInterval);
+    document.getElementById('warn-box').style.display = 'none';
+    document.querySelectorAll('.q-opt').forEach(b => b.disabled = true);
+
+    const btn = document.getElementById('submit-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+
+    const res  = await fetch(`/api/quiz/scheduled/${currentTest.id}/submit`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answers: currentAnswers }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (data.error === 'Already submitted') {
+        showScore(null);
+      } else {
+        submitted = false;
+        if (btn) { btn.disabled = false; btn.textContent = 'Submit Test →'; }
+        alert(data.error);
+      }
+      return;
+    }
+    showScore(data);
+  }
+
+  function showScore(data) {
+    if (!data) {
+      document.getElementById('modal-content').innerHTML = `
+        <div class="score-screen">
+          <div style="font-size:3rem;margin-bottom:1rem;">✅</div>
+          <h2 style="font-family:'Syne',sans-serif;">Already Submitted</h2>
+          <p style="color:var(--text-2);margin-top:.5rem;">You've already completed this test.</p>
+        </div>`;
+    } else {
+      const emoji = data.percentage>=80?'🎯':data.percentage>=50?'📈':'💪';
+      const msg   = data.percentage>=80?'Excellent!':data.percentage>=50?'Good effort!':'Keep practising!';
+      document.getElementById('modal-content').innerHTML = `
+        <div class="score-screen">
+          <div style="font-size:3.5rem;margin-bottom:.75rem;">${emoji}</div>
+          <h2 style="font-family:'Syne',sans-serif;font-size:1.5rem;margin-bottom:.5rem;">${msg}</h2>
+          <div class="score-big">${data.score} / ${data.maxScore}</div>
+          <div style="color:var(--text-2);font-size:.9rem;margin-top:.5rem;">${data.percentage}%${data.score>0?' · +'+data.score+' XP earned':''}</div>
+        </div>`;
+    }
+    document.getElementById('modal-footer').innerHTML = `<button class="btn btn-primary" onclick="closeTest()">Done ✓</button>`;
+    document.getElementById('warn-box').style.display = 'none';
+  }
+
+  function confirmClose() {
+    if (submitted) { closeTest(); return; }
+    const done = Object.keys(currentAnswers).length;
+    const total = (currentTest?.challenges||[]).length;
+    if (done > 0 && !confirm(`You answered ${done}/${total}. Leave without submitting?`)) return;
+    closeTest();
+  }
+
+  function closeTest() {
+    clearInterval(timerInterval);
+    document.getElementById('testModal').classList.remove('open');
+    document.body.style.overflow = '';
+    currentTest = null; currentAnswers = {}; submitted = false;
+    loadTests();
+  }
+
+  loadTests();
+</script>
+</body>
+</html>

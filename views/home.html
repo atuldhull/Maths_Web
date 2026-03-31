@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math Collective — Architects of Pure Logic</title>
+  <meta name="description" content="A university hub for competitive mathematics, algorithmic thinking, and the relentless pursuit of mathematical truth.">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js" defer></script>
+  <script src="/js/globe.js" defer></script>
+  <script src="/js/app.js" defer></script>
+  <style>
+    /* ── Page-specific styles ── */
+    .globe-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+      padding: 0 1.5rem 6rem;
+    }
+
+    .hero__globe-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      opacity: 0.85;
+    }
+
+    .hero__content {
+      position: relative;
+      z-index: 10;
+      max-width: 760px;
+    }
+
+    .hero__tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--purple-light);
+      border: 1px solid var(--border-acc);
+      background: var(--purple-dim);
+      padding: 6px 18px;
+      border-radius: 99px;
+      margin-bottom: 2rem;
+    }
+
+    .hero__title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(3rem, 7vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.08;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.03em;
+    }
+
+    .hero__title .line1 { color: white; display: block; }
+    .hero__title .line2 {
+      display: block;
+      background: linear-gradient(90deg, var(--purple-light), #c084fc, var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 200% auto;
+      animation: shimmer 5s linear infinite;
+    }
+
+    .hero__sub {
+      font-size: 1.1rem;
+      color: var(--text-2);
+      line-height: 1.8;
+      max-width: 520px;
+      margin: 0 auto 2.5rem;
+      font-weight: 400;
+    }
+    .hero__sub strong { color: var(--text); font-weight: 600; }
+
+    .hero__cta {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hero__scroll {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-3);
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      z-index: 10;
+    }
+    .hero__scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--purple-light), transparent);
+      animation: pulse-down 2s ease infinite;
+    }
+    @keyframes pulse-down {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50%       { opacity: 0.9; transform: scaleY(1.1); }
+    }
+
+    /* ── Math Ticker ── */
+    .ticker-wrap {
+      overflow: hidden;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 0;
+      background: rgba(124,58,237,0.04);
+    }
+    .ticker {
+      display: flex;
+      gap: 64px;
+      animation: ticker 35s linear infinite;
+      white-space: nowrap;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      color: rgba(167,139,250,0.55);
+      letter-spacing: 0.08em;
+    }
+    .ticker span { flex-shrink: 0; }
+    @keyframes ticker { 0%{ transform: translateX(0); } 100%{ transform: translateX(-50%); } }
+
+    /* ── Stats ── */
+    .stats {
+      max-width: 1100px;
+      margin: 5rem auto 0;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--purple), transparent);
+    }
+    .stat-card:hover { border-color: var(--border-acc); transform: translateY(-4px); }
+
+    .stat-num {
+      display: block;
+      font-family: 'Syne', sans-serif;
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, white, var(--purple-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
+    }
+    .stat-label {
+      display: block;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    /* ── Formula Bar ── */
+    .formula-bar {
+      max-width: 1100px;
+      margin: 1.25rem auto 0;
+      padding: 0 1.5rem;
+    }
+    .formula-inner {
+      background: var(--purple-dim);
+      border: 1px solid var(--border-acc);
+      border-radius: var(--radius-lg);
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      cursor: pointer;
+      transition: background 0.25s, border-color 0.25s;
+    }
+    .formula-inner:hover { background: rgba(124,58,237,0.18); border-color: rgba(124,58,237,0.5); }
+    .formula-label { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--purple-light); letter-spacing: 0.15em; text-transform: uppercase; flex-shrink: 0; }
+    #formula-display { font-family: 'Space Mono', monospace; font-size: 0.92rem; color: var(--text-2); flex: 1; transition: opacity 0.3s; }
+    .formula-hint { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--text-3); flex-shrink: 0; }
+
+    /* ── Features ── */
+    .features {
+      max-width: 1100px;
+      margin: 5rem auto 0;
+      padding: 0 1.5rem;
+    }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--purple-light);
+      margin-bottom: 0.75rem;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.75rem;
+    }
+
+    .section-sub {
+      color: var(--text-2);
+      font-size: 1.05rem;
+      max-width: 520px;
+      line-height: 1.7;
+    }
+
+    .features__header { margin-bottom: 3rem; }
+
+    .features__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    }
+    .feature-card:hover {
+      border-color: var(--border-acc);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--purple-dim);
+      border: 1px solid var(--border-acc);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .feature-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      letter-spacing: -0.02em;
+    }
+
+    .feature-card p {
+      font-size: 0.88rem;
+      color: var(--text-2);
+      line-height: 1.65;
+    }
+
+    /* ── CTA Banner ── */
+    .cta-banner {
+      max-width: 1100px;
+      margin: 5rem auto 0;
+      padding: 0 1.5rem;
+    }
+
+    .cta-inner {
+      background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(59,130,246,0.1));
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: var(--radius-xl);
+      padding: 4rem 3rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-inner::before {
+      content: 'Σ';
+      position: absolute;
+      top: -20px;
+      left: 5%;
+      font-family: 'Space Mono', monospace;
+      font-size: 12rem;
+      color: rgba(124,58,237,0.06);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .cta-inner h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+      letter-spacing: -0.03em;
+    }
+
+    .cta-inner p {
+      color: var(--text-2);
+      font-size: 1.05rem;
+      max-width: 480px;
+      margin: 0 auto 2rem;
+      line-height: 1.7;
+    }
+
+    .cta-inner .btn-group {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+      .features__grid { grid-template-columns: 1fr; }
+      .cta-inner { padding: 2.5rem 1.5rem; }
+    }
+
+    @media (max-width: 480px) {
+      .stats { grid-template-columns: 1fr; }
+      .formula-inner { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<nav class="mc-nav">
+  <a href="/" class="mc-nav__logo">
+    <div class="mc-nav__logo-mark">Σ</div>
+    Math Collective
+  </a>
+
+  <ul class="mc-nav__links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/events">Events</a></li>
+    <li><a href="/contact">Contact</a></li>
+    <li><a href="/gallery">Gallery</a></li>
+  </ul>
+
+  <div class="mc-nav__actions">
+    <!-- Shown when logged in -->
+    <div class="mc-nav__user" id="nav-user-pill">
+      <div class="mc-nav__avatar">A</div>
+      <span class="mc-nav__username">Member</span>
+      <span style="color:var(--text-3);font-size:0.75rem;margin-left:4px;cursor:pointer;" onclick="logout()">↩</span>
+    </div>
+
+    <!-- Shown when logged out -->
+    <a href="/login" class="btn btn-ghost btn-sm" id="nav-login-btn">Log In</a>
+    <a href="/register" class="btn btn-primary btn-sm">Join Free</a>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <!-- Globe Background -->
+  <div class="hero__globe-wrap">
+    <canvas class="globe-canvas" id="globeCanvas"></canvas>
+  </div>
+
+  <div class="hero__content">
+    <div class="hero__tag fade-in-1">
+      <span>✦</span>
+      Est. 2026 · BMSIT Math Collective
+      <span>✦</span>
+    </div>
+
+    <h1 class="hero__title fade-in-2">
+      <span class="line1">Architects of</span>
+      <span class="line2">Pure Logic</span>
+    </h1>
+
+    <p class="hero__sub fade-in-3">
+      A university hub for <strong>competitive mathematics</strong>,
+      algorithmic thinking, and the relentless pursuit of
+      <strong>mathematical truth</strong>.
+    </p>
+
+    <div class="hero__cta fade-in-4">
+      <button class="btn btn-primary btn-lg" onclick="goToArena()">⚔ Enter The Arena</button>
+      <a href="/about" class="btn btn-ghost btn-lg">Explore More →</a>
+    </div>
+  </div>
+
+  <div class="hero__scroll">
+    <div class="hero__scroll-line"></div>
+    Scroll
+  </div>
+</section>
+
+<!-- ═══════════ TICKER ═══════════ -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span>e^(iπ) + 1 = 0</span><span>∫₀^∞ e^(−x²) dx = √π/2</span>
+    <span>∑(1/n²) = π²/6</span><span>a² + b² = c²</span>
+    <span>F(n) = F(n−1) + F(n−2)</span><span>P(A|B) = P(B|A)·P(A)/P(B)</span>
+    <span>∇²φ = ρ/ε₀</span><span>d/dx[eˣ] = eˣ</span><span>φ = (1+√5)/2</span>
+    <span>e^(iπ) + 1 = 0</span><span>∫₀^∞ e^(−x²) dx = √π/2</span>
+    <span>∑(1/n²) = π²/6</span><span>a² + b² = c²</span>
+    <span>F(n) = F(n−1) + F(n−2)</span><span>P(A|B) = P(B|A)·P(A)/P(B)</span>
+    <span>∇²φ = ρ/ε₀</span><span>d/dx[eˣ] = eˣ</span><span>φ = (1+√5)/2</span>
+  </div>
+</div>
+
+<!-- ═══════════ STATS ═══════════ -->
+<div class="stats reveal">
+  <div class="stat-card">
+    <span class="stat-num">239</span>
+    <span class="stat-label">Active Members</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-num" id="stat-challenges">—</span>
+    <span class="stat-label">Live Challenges</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-num">∞</span>
+    <span class="stat-label">Problems to Solve</span>
+  </div>
+</div>
+
+<!-- ═══════════ FORMULA CYCLER ═══════════ -->
+<div class="formula-bar reveal">
+  <div class="formula-inner" onclick="cycleFormula('formula-display')">
+    <span class="formula-label">// Formula of the moment</span>
+    <span id="formula-display">e^(iπ) + 1 = 0  —  Euler's Identity</span>
+    <span class="formula-hint">tap to cycle →</span>
+  </div>
+</div>
+
+<!-- ═══════════ FEATURES ═══════════ -->
+<section class="features reveal">
+  <div class="features__header">
+    <div class="section-label">What We Offer</div>
+    <h2 class="section-title">Built for Math Minds</h2>
+    <p class="section-sub">
+      From weekly challenges to collaborative problem-solving — every tool
+      you need to sharpen your mathematical edge.
+    </p>
+  </div>
+
+  <div class="features__grid">
+    <div class="feature-card">
+      <div class="feature-icon">⚔</div>
+      <h3>The Arena</h3>
+      <p>Compete in timed, AI-generated math challenges. Earn XP, climb the leaderboard, and prove your problem-solving prowess.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏆</div>
+      <h3>Live Leaderboard</h3>
+      <p>Real-time rankings updated with every submission. See where you stand against the best mathematical minds on campus.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <h3>AI-Powered Questions</h3>
+      <p>Challenges generated by advanced AI, covering algebra, calculus, number theory, combinatorics, and more.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <h3>Events & Workshops</h3>
+      <p>Weekly workshops, guest lectures, and math olympiad prep sessions — curated for every level of expertise.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📈</div>
+      <h3>Progress Tracking</h3>
+      <p>Monitor your XP growth, submission history, accuracy rates, and personal milestones on your dashboard.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌐</div>
+      <h3>Community</h3>
+      <p>Connect with fellow math enthusiasts. Share solutions, debate approaches, and learn from the community.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CTA BANNER ═══════════ -->
+<div class="cta-banner reveal">
+  <div class="cta-inner">
+    <h2>Ready to Enter the Arena?</h2>
+    <p>Join 239+ members already solving challenges, earning XP, and pushing their mathematical limits.</p>
+    <div class="btn-group">
+      <a href="/register" class="btn btn-primary btn-lg">Get Started Free</a>
+      <a href="/about" class="btn btn-ghost btn-lg">Learn More</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="mc-footer">
+  <div class="mc-footer__grid">
+    <div class="mc-footer__brand">
+      <div class="mc-nav__logo" style="margin-bottom:0.75rem;">
+        <div class="mc-nav__logo-mark">Σ</div>
+        Math Collective
+      </div>
+      <p>A university hub for competitive mathematics, algorithmic thinking, and the relentless pursuit of mathematical truth.</p>
+    </div>
+    <div class="mc-footer__col">
+      <h4>Navigate</h4>
+      <a href="/">Home</a>
+      <a href="/about">About</a>
+      <a href="/events">Events</a>
+      <a href="/contact">Contact</a>
+    </div>
+    <div class="mc-footer__col">
+      <h4>Platform</h4>
+      <a href="/arena">The Arena</a>
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+      <a href="/dashboard">Dashboard</a>
+    </div>
+    <div class="mc-footer__col">
+      <h4>Legal</h4>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+    </div>
+  </div>
+  <div class="mc-footer__bottom">
+    <span>© 2026 Math Collective · BMSIT. All rights reserved.</span>
+    <span style="font-family:'Space Mono',monospace;font-size:0.72rem;">e^(iπ) + 1 = 0</span>
+  </div>
+</footer>
+
+<script>
+  // Init globe once Three.js + globe.js are loaded
+  window.addEventListener('load', () => {
+    if (typeof initGlobe === 'function') initGlobe('globeCanvas');
+  });
+
+  // Load stats
+  async function loadStats() {
+    try {
+      const res = await fetch('/api/challenge/all');
+      const data = await res.json();
+      const el = document.getElementById('stat-challenges');
+      if (el && Array.isArray(data)) el.textContent = data.length;
+    } catch {}
+  }
+  loadStats();
+
+  // Start formula cycler
+  document.addEventListener('DOMContentLoaded', () => startFormulaCycle('formula-display', 5000));
+</script>
+</body>
+</html>

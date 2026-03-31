@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Quiz | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; }
+
+    .phase { display: none; width: 100%; max-width: 560px; }
+    .phase.active { display: block; }
+
+    .join-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem; text-align: center; }
+    .join-card h1 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .code-input { font-family: 'Space Mono', monospace; font-size: 2rem; text-align: center; letter-spacing: 0.2em; text-transform: uppercase; padding: 1rem; }
+
+    .lobby-card { text-align: center; }
+    .waiting-anim { font-size: 3rem; animation: bounce 1s infinite; margin-bottom: 1rem; }
+    @keyframes bounce { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
+    .room-badge { font-family: 'Space Mono', monospace; font-size: 0.8rem; background: var(--surface); border: 1px solid var(--border); padding: 6px 16px; border-radius: 99px; color: var(--text-2); margin-bottom: 1rem; display: inline-block; }
+
+    /* Question */
+    .q-card { background: var(--surface); border: 1px solid var(--border-acc); border-radius: 16px; padding: 2rem; margin-bottom: 1.25rem; }
+    .q-num { font-family: 'Space Mono', monospace; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--purple-light); margin-bottom: 0.75rem; }
+    .q-text { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; line-height: 1.4; margin-bottom: 1.5rem; }
+    .timer-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; margin-bottom: 1.5rem; }
+    .timer-fill { height: 100%; background: var(--purple); border-radius: 99px; transition: width 1s linear; }
+
+    .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .opt-btn { padding: 1.25rem; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; border: none; transition: transform 0.1s, opacity 0.2s; color: white; }
+    .opt-btn:hover:not(:disabled) { transform: scale(1.02); }
+    .opt-btn:active:not(:disabled) { transform: scale(0.98); }
+    .opt-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .opt-A { background: #ef4444; }
+    .opt-B { background: #3b82f6; }
+    .opt-C { background: #f59e0b; }
+    .opt-D { background: #10b981; }
+    .opt-btn.selected { border: 3px solid white; }
+    .opt-btn.correct  { outline: 4px solid #4ade80; }
+    .opt-btn.wrong    { outline: 4px solid #f87171; opacity: 0.6; }
+
+    /* Result */
+    .result-big { font-size: 5rem; text-align: center; margin: 1rem 0; animation: pop 0.5s ease; }
+    @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+    .xp-flash { background: linear-gradient(135deg, var(--purple), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; text-align: center; }
+
+    /* Podium */
+    .final-podium { text-align: center; }
+    .lb-item { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 0.75rem; }
+
+    @media (max-width: 480px) { .opt-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- ══ JOIN ══ -->
+<div class="phase active" id="phase-join">
+  <div class="join-card">
+    <div style="font-size:3rem;margin-bottom:1rem;">⚔</div>
+    <h1>Join Live Quiz</h1>
+    <p style="color:var(--text-2);margin-bottom:2rem;">Enter the room code from your teacher.</p>
+    <input class="form-input code-input" type="text" id="code-input" placeholder="XXXXXX" maxlength="6" style="margin-bottom:1rem;">
+    <input class="form-input" type="text" id="name-input" placeholder="Your name" style="margin-bottom:1.25rem;">
+    <div id="join-error" style="color:#f87171;font-size:0.85rem;margin-bottom:0.75rem;display:none;"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:1.1rem;" onclick="joinSession()">
+      Join →
+    </button>
+  </div>
+</div>
+
+<!-- ══ LOBBY ══ -->
+<div class="phase" id="phase-lobby">
+  <div class="lobby-card">
+    <div class="waiting-anim">⏳</div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:0.5rem;" id="lobby-name">Loading...</h2>
+    <div class="room-badge" id="lobby-room-badge">Room —</div>
+    <p style="color:var(--text-2);">Waiting for teacher to start the quiz...</p>
+    <div id="lobby-players-count" style="font-family:'Space Mono',monospace;font-size:0.82rem;color:var(--text-3);margin-top:0.5rem;">0 players joined</div>
+  </div>
+</div>
+
+<!-- ══ QUESTION ══ -->
+<div class="phase" id="phase-question" style="max-width:600px;">
+  <div class="q-card">
+    <div class="q-num" id="q-num">Q1 / 10</div>
+    <div class="timer-bar"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+    <div class="q-text" id="q-text"></div>
+    <div class="opt-grid" id="opt-grid"></div>
+  </div>
+  <div id="waiting-msg" style="text-align:center;color:var(--text-2);font-size:0.9rem;display:none;">
+    ✓ Answer submitted — waiting for others...
+  </div>
+</div>
+
+<!-- ══ ANSWER RESULT ══ -->
+<div class="phase" id="phase-result">
+  <div style="text-align:center;">
+    <div class="result-big" id="result-emoji">—</div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;" id="result-text">—</h2>
+    <div class="xp-flash" id="result-xp" style="margin:0.5rem 0;"></div>
+    <p style="color:var(--text-2);font-size:0.88rem;margin-top:1rem;" id="result-solution"></p>
+    <p style="color:var(--text-3);font-size:0.82rem;margin-top:1.5rem;">Waiting for next question...</p>
+  </div>
+</div>
+
+<!-- ══ FINAL ══ -->
+<div class="phase" id="phase-final">
+  <div style="text-align:center;margin-bottom:2rem;">
+    <div style="font-size:4rem;margin-bottom:1rem;">🏆</div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;">Quiz Complete!</h1>
+  </div>
+  <div id="final-lb"></div>
+  <div style="text-align:center;margin-top:1.5rem;">
+    <a href="/arena" class="btn btn-primary">⚔ Go to Arena</a>
+  </div>
+</div>
+
+
+<script>
+  const socket = io();
+  let myName     = '';
+  let roomCode   = '';
+  let myScore    = 0;
+  let startTime  = null;
+  let timerInt   = null;
+  let timeLimit  = 30;
+  let hasAnswered = false;
+
+  async function init() {
+    const state = await getAuthState();
+    if (state.loggedIn) {
+      document.getElementById('name-input').value = state.user.name?.split(' ')[0] || '';
+    }
+    // Check URL params
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('code')) document.getElementById('code-input').value = params.get('code').toUpperCase();
+  }
+
+  function joinSession() {
+    const code = document.getElementById('code-input').value.trim().toUpperCase();
+    const name = document.getElementById('name-input').value.trim();
+    const errEl = document.getElementById('join-error');
+
+    if (!code || code.length < 4) { errEl.style.display='block'; errEl.textContent='Enter a valid room code.'; return; }
+    if (!name) { errEl.style.display='block'; errEl.textContent='Enter your name.'; return; }
+
+    errEl.style.display = 'none';
+    myName   = name;
+    roomCode = code;
+    socket.emit("join_session", { code, playerName: name });
+  }
+
+  socket.on("join_error", (msg) => {
+    const errEl = document.getElementById('join-error');
+    errEl.style.display = 'block';
+    errEl.textContent   = msg;
+  });
+
+  socket.on("joined", ({ code, playerName }) => {
+    document.getElementById('lobby-name').textContent        = `You're in, ${playerName}!`;
+    document.getElementById('lobby-room-badge').textContent  = `Room ${code}`;
+    showPhase('lobby');
+  });
+
+  socket.on("lobby_update", ({ players, count }) => {
+    document.getElementById('lobby-players-count').textContent = `${count} player${count!==1?'s':''} joined`;
+  });
+
+  socket.on("question_start", ({ questionNumber, total, question, options, timeLimit: tl }) => {
+    hasAnswered = false;
+    timeLimit   = tl;
+    startTime   = Date.now();
+
+    document.getElementById('q-num').textContent  = `Q${questionNumber} / ${total}`;
+    document.getElementById('q-text').textContent = question;
+    document.getElementById('waiting-msg').style.display = 'none';
+
+    const colors = ['opt-A','opt-B','opt-C','opt-D'];
+    document.getElementById('opt-grid').innerHTML = options.map((opt, i) => `
+      <button class="opt-btn ${colors[i]}" id="student-opt-${i}" onclick="submitAnswer(${i})">
+        ${opt}
+      </button>
+    `).join('');
+
+    // Timer bar
+    clearInterval(timerInt);
+    document.getElementById('timer-fill').style.transition = 'none';
+    document.getElementById('timer-fill').style.width = '100%';
+    setTimeout(() => {
+      document.getElementById('timer-fill').style.transition = `width ${timeLimit}s linear`;
+      document.getElementById('timer-fill').style.width = '0%';
+    }, 50);
+
+    timerInt = setInterval(() => {
+      const elapsed = (Date.now() - startTime) / 1000;
+      if (elapsed >= timeLimit) clearInterval(timerInt);
+    }, 1000);
+
+    showPhase('question');
+  });
+
+  function submitAnswer(index) {
+    if (hasAnswered) return;
+    hasAnswered = true;
+
+    const timeTaken = (Date.now() - startTime) / 1000;
+    socket.emit("submit_answer", { code: roomCode, answerIndex: index, timeTaken });
+
+    // Dim all options, highlight selected
+    document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+    document.getElementById('student-opt-' + index)?.classList.add('selected');
+    document.getElementById('waiting-msg').style.display = 'block';
+  }
+
+  socket.on("answer_received", () => {
+    // Already handled in submitAnswer
+  });
+
+  socket.on("question_result", ({ correctIndex, solution, podium }) => {
+    clearInterval(timerInt);
+
+    // Show correct/wrong on buttons
+    ['student-opt-0','student-opt-1','student-opt-2','student-opt-3'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (i === correctIndex) el.classList.add('correct');
+      else el.classList.add('wrong');
+    });
+
+    setTimeout(() => {
+      // Find my score from podium
+      const me = podium.find(p => p.name === myName);
+      myScore = me?.score || myScore;
+
+      const wasCorrect = hasAnswered && document.getElementById('student-opt-' + correctIndex)?.classList.contains('selected');
+
+      document.getElementById('result-emoji').textContent = wasCorrect ? '✅' : '❌';
+      document.getElementById('result-text').textContent  = wasCorrect ? 'Correct!' : 'Incorrect';
+      document.getElementById('result-xp').textContent    = wasCorrect ? `+XP earned` : '';
+      document.getElementById('result-solution').textContent = solution ? `💡 ${solution}` : '';
+
+      showPhase('result');
+    }, 1500);
+  });
+
+  socket.on("quiz_finished", ({ leaderboard }) => {
+    const medals = ['🥇','🥈','🥉'];
+    document.getElementById('final-lb').innerHTML = leaderboard.map((p, i) => `
+      <div class="lb-item" style="${p.name===myName?'border-color:var(--purple);background:var(--purple-dim);':''}">
+        <span style="font-size:1.3rem;">${medals[i]||'#'+(i+1)}</span>
+        <div style="flex:1;font-weight:${p.name===myName?'800':'600'};">${p.name}${p.name===myName?' (you)':''}</div>
+        <div style="font-family:'Space Mono',monospace;color:var(--purple-light);">${p.score} pts</div>
+      </div>
+    `).join('');
+    showPhase('final');
+  });
+
+  socket.on("session_ended", () => {
+    showPhase('final');
+    document.getElementById('final-lb').innerHTML = '<div style="text-align:center;color:var(--text-2);padding:2rem;">Session ended by teacher.</div>';
+  });
+
+  function showPhase(name) {
+    document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+    document.getElementById('phase-' + name).classList.add('active');
+  }
+
+  init();
+</script>
+</body>
+</html>

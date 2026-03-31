@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gallery | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #080808;
+      color: #f0f0f0;
+      font-family: 'Crimson Text', Georgia, serif;
+      overflow-x: hidden;
+    }
+
+    .page-title {
+      text-align: center;
+      padding: 3rem 1rem 0.5rem;
+      font-family: 'Cinzel', serif;
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: #f0e6d3;
+    }
+    .page-subtitle {
+      text-align: center;
+      font-family: 'Crimson Text', serif;
+      font-style: italic;
+      color: #666;
+      font-size: 1rem;
+      margin-bottom: 3rem;
+      letter-spacing: 1px;
+    }
+
+    .section-treasure {
+      margin: 0 auto 4rem;
+      max-width: 1300px;
+      padding: 3rem 2rem 4rem;
+      border-radius: 24px;
+      background-color: #1c0e00;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='none'/%3E%3Cpath d='M0 40 Q10 30 20 40 Q30 50 40 40 Q50 30 60 40 Q70 50 80 40' stroke='%238B6340' stroke-width='0.8' fill='none' opacity='0.18'/%3E%3Cpath d='M0 20 Q10 10 20 20 Q30 30 40 20 Q50 10 60 20 Q70 30 80 20' stroke='%238B6340' stroke-width='0.5' fill='none' opacity='0.1'/%3E%3Cpath d='M0 60 Q10 50 20 60 Q30 70 40 60 Q50 50 60 60 Q70 70 80 60' stroke='%238B6340' stroke-width='0.5' fill='none' opacity='0.1'/%3E%3Ccircle cx='40' cy='40' r='1.2' fill='%238B6340' opacity='0.25'/%3E%3Ccircle cx='0' cy='0' r='1' fill='%238B6340' opacity='0.15'/%3E%3Ccircle cx='80' cy='80' r='1' fill='%238B6340' opacity='0.15'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect width='200' height='200' fill='none'/%3E%3Ccircle cx='100' cy='100' r='80' fill='none' stroke='%23704020' stroke-width='0.4' opacity='0.08' stroke-dasharray='4 6'/%3E%3Ccircle cx='100' cy='100' r='50' fill='none' stroke='%23704020' stroke-width='0.3' opacity='0.06' stroke-dasharray='3 5'/%3E%3C/svg%3E");
+      border: 1.5px solid #5c3010;
+      position: relative;
+      overflow: hidden;
+    }
+    .section-treasure::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 15% 20%, rgba(180,120,40,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 80%, rgba(120,70,20,0.08) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 50%, rgba(90,50,10,0.04) 0%, transparent 70%);
+      pointer-events: none;
+      border-radius: 22px;
+    }
+    .section-treasure .corner { position: absolute; width: 60px; height: 60px; opacity: 0.25; }
+    .section-treasure .corner-tl { top: 12px; left: 12px; }
+    .section-treasure .corner-tr { top: 12px; right: 12px; transform: scaleX(-1); }
+    .section-treasure .corner-bl { bottom: 12px; left: 12px; transform: scaleY(-1); }
+    .section-treasure .corner-br { bottom: 12px; right: 12px; transform: scale(-1,-1); }
+    .treasure-header { position: relative; text-align: center; margin-bottom: 2.5rem; z-index: 2; }
+    .treasure-header .section-label { font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 5px; text-transform: uppercase; color: #a0632a; margin-bottom: 0.5rem; }
+    .treasure-header .section-title { font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 700; color: #e8c070; letter-spacing: 3px; text-shadow: 0 0 40px rgba(200,150,50,0.3); }
+    .treasure-header .section-sub { font-family: 'Crimson Text', serif; font-size: 1rem; color: #8a5a30; font-style: italic; margin-top: 0.4rem; }
+    .treasure-header .title-ornament { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 0.8rem 0; }
+    .treasure-header .title-ornament span { display: block; height: 1px; width: 80px; background: linear-gradient(90deg, transparent, #8B6340); }
+    .treasure-header .title-ornament span:last-child { background: linear-gradient(90deg, #8B6340, transparent); }
+    .treasure-header .title-ornament .diamond { width: 8px; height: 8px; background: #c8902a; transform: rotate(45deg); }
+    .treasure-deco { position: absolute; z-index: 1; pointer-events: none; }
+    .compass-wrap { top: 80px; right: 40px; opacity: 0.55; }
+    .magnify-wrap { bottom: 60px; left: 50px; opacity: 0.4; }
+    .map-container { position: relative; width: 100%; min-height: 1100px; z-index: 2; }
+    .map-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+    .map-node { position: absolute; z-index: 2; transform: translate(-50%, -50%); }
+    .map-node .photo-frame { position: relative; border-radius: 10px; overflow: hidden; border: 3px solid #8B6340; box-shadow: 0 4px 20px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(200,160,80,0.2); transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; background: #2a1500; }
+    .map-node .photo-frame:hover { transform: scale(1.06) rotate(0deg) !important; box-shadow: 0 8px 32px rgba(200,140,40,0.5); border-color: #e8c070; z-index: 10; }
+    .map-node .photo-frame img, .map-node .photo-frame video { display: block; object-fit: cover; }
+    .map-node .pin { position: absolute; top: -18px; left: 50%; width: 12px; height: 12px; background: #e8c070; border-radius: 50% 50% 50% 0; transform: translateX(-50%) rotate(-45deg); box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+    .map-node .label { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 1px; color: #a07040; white-space: nowrap; text-transform: uppercase; }
+    .map-node.video-node .photo-frame { border-color: #c06010; border-style: dashed; }
+    .map-node:nth-child(odd) .photo-frame { transform: rotate(-1.5deg); }
+    .map-node:nth-child(even) .photo-frame { transform: rotate(1.2deg); }
+    .map-node:nth-child(3n) .photo-frame { transform: rotate(-0.8deg); }
+
+    .section-inauguration {
+      margin: 0 auto 4rem;
+      max-width: 1300px;
+      padding: 3rem 2rem 4rem;
+      border-radius: 24px;
+      background-color: #0d0818;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Ccircle cx='60' cy='60' r='50' fill='none' stroke='%23c040e0' stroke-width='0.5' opacity='0.12' stroke-dasharray='3 4'/%3E%3Ccircle cx='60' cy='60' r='35' fill='none' stroke='%23ff8000' stroke-width='0.5' opacity='0.1' stroke-dasharray='2 3'/%3E%3Ccircle cx='60' cy='60' r='20' fill='none' stroke='%23c040e0' stroke-width='0.5' opacity='0.12' stroke-dasharray='3 4'/%3E%3Ccircle cx='60' cy='60' r='8' fill='none' stroke='%23ff8000' stroke-width='0.4' opacity='0.1'/%3E%3Cline x1='60' y1='10' x2='60' y2='110' stroke='%23ff8000' stroke-width='0.3' opacity='0.06'/%3E%3Cline x1='10' y1='60' x2='110' y2='60' stroke='%23ff8000' stroke-width='0.3' opacity='0.06'/%3E%3Cline x1='25' y1='25' x2='95' y2='95' stroke='%23c040e0' stroke-width='0.3' opacity='0.06'/%3E%3Cline x1='95' y1='25' x2='25' y2='95' stroke='%23c040e0' stroke-width='0.3' opacity='0.06'/%3E%3Ccircle cx='60' cy='10' r='2.5' fill='%23ff8000' opacity='0.2'/%3E%3Ccircle cx='60' cy='110' r='2.5' fill='%23ff8000' opacity='0.2'/%3E%3Ccircle cx='10' cy='60' r='2.5' fill='%23ff8000' opacity='0.2'/%3E%3Ccircle cx='110' cy='60' r='2.5' fill='%23ff8000' opacity='0.2'/%3E%3Ccircle cx='25' cy='25' r='2' fill='%23c040e0' opacity='0.18'/%3E%3Ccircle cx='95' cy='95' r='2' fill='%23c040e0' opacity='0.18'/%3E%3Ccircle cx='95' cy='25' r='2' fill='%23c040e0' opacity='0.18'/%3E%3Ccircle cx='25' cy='95' r='2' fill='%23c040e0' opacity='0.18'/%3E%3C/svg%3E");
+      border: 1.5px solid #3a1060;
+      position: relative;
+      overflow: hidden;
+    }
+    .section-inauguration::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 10% 10%, rgba(200,50,220,0.07) 0%, transparent 40%), radial-gradient(ellipse at 90% 90%, rgba(255,100,0,0.07) 0%, transparent 40%), radial-gradient(ellipse at 50% 50%, rgba(150,30,200,0.04) 0%, transparent 60%); pointer-events: none; }
+    .floral-border-top, .floral-border-bottom { position: absolute; left: 0; right: 0; height: 50px; z-index: 1; pointer-events: none; }
+    .floral-border-top { top: 0; }
+    .floral-border-bottom { bottom: 0; transform: scaleY(-1); }
+    .inaug-header { position: relative; text-align: center; margin-bottom: 2.5rem; z-index: 2; padding-top: 1rem; }
+    .inaug-header .section-label { font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 5px; text-transform: uppercase; color: #9040c0; margin-bottom: 0.5rem; }
+    .inaug-header .section-title { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: #f0c0ff; letter-spacing: 2px; text-shadow: 0 0 40px rgba(200,80,250,0.3); }
+    .inaug-header .section-sub { font-family: 'Crimson Text', serif; font-size: 1rem; color: #6b3fa0; font-style: italic; margin-top: 0.4rem; }
+    .inaug-header .title-ornament { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0.8rem 0; }
+    .inaug-header .title-ornament .line { display: block; height: 1px; width: 70px; background: linear-gradient(90deg, transparent, #9040c0); }
+    .inaug-header .title-ornament .line:last-child { background: linear-gradient(90deg, #9040c0, transparent); }
+    .inaug-header .title-ornament .petal-center { width: 10px; height: 10px; background: #c060e0; border-radius: 50%; box-shadow: 0 0 8px rgba(200,80,250,0.5); }
+    .inaug-gallery-wrap { position: relative; z-index: 2; }
+    .inaug-gallery-wrap .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+    .inaug-photo-wrap { position: relative; }
+    .inaug-photo-wrap .photo-inner { border-radius: 14px; overflow: hidden; border: 1.5px solid #4a1a70; transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; background: #180830; position: relative; }
+    .inaug-photo-wrap .photo-inner::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(200,80,250,0.06) 0%, transparent 50%); z-index: 1; pointer-events: none; }
+    .inaug-photo-wrap .photo-inner:hover { transform: scale(1.04); box-shadow: 0 8px 30px rgba(180,60,230,0.45); border-color: #c060e0; }
+    .inaug-photo-wrap .photo-inner img, .inaug-photo-wrap .photo-inner video { display: block; width: 100%; height: 200px; object-fit: cover; }
+    .inaug-photo-wrap .photo-inner .flower-corner { position: absolute; z-index: 2; pointer-events: none; }
+    .inaug-photo-wrap .photo-inner .flower-tl { top: 4px; left: 4px; }
+    .inaug-photo-wrap .photo-inner .flower-tr { top: 4px; right: 4px; transform: scaleX(-1); }
+    .inaug-side-flower { position: absolute; z-index: 1; pointer-events: none; opacity: 0.35; }
+    .inaug-side-flower.left { left: -10px; top: 50%; transform: translateY(-50%); }
+    .inaug-side-flower.right { right: -10px; top: 50%; transform: translateY(-50%) scaleX(-1); }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+    .gallery img { width: 100%; height: 200px; object-fit: cover; border-radius: 12px; cursor: pointer; }
+    .gallery video { width: 100%; height: 200px; object-fit: cover; border-radius: 12px; }
+
+    #lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.94); z-index: 9999; align-items: center; justify-content: center; }
+    #lightbox.active { display: flex; }
+    #lightbox img { max-width: 90vw; max-height: 88vh; border-radius: 12px; object-fit: contain; box-shadow: 0 0 80px rgba(200,150,50,0.2); }
+    #lightbox-close { position: absolute; top: 20px; right: 28px; font-size: 2rem; color: #fff; cursor: pointer; background: none; border: none; opacity: 0.6; font-family: sans-serif; }
+    #lightbox-close:hover { opacity: 1; }
+    .page-footer { text-align: center; padding: 2rem 1rem 3rem; color: #333; font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 2px; }
+    @keyframes float-compass { 0%, 100% { transform: rotate(0deg) translateY(0); } 50% { transform: rotate(3deg) translateY(-6px); } }
+    .compass-float { animation: float-compass 6s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+
+<nav class="mc-nav">
+  <a href="/" class="mc-nav__logo">
+    <div class="mc-nav__logo-mark">Σ</div>
+    Math Collective
+  </a>
+  <ul class="mc-nav__links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about">About</a></li>
+    <li><a href="/events">Events</a></li>
+    <li><a href="/gallery" style="color:#f0e6d3;">Gallery</a></li>
+    <li><a href="/contact">Contact</a></li>
+  </ul>
+  <div class="mc-nav__actions">
+    <div class="mc-nav__user" id="nav-user-pill">
+      <div class="mc-nav__avatar">A</div>
+      <span class="mc-nav__username">Member</span>
+      <span style="color:var(--text-3);font-size:0.75rem;margin-left:4px;cursor:pointer;" onclick="logout()">↩</span>
+    </div>
+    <a href="/login" class="btn btn-ghost btn-sm" id="nav-login-btn">Log In</a>
+    <a href="/register" class="btn btn-primary btn-sm">Join Free</a>
+  </div>
+</nav>
+
+<h1 class="page-title">Club Gallery</h1>
+<p class="page-subtitle">Memories etched in time</p>
+
+<div class="section-treasure">
+  <svg class="corner corner-tl" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 55 L5 5 L55 5" stroke="#8B6340" stroke-width="2"/><path d="M5 5 L20 20" stroke="#8B6340" stroke-width="1" opacity="0.5"/><circle cx="5" cy="5" r="3" fill="#8B6340"/><path d="M10 5 Q12 2 14 5 Q16 8 18 5" stroke="#8B6340" stroke-width="0.8" fill="none"/></svg>
+  <svg class="corner corner-tr" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 55 L5 5 L55 5" stroke="#8B6340" stroke-width="2"/><path d="M5 5 L20 20" stroke="#8B6340" stroke-width="1" opacity="0.5"/><circle cx="5" cy="5" r="3" fill="#8B6340"/><path d="M10 5 Q12 2 14 5 Q16 8 18 5" stroke="#8B6340" stroke-width="0.8" fill="none"/></svg>
+  <svg class="corner corner-bl" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 55 L5 5 L55 5" stroke="#8B6340" stroke-width="2"/><circle cx="5" cy="5" r="3" fill="#8B6340"/></svg>
+  <svg class="corner corner-br" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 55 L5 5 L55 5" stroke="#8B6340" stroke-width="2"/><circle cx="5" cy="5" r="3" fill="#8B6340"/></svg>
+
+  <div class="treasure-deco compass-wrap compass-float">
+    <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="46" stroke="#8B6340" stroke-width="1.5"/><circle cx="50" cy="50" r="40" stroke="#8B6340" stroke-width="0.6" stroke-dasharray="3 4"/><circle cx="50" cy="50" r="5" fill="#c8902a"/><text x="50" y="14" text-anchor="middle" fill="#e8c070" font-size="10" font-family="Cinzel, serif" font-weight="700">N</text><text x="50" y="92" text-anchor="middle" fill="#a07040" font-size="8" font-family="Cinzel, serif">S</text><text x="90" y="53" text-anchor="middle" fill="#a07040" font-size="8" font-family="Cinzel, serif">E</text><text x="10" y="53" text-anchor="middle" fill="#a07040" font-size="8" font-family="Cinzel, serif">W</text><polygon points="50,18 47,50 50,45 53,50" fill="#e8c070"/><polygon points="50,82 47,50 50,55 53,50" fill="#704020"/></svg>
+  </div>
+
+  <div class="treasure-deco magnify-wrap">
+    <svg width="80" height="90" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="26" stroke="#8B6340" stroke-width="3"/><circle cx="32" cy="32" r="18" stroke="#8B6340" stroke-width="1" opacity="0.4"/><line x1="51" y1="51" x2="74" y2="80" stroke="#8B6340" stroke-width="5" stroke-linecap="round"/></svg>
+  </div>
+
+  <div class="treasure-header">
+    <p class="section-label">Event Memories</p>
+    <div class="title-ornament">
+      <span></span><div class="diamond"></div>
+      <h2 class="section-title">Treasure Hunt</h2>
+      <div class="diamond"></div><span></span>
+    </div>
+    <p class="section-sub">Follow the path — every picture marks an X</p>
+  </div>
+
+  <div class="map-container" id="map-container">
+    <svg class="map-svg" id="map-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+</div>
+
+<div class="section-inauguration">
+  <svg class="floral-border-top" viewBox="0 0 1200 50" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs><g id="flower-sm"><circle cx="0" cy="0" r="3" fill="#c060e0" opacity="0.6"/><ellipse cx="0" cy="-6" rx="2" ry="4" fill="#e080ff" opacity="0.4" transform="rotate(0)"/><ellipse cx="0" cy="-6" rx="2" ry="4" fill="#e080ff" opacity="0.4" transform="rotate(60)"/><ellipse cx="0" cy="-6" rx="2" ry="4" fill="#e080ff" opacity="0.4" transform="rotate(120)"/><ellipse cx="0" cy="-6" rx="2" ry="4" fill="#ff9040" opacity="0.35" transform="rotate(180)"/><ellipse cx="0" cy="-6" rx="2" ry="4" fill="#ff9040" opacity="0.35" transform="rotate(240)"/><ellipse cx="0" cy="-6" rx="2" ry="4" fill="#ff9040" opacity="0.35" transform="rotate(300)"/></g></defs>
+    <path d="M0 30 Q100 10 200 30 Q300 50 400 30 Q500 10 600 30 Q700 50 800 30 Q900 10 1000 30 Q1100 50 1200 30" stroke="#4a1a70" stroke-width="1.5" fill="none" opacity="0.5"/>
+    <use href="#flower-sm" transform="translate(80, 22) scale(1.2)"/><use href="#flower-sm" transform="translate(200, 30) scale(0.9)"/><use href="#flower-sm" transform="translate(320, 18) scale(1.1)"/><use href="#flower-sm" transform="translate(440, 30) scale(1)"/><use href="#flower-sm" transform="translate(560, 22) scale(1.3)"/><use href="#flower-sm" transform="translate(680, 30) scale(0.95)"/><use href="#flower-sm" transform="translate(800, 18) scale(1.1)"/><use href="#flower-sm" transform="translate(920, 30) scale(1)"/><use href="#flower-sm" transform="translate(1040, 22) scale(1.2)"/><use href="#flower-sm" transform="translate(1160, 30) scale(0.9)"/>
+  </svg>
+  <svg class="floral-border-bottom" viewBox="0 0 1200 50" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0 30 Q100 10 200 30 Q300 50 400 30 Q500 10 600 30 Q700 50 800 30 Q900 10 1000 30 Q1100 50 1200 30" stroke="#4a1a70" stroke-width="1.5" fill="none" opacity="0.5"/>
+    <circle cx="80" cy="22" r="3" fill="#c060e0" opacity="0.55"/><circle cx="200" cy="30" r="3" fill="#ff9040" opacity="0.45"/><circle cx="320" cy="18" r="3" fill="#c060e0" opacity="0.55"/><circle cx="440" cy="30" r="3" fill="#ff9040" opacity="0.45"/><circle cx="560" cy="22" r="3.5" fill="#c060e0" opacity="0.6"/><circle cx="680" cy="30" r="3" fill="#ff9040" opacity="0.45"/><circle cx="800" cy="18" r="3" fill="#c060e0" opacity="0.55"/><circle cx="920" cy="30" r="3" fill="#ff9040" opacity="0.45"/><circle cx="1040" cy="22" r="3" fill="#c060e0" opacity="0.55"/><circle cx="1160" cy="30" r="3" fill="#ff9040" opacity="0.45"/>
+  </svg>
+
+  <svg class="inaug-side-flower left" width="50" height="300" viewBox="0 0 50 300" xmlns="http://www.w3.org/2000/svg"><line x1="25" y1="0" x2="25" y2="300" stroke="#3a1060" stroke-width="1.5" opacity="0.6"/><g transform="translate(25,50)"><circle cx="0" cy="0" r="4" fill="#c060e0" opacity="0.7"/><ellipse cx="0" cy="-9" rx="3" ry="6" fill="#e080ff" opacity="0.5"/><ellipse cx="0" cy="-9" rx="3" ry="6" fill="#e080ff" opacity="0.5" transform="rotate(72)"/><ellipse cx="0" cy="-9" rx="3" ry="6" fill="#ff9040" opacity="0.4" transform="rotate(144)"/><ellipse cx="0" cy="-9" rx="3" ry="6" fill="#ff9040" opacity="0.4" transform="rotate(216)"/><ellipse cx="0" cy="-9" rx="3" ry="6" fill="#e080ff" opacity="0.5" transform="rotate(288)"/></g></svg>
+  <svg class="inaug-side-flower right" width="50" height="300" viewBox="0 0 50 300" xmlns="http://www.w3.org/2000/svg"><line x1="25" y1="0" x2="25" y2="300" stroke="#3a1060" stroke-width="1.5" opacity="0.6"/><g transform="translate(25,80)"><circle cx="0" cy="0" r="4" fill="#ff9040" opacity="0.7"/><ellipse cx="0" cy="-9" rx="3" ry="6" fill="#ffb060" opacity="0.5"/><ellipse cx="0" cy="-9" rx="3" ry="6" fill="#c060e0" opacity="0.45" transform="rotate(144)"/></g></svg>
+
+  <div class="inaug-header">
+    <p class="section-label">The Beginning</p>
+    <div class="title-ornament">
+      <span class="line"></span><div class="petal-center"></div>
+      <h2 class="section-title">Inauguration</h2>
+      <div class="petal-center"></div><span class="line"></span>
+    </div>
+    <p class="section-sub">Where it all began — the first chapter of Math Collective</p>
+  </div>
+
+  <div class="inaug-gallery-wrap">
+    <svg style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;opacity:0.06;pointer-events:none;z-index:0;" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="90" fill="none" stroke="#c040e0" stroke-width="1.5"/><circle cx="100" cy="100" r="70" fill="none" stroke="#ff8000" stroke-width="1.5"/><circle cx="100" cy="100" r="50" fill="none" stroke="#c040e0" stroke-width="1.5"/><circle cx="100" cy="100" r="30" fill="none" stroke="#ff8000" stroke-width="1.5"/><line x1="100" y1="10" x2="100" y2="190" stroke="#c040e0" stroke-width="1"/><line x1="10" y1="100" x2="190" y2="100" stroke="#c040e0" stroke-width="1"/></svg>
+    <div class="gallery" id="gallery-inauguration" style="position:relative;z-index:1;"></div>
+  </div>
+</div>
+
+<p class="page-footer">Math Collective &nbsp;·&nbsp; All rights reserved</p>
+
+<div id="lightbox">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+}
+document.getElementById('lightbox').addEventListener('click', function(e) {
+  if (e.target === this) closeLightbox();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+const treasureFiles = [
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175009/th1_yu7tlg.jpg',  type: 'img', label: 'Start' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175073/th2_m9gf5f.jpg',  type: 'img', label: 'Clue I' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/video/upload/v1774175545/th3_ddwp6t.mp4',  type: 'vid', label: 'Chase' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/video/upload/v1774176417/th4_rnyvnq.mp4',  type: 'vid', label: 'Race' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/video/upload/v1774175073/th5_hwaska.mp4',  type: 'vid', label: 'Sprint' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175075/th6_k25h7p.jpg',  type: 'img', label: 'Clue II' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175075/th7_ozqiy1.jpg',  type: 'img', label: 'Discovery' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175075/th8_ms0yeh.jpg',  type: 'img', label: 'Trail' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175079/th9_rzulny.jpg',  type: 'img', label: 'Clue III' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175081/th10_jdzplq.jpg', type: 'img', label: 'Deep Forest' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175081/th11_erg6vl.jpg', type: 'img', label: 'The Riddle' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175081/th12_ktjb5x.jpg', type: 'img', label: 'Hidden Path' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175083/th13_riqglx.jpg', type: 'img', label: 'Clue IV' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175093/th14_hyvufj.jpg', type: 'img', label: 'Almost There' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175084/th15_w4bpxz.jpg', type: 'img', label: 'Final Clue' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175082/th16_cgq33i.jpg', type: 'img', label: 'The Mark' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175082/th17_j56sfy.jpg', type: 'img', label: 'X Marks' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175083/th18_qc2msf.jpg', type: 'img', label: 'Found It' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175084/th19_k1pfte.jpg', type: 'img', label: 'Victory' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774175084/th20_l8mobt.jpg', type: 'img', label: 'Treasure!' },
+];
+
+const mapPositions = [
+  [10,6],[28,4],[48,7],[68,5],[86,9],[92,22],[78,30],[58,27],[38,32],[18,36],
+  [8,48],[22,56],[42,52],[62,55],[80,52],[90,65],[72,72],[50,70],[30,75],[15,85],
+];
+
+const photoSizes = [
+  [240,180],[220,165],[200,155],[215,162],[205,155],[230,172],[220,165],[208,158],[225,168],[212,160],
+  [218,164],[205,155],[235,176],[220,165],[212,160],[208,158],[222,168],[240,180],[218,164],[230,172],
+];
+
+const mapContainer = document.getElementById('map-container');
+const mapSvg = document.getElementById('map-svg');
+
+window.addEventListener('load', () => {
+  const cw = mapContainer.offsetWidth;
+  const ch = 1500;
+  mapContainer.style.minHeight = ch + 'px';
+
+  const centers = mapPositions.map(([lp, tp]) => ({
+    x: Math.round(lp / 100 * cw),
+    y: Math.round(tp / 100 * ch),
+  }));
+
+  let pathD = 'M ' + centers[0].x + ' ' + centers[0].y;
+  for (let i = 1; i < centers.length; i++) {
+    const prev = centers[i-1], curr = centers[i];
+    const cpx = (prev.x + curr.x) / 2 + (Math.random() - 0.5) * 80;
+    const cpy = (prev.y + curr.y) / 2 + (Math.random() - 0.5) * 40;
+    pathD += ' Q ' + cpx + ' ' + cpy + ' ' + curr.x + ' ' + curr.y;
+  }
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', pathD); path.setAttribute('stroke', '#8B6340');
+  path.setAttribute('stroke-width', '2'); path.setAttribute('fill', 'none');
+  path.setAttribute('stroke-dasharray', '10 8'); path.setAttribute('opacity', '0.55');
+  mapSvg.appendChild(path);
+
+  const pathGlow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  pathGlow.setAttribute('d', pathD); pathGlow.setAttribute('stroke', '#e8c070');
+  pathGlow.setAttribute('stroke-width', '0.5'); pathGlow.setAttribute('fill', 'none');
+  pathGlow.setAttribute('stroke-dasharray', '10 8'); pathGlow.setAttribute('opacity', '0.2');
+  mapSvg.appendChild(pathGlow);
+
+  centers.forEach((c, i) => {
+    const xSize = 6;
+    ['x1,y1,x2,y2', 'x1b,y1b,x2b,y2b'].forEach((_, j) => {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      if (j === 0) {
+        line.setAttribute('x1', c.x - xSize); line.setAttribute('y1', c.y - xSize);
+        line.setAttribute('x2', c.x + xSize); line.setAttribute('y2', c.y + xSize);
+      } else {
+        line.setAttribute('x1', c.x + xSize); line.setAttribute('y1', c.y - xSize);
+        line.setAttribute('x2', c.x - xSize); line.setAttribute('y2', c.y + xSize);
+      }
+      line.setAttribute('stroke', i === 19 ? '#e8c070' : '#8B6340');
+      line.setAttribute('stroke-width', i === 19 ? '2' : '1.2');
+      line.setAttribute('opacity', '0.7');
+      mapSvg.appendChild(line);
+    });
+  });
+
+  treasureFiles.forEach((file, i) => {
+    const c = centers[i];
+    const [w, h] = photoSizes[i];
+    const isLast = i === 19;
+
+    const node = document.createElement('div');
+    node.className = 'map-node' + (file.type === 'vid' ? ' video-node' : '');
+    node.style.left = c.x + 'px';
+    node.style.top = c.y + 'px';
+
+    const frame = document.createElement('div');
+    frame.className = 'photo-frame';
+    frame.style.width = w + 'px';
+    frame.style.height = h + 'px';
+    if (isLast) { frame.style.border = '3px solid #e8c070'; frame.style.boxShadow = '0 0 20px rgba(232,192,112,0.4)'; }
+
+    if (file.type === 'img') {
+      const img = document.createElement('img');
+      img.src = file.name;
+      img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover';
+      img.onclick = () => openLightbox(img.src);
+      frame.appendChild(img);
+    } else {
+      const vid = document.createElement('video');
+      vid.controls = true; vid.muted = true; vid.playsInline = true; vid.preload = 'metadata';
+      vid.style.width = '100%'; vid.style.height = '100%'; vid.style.objectFit = 'cover';
+      const src = document.createElement('source');
+      src.src = file.name; src.type = 'video/mp4';
+      vid.appendChild(src);
+      frame.appendChild(vid);
+    }
+
+    const pin = document.createElement('div'); pin.className = 'pin'; node.appendChild(pin);
+    node.appendChild(frame);
+    const label = document.createElement('div'); label.className = 'label';
+    label.textContent = file.label;
+    if (isLast) label.style.color = '#e8c070';
+    node.appendChild(label);
+    mapContainer.appendChild(node);
+  });
+
+  const lastC = centers[19];
+  const star = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  star.setAttribute('x', lastC.x + 50); star.setAttribute('y', lastC.y - 40);
+  star.setAttribute('font-size', '24'); star.setAttribute('fill', '#e8c070');
+  star.setAttribute('opacity', '0.5'); star.setAttribute('font-family', 'serif');
+  star.textContent = '★';
+  mapSvg.appendChild(star);
+});
+
+const inaugurationFiles = [
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774176825/in1_eiu6oo.jpg', type: 'img' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774176827/in2_hatyfb.jpg', type: 'img' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774176827/in3_lqbjms.jpg', type: 'img' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/video/upload/v1774176826/in4_aj7j6j.mp4', type: 'vid' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/video/upload/v1774176828/in5_l2hmqn.mp4', type: 'vid' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774176829/in6_jwompu.jpg', type: 'img' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774176832/in7_ifldal.jpg', type: 'img' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774176832/in8_rohg3w.jpg', type: 'img' },
+  { name: 'https://res.cloudinary.com/dd0pler5u/image/upload/v1774176833/in9_ag3kyr.jpg', type: 'img' },
+];
+
+const igContainer = document.getElementById('gallery-inauguration');
+const flowerSVG = '<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="3" fill="#c060e0" opacity="0.7"/><ellipse cx="10" cy="4" rx="2" ry="4" fill="#e080ff" opacity="0.5"/><ellipse cx="10" cy="4" rx="2" ry="4" fill="#ff9040" opacity="0.45" transform="rotate(72 10 10)"/><ellipse cx="10" cy="4" rx="2" ry="4" fill="#e080ff" opacity="0.5" transform="rotate(144 10 10)"/><ellipse cx="10" cy="4" rx="2" ry="4" fill="#ff9040" opacity="0.45" transform="rotate(216 10 10)"/><ellipse cx="10" cy="4" rx="2" ry="4" fill="#e080ff" opacity="0.5" transform="rotate(288 10 10)"/></svg>';
+
+inaugurationFiles.forEach(file => {
+  const wrap = document.createElement('div'); wrap.className = 'inaug-photo-wrap';
+  const inner = document.createElement('div'); inner.className = 'photo-inner';
+  const fc1 = document.createElement('div'); fc1.className = 'flower-corner flower-tl'; fc1.innerHTML = flowerSVG;
+  const fc2 = document.createElement('div'); fc2.className = 'flower-corner flower-tr'; fc2.innerHTML = flowerSVG;
+
+  if (file.type === 'img') {
+    const img = document.createElement('img');
+    img.src = file.name;
+    img.onclick = () => openLightbox(img.src);
+    inner.appendChild(img);
+  } else {
+    const vid = document.createElement('video');
+    vid.controls = true; vid.muted = true; vid.playsInline = true; vid.preload = 'metadata';
+    vid.style.width = '100%'; vid.style.height = '200px'; vid.style.objectFit = 'cover';
+    const src = document.createElement('source'); src.src = file.name; src.type = 'video/mp4';
+    vid.appendChild(src); inner.appendChild(vid);
+  }
+  inner.appendChild(fc1); inner.appendChild(fc2);
+  wrap.appendChild(inner); igContainer.appendChild(wrap);
+});
+</script>
+</body>
+</html>

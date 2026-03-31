@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ML Launchpad | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ml-purple: #7c3aed;
+      --ml-cyan:   #06b6d4;
+      --ml-green:  #10b981;
+      --ml-amber:  #f59e0b;
+      --ml-pink:   #ec4899;
+      --ml-bg:     #030712;
+      --ml-surf:   rgba(255,255,255,0.03);
+      --ml-border: rgba(255,255,255,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--ml-bg);
+      color: #f1f5f9;
+      font-family: 'Space Grotesk', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── AUTH GATE ── */
+    .auth-gate {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(3,7,18,0.97);
+      backdrop-filter: blur(20px);
+      z-index: 999;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 1.5rem;
+      text-align: center; padding: 2rem;
+    }
+    .auth-gate.visible { display: flex; }
+    .auth-gate h2 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; }
+    .auth-gate p  { color: #94a3b8; max-width: 400px; }
+    .auth-gate-icon { font-size: 4rem; margin-bottom: .5rem; }
+
+    /* ── HERO ── */
+    .ml-hero {
+      position: relative;
+      min-height: 520px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 7rem 2rem 4rem;
+      overflow: hidden;
+    }
+
+    /* Animated grid bg */
+    .ml-hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(124,58,237,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.07) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridMove 20s linear infinite;
+    }
+    @keyframes gridMove {
+      0%   { background-position: 0 0; }
+      100% { background-position: 60px 60px; }
+    }
+
+    /* Radial glow */
+    .ml-hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,58,237,0.2), transparent 70%);
+      pointer-events: none;
+    }
+
+    .ml-hero-badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.4);
+      border-radius: 99px;
+      padding: .35rem 1rem;
+      font-size: .72rem; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: #c4b5fd; margin-bottom: 1.5rem;
+      position: relative; z-index: 1;
+      animation: fadeSlideDown .6s ease both;
+    }
+
+    .ml-hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -.03em;
+      position: relative; z-index: 1;
+      animation: fadeSlideDown .7s ease .1s both;
+    }
+    .ml-hero h1 .accent {
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .ml-hero p {
+      font-size: 1.1rem; color: #94a3b8;
+      max-width: 600px; line-height: 1.7;
+      margin: 1.25rem auto 2rem;
+      position: relative; z-index: 1;
+      animation: fadeSlideDown .7s ease .2s both;
+    }
+
+    .ml-hero-stats {
+      display: flex; gap: 2.5rem; flex-wrap: wrap;
+      justify-content: center;
+      position: relative; z-index: 1;
+      animation: fadeSlideDown .7s ease .3s both;
+    }
+    .ml-stat { text-align: center; }
+    .ml-stat .num {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem; font-weight: 800;
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .ml-stat .lbl {
+      font-size: .7rem; color: #64748b;
+      text-transform: uppercase; letter-spacing: .1em; font-weight: 600;
+    }
+
+    @keyframes fadeSlideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── TABS ── */
+    .ml-tabs-wrap {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(3,7,18,0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--ml-border);
+      padding: 0 2rem;
+    }
+    .ml-tabs {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; gap: 0; overflow-x: auto;
+    }
+    .ml-tab {
+      padding: 1rem 1.5rem;
+      border-bottom: 2px solid transparent;
+      cursor: pointer; font-weight: 600; font-size: .88rem;
+      color: #64748b; white-space: nowrap;
+      transition: all .2s; background: none; border-top: none; border-left: none; border-right: none;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .ml-tab:hover { color: #f1f5f9; }
+    .ml-tab.active { color: #a78bfa; border-bottom-color: #7c3aed; }
+
+    /* ── CONTENT SECTIONS ── */
+    .ml-content {
+      max-width: 1200px; margin: 0 auto;
+      padding: 3rem 2rem 6rem;
+    }
+
+    .ml-section { display: none; }
+    .ml-section.active { display: block; }
+
+    /* Section header */
+    .section-head {
+      margin-bottom: 2.5rem;
+      display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    }
+    .section-head h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem; font-weight: 800; letter-spacing: -.02em;
+    }
+    .section-head p { color: #64748b; font-size: .9rem; margin-top: .35rem; }
+    .section-head .filter-row { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .filter-btn {
+      padding: .35rem .9rem; border-radius: 99px;
+      border: 1px solid var(--ml-border);
+      background: none; color: #64748b;
+      font-size: .75rem; font-weight: 600; cursor: pointer;
+      transition: all .15s; font-family: 'Space Grotesk', sans-serif;
+    }
+    .filter-btn:hover { border-color: rgba(124,58,237,.5); color: #a78bfa; }
+    .filter-btn.on { background: rgba(124,58,237,.15); border-color: #7c3aed; color: #a78bfa; }
+
+    /* ── PROBLEM CARDS ── */
+    .problems-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .problem-card {
+      background: var(--ml-surf);
+      border: 1px solid var(--ml-border);
+      border-radius: 16px; padding: 1.5rem;
+      cursor: pointer; position: relative; overflow: hidden;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+      animation: cardIn .4s ease both;
+    }
+    .problem-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      opacity: 0; transition: opacity .2s;
+      border-radius: 16px;
+    }
+    .problem-card:hover { transform: translateY(-4px); }
+    .problem-card:hover::before { opacity: 1; }
+
+    /* Color variants */
+    .problem-card.purple { border-color: rgba(124,58,237,.2); }
+    .problem-card.purple:hover { box-shadow: 0 12px 40px rgba(124,58,237,.2); border-color: rgba(124,58,237,.5); }
+    .problem-card.purple::before { background: linear-gradient(135deg, rgba(124,58,237,.05), transparent); }
+
+    .problem-card.cyan { border-color: rgba(6,182,212,.2); }
+    .problem-card.cyan:hover { box-shadow: 0 12px 40px rgba(6,182,212,.2); border-color: rgba(6,182,212,.5); }
+    .problem-card.cyan::before { background: linear-gradient(135deg, rgba(6,182,212,.05), transparent); }
+
+    .problem-card.green { border-color: rgba(16,185,129,.2); }
+    .problem-card.green:hover { box-shadow: 0 12px 40px rgba(16,185,129,.2); border-color: rgba(16,185,129,.5); }
+    .problem-card.green::before { background: linear-gradient(135deg, rgba(16,185,129,.05), transparent); }
+
+    .problem-card.amber { border-color: rgba(245,158,11,.2); }
+    .problem-card.amber:hover { box-shadow: 0 12px 40px rgba(245,158,11,.2); border-color: rgba(245,158,11,.5); }
+    .problem-card.amber::before { background: linear-gradient(135deg, rgba(245,158,11,.05), transparent); }
+
+    .problem-card.pink { border-color: rgba(236,72,153,.2); }
+    .problem-card.pink:hover { box-shadow: 0 12px 40px rgba(236,72,153,.2); border-color: rgba(236,72,153,.5); }
+    .problem-card.pink::before { background: linear-gradient(135deg, rgba(236,72,153,.05), transparent); }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+    .card-icon { font-size: 2rem; flex-shrink: 0; }
+    .card-badges { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .badge {
+      font-size: .62rem; font-weight: 700; letter-spacing: .08em;
+      padding: .2rem .6rem; border-radius: 99px; text-transform: uppercase;
+    }
+    .badge-beginner { background: rgba(16,185,129,.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,.3); }
+    .badge-intermediate { background: rgba(245,158,11,.15); color: #fcd34d; border: 1px solid rgba(245,158,11,.3); }
+    .badge-advanced { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+    .badge-nlp { background: rgba(124,58,237,.15); color: #c4b5fd; border: 1px solid rgba(124,58,237,.3); }
+    .badge-cv  { background: rgba(6,182,212,.15); color: #a5f3fc; border: 1px solid rgba(6,182,212,.3); }
+    .badge-tab { background: rgba(236,72,153,.15); color: #fbcfe8; border: 1px solid rgba(236,72,153,.3); }
+    .badge-rl  { background: rgba(245,158,11,.15); color: #fde68a; border: 1px solid rgba(245,158,11,.3); }
+    .badge-gen { background: rgba(16,185,129,.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,.3); }
+
+    .problem-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; line-height: 1.3; }
+    .problem-card p  { font-size: .83rem; color: #64748b; line-height: 1.6; margin-bottom: 1rem; }
+
+    .card-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: .85rem; border-top: 1px solid var(--ml-border);
+      font-size: .75rem; color: #475569;
+    }
+    .card-meta .tools { display: flex; gap: .35rem; flex-wrap: wrap; }
+    .tool-pill {
+      padding: .15rem .55rem; border-radius: 4px;
+      background: rgba(255,255,255,.06); font-size: .65rem;
+      font-family: 'Space Mono', monospace; color: #94a3b8;
+    }
+    .card-action {
+      font-size: .75rem; font-weight: 700;
+      color: #7c3aed; cursor: pointer;
+      display: inline-flex; align-items: center; gap: .25rem;
+      transition: gap .2s, color .2s, transform .2s;
+      background: none; border: none; padding: 0; font-family: inherit;
+    }
+    .card-action:hover { gap: .5rem; color: #a78bfa; transform: translateX(2px); }
+
+    /* ── Hint modal ── */
+    .hint-overlay { position: fixed; inset: 0; background: rgba(3,7,18,0.65); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 1.25rem; opacity: 0; transition: opacity 0.2s ease; }
+    .hint-overlay.active { display: flex; opacity: 1; }
+    .hint-modal { width: min(760px, 100%); background: #0f172a; border: 1px solid rgba(124,58,237,0.35); border-radius: 18px; box-shadow: 0 24px 80px rgba(0,0,0,0.55); overflow: hidden; }
+    .hint-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .hint-header h3 { margin: 0; font-size: 1.1rem; }
+    .hint-close { background: none; border: 1px solid rgba(255,255,255,0.08); color: #cbd5e1; border-radius: 10px; padding: 6px 10px; cursor: pointer; transition: all .2s ease; }
+    .hint-close:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .hint-body { padding: 1.25rem 1.5rem 1.5rem; display: grid; gap: 0.9rem; }
+    .hint-section { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 0.95rem 1rem; }
+    .hint-section h4 { margin: 0 0 0.35rem; font-size: 0.95rem; color: #c7d2fe; letter-spacing: 0.01em; }
+    .hint-section p { margin: 0; color: #cbd5e1; font-size: 0.9rem; line-height: 1.6; }
+    .hint-list { margin: 0.35rem 0 0; padding-left: 1.1rem; color: #cbd5e1; line-height: 1.55; }
+    .hint-resources { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.35rem; }
+    .hint-resources a { color: #a5b4fc; font-size: 0.9rem; text-decoration: none; }
+    .hint-resources a:hover { text-decoration: underline; }
+    .hint-tags { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.4rem; }
+    .hint-tag { font-size: 0.78rem; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(124,58,237,0.4); color: #c4b5fd; background: rgba(124,58,237,0.1); }
+    .hint-footer { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-top: .35rem; flex-wrap: wrap; color: #94a3b8; font-size: 0.82rem; }
+
+    /* ── ROADMAP ── */
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .roadmap-card {
+      background: var(--ml-surf);
+      border: 1px solid var(--ml-border);
+      border-radius: 20px; overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .roadmap-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,.4); }
+
+    .roadmap-header {
+      padding: 1.5rem;
+      position: relative; overflow: hidden;
+    }
+    .roadmap-header::before {
+      content: '';
+      position: absolute; inset: 0;
+      opacity: .12;
+    }
+    .roadmap-header.purple-h::before { background: linear-gradient(135deg, #7c3aed, transparent); }
+    .roadmap-header.cyan-h::before   { background: linear-gradient(135deg, #06b6d4, transparent); }
+    .roadmap-header.green-h::before  { background: linear-gradient(135deg, #10b981, transparent); }
+    .roadmap-header.pink-h::before   { background: linear-gradient(135deg, #ec4899, transparent); }
+    .roadmap-header.amber-h::before  { background: linear-gradient(135deg, #f59e0b, transparent); }
+
+    .roadmap-emoji { font-size: 2.5rem; margin-bottom: .75rem; display: block; position: relative; z-index: 1; }
+    .roadmap-header h3 { font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 800; position: relative; z-index: 1; }
+    .roadmap-header p  { font-size: .8rem; color: #94a3b8; margin-top: .35rem; position: relative; z-index: 1; }
+    .roadmap-meta {
+      display: flex; gap: .75rem; margin-top: .75rem;
+      position: relative; z-index: 1;
+    }
+    .roadmap-meta span {
+      font-size: .67rem; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; color: #64748b;
+      display: flex; align-items: center; gap: .25rem;
+    }
+
+    .roadmap-steps { padding: 1.25rem 1.5rem; }
+    .roadmap-step {
+      display: flex; gap: 1rem; align-items: flex-start;
+      padding: .65rem 0;
+      border-bottom: 1px solid var(--ml-border);
+      position: relative;
+    }
+    .roadmap-step:last-child { border-bottom: none; }
+
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .65rem; font-weight: 700; font-family: 'Space Mono', monospace;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .step-num.purple-n { background: rgba(124,58,237,.2); color: #a78bfa; border: 1px solid rgba(124,58,237,.3); }
+    .step-num.cyan-n   { background: rgba(6,182,212,.2);  color: #67e8f9; border: 1px solid rgba(6,182,212,.3); }
+    .step-num.green-n  { background: rgba(16,185,129,.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,.3); }
+    .step-num.pink-n   { background: rgba(236,72,153,.2); color: #fbcfe8; border: 1px solid rgba(236,72,153,.3); }
+    .step-num.amber-n  { background: rgba(245,158,11,.2); color: #fde68a; border: 1px solid rgba(245,158,11,.3); }
+
+    .step-content { flex: 1; }
+    .step-title { font-size: .85rem; font-weight: 600; color: #e2e8f0; }
+    .step-desc  { font-size: .75rem; color: #64748b; margin-top: 2px; line-height: 1.5; }
+    .step-tags  { display: flex; gap: .3rem; flex-wrap: wrap; margin-top: .35rem; }
+    .step-tag   {
+      font-size: .6rem; padding: .1rem .45rem; border-radius: 3px;
+      background: rgba(255,255,255,.06); color: #94a3b8;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .roadmap-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--ml-border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .roadmap-footer a {
+      font-size: .78rem; font-weight: 700; color: #7c3aed;
+      text-decoration: none; display: flex; align-items: center; gap: .3rem;
+      transition: gap .15s;
+    }
+    .roadmap-footer a:hover { gap: .5rem; }
+
+    /* ── DATASETS ── */
+    .datasets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+
+    .dataset-card {
+      background: var(--ml-surf);
+      border: 1px solid var(--ml-border);
+      border-radius: 14px; padding: 1.25rem;
+      display: flex; flex-direction: column; gap: .75rem;
+      transition: transform .15s, border-color .15s;
+      text-decoration: none; color: inherit;
+    }
+    .dataset-card:hover { transform: translateY(-3px); }
+    .dataset-card.kaggle:hover  { border-color: rgba(32,189,230,.4); }
+    .dataset-card.uci:hover     { border-color: rgba(16,185,129,.4); }
+    .dataset-card.hf:hover      { border-color: rgba(245,158,11,.4); }
+    .dataset-card.sklearn:hover { border-color: rgba(124,58,237,.4); }
+    .dataset-card.other:hover   { border-color: rgba(236,72,153,.4); }
+
+    .dataset-top { display: flex; align-items: center; gap: .75rem; }
+    .ds-source {
+      font-size: .6rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; padding: .2rem .6rem;
+      border-radius: 4px;
+    }
+    .ds-kaggle  { background: rgba(32,189,230,.15);  color: #67e8f9;  border: 1px solid rgba(32,189,230,.3); }
+    .ds-uci     { background: rgba(16,185,129,.15);  color: #6ee7b7;  border: 1px solid rgba(16,185,129,.3); }
+    .ds-hf      { background: rgba(245,158,11,.15);  color: #fde68a;  border: 1px solid rgba(245,158,11,.3); }
+    .ds-sklearn { background: rgba(124,58,237,.15);  color: #c4b5fd;  border: 1px solid rgba(124,58,237,.3); }
+    .ds-other   { background: rgba(236,72,153,.15);  color: #fbcfe8;  border: 1px solid rgba(236,72,153,.3); }
+
+    .dataset-card h4 { font-size: .92rem; font-weight: 700; line-height: 1.3; }
+    .dataset-card p  { font-size: .78rem; color: #64748b; line-height: 1.5; flex: 1; }
+
+    .dataset-bottom {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: .65rem; border-top: 1px solid var(--ml-border);
+    }
+    .ds-tags { display: flex; gap: .3rem; }
+    .ds-tag  {
+      font-size: .6rem; padding: .15rem .45rem; border-radius: 4px;
+      background: rgba(255,255,255,.05); color: #94a3b8;
+    }
+    .ds-link {
+      font-size: .72rem; font-weight: 700; color: #7c3aed;
+      text-decoration: none; display: flex; align-items: center; gap: .2rem;
+    }
+    .ds-link:hover { color: #a78bfa; }
+
+    /* ── FEATURED BANNER ── */
+    .featured-banner {
+      background: linear-gradient(135deg, rgba(124,58,237,.15), rgba(6,182,212,.08));
+      border: 1px solid rgba(124,58,237,.3);
+      border-radius: 20px; padding: 2rem;
+      display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;
+      margin-bottom: 2.5rem;
+      position: relative; overflow: hidden;
+    }
+    .featured-banner::before {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(124,58,237,.2), transparent 70%);
+      pointer-events: none;
+    }
+    .featured-text { flex: 1; min-width: 200px; position: relative; z-index: 1; }
+    .featured-text h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.2rem; font-weight: 800; margin-bottom: .4rem;
+    }
+    .featured-text p { font-size: .85rem; color: #94a3b8; }
+
+    /* ── SCROLL ANIMATION ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity .5s ease, transform .5s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center; padding: 4rem 2rem;
+      color: #475569;
+    }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: .4; }
+
+    /* Scrollbar */
+    .ml-tabs::-webkit-scrollbar { height: 0; }
+  </style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div class="auth-gate" id="auth-gate">
+  <div class="auth-gate-icon">🔒</div>
+  <h2>Login Required</h2>
+  <p>The ML Launchpad is exclusive to Math Collective members. Join to access problem statements, roadmaps, and datasets.</p>
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;">
+    <a href="/login?redirect=/ml-launchpad" class="btn btn-primary">Log In</a>
+    <a href="/register" class="btn btn-ghost">Join Free</a>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="mc-nav">
+  <a href="/" class="mc-nav__logo"><div class="mc-nav__logo-mark">Σ</div> Math Collective</a>
+  <ul class="mc-nav__links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/arena">Arena</a></li>
+    <li><a href="/events">Events</a></li>
+    <li><a href="/ml-launchpad" style="color:#a78bfa;">ML Launchpad</a></li>
+  </ul>
+  <div class="mc-nav__actions">
+    <div class="mc-nav__user" id="nav-user-pill" style="display:none;">
+      <div class="mc-nav__avatar">A</div>
+      <span class="mc-nav__username">Member</span>
+      <a href="/profile" style="color:var(--text-3);font-size:.75rem;margin-left:4px;">👤</a>
+      <span style="color:var(--text-3);font-size:.75rem;margin-left:4px;cursor:pointer;" onclick="logout()">↩</span>
+    </div>
+    <a href="/login" class="btn btn-ghost btn-sm" id="nav-login-btn">Log In</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="ml-hero">
+  <div class="ml-hero-badge">⚡ Exclusive Member Resource</div>
+  <h1>ML <span class="accent">Launchpad</span></h1>
+  <p>Your command centre for AI/ML exploration. Curated problems, step-by-step roadmaps, and a dataset bank — everything you need to go from zero to deployed model.</p>
+  <div class="ml-hero-stats">
+    <div class="ml-stat"><div class="num">24</div><div class="lbl">Problem Statements</div></div>
+    <div class="ml-stat"><div class="num">6</div><div class="lbl">Learning Roadmaps</div></div>
+    <div class="ml-stat"><div class="num">40+</div><div class="lbl">Datasets</div></div>
+    <div class="ml-stat"><div class="num">5</div><div class="lbl">Domains</div></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="ml-tabs-wrap">
+  <div class="ml-tabs">
+    <button class="ml-tab active" onclick="switchTab('problems', this)">🧩 Problem Statements</button>
+    <button class="ml-tab" onclick="switchTab('roadmaps', this)">🗺️ Learning Roadmaps</button>
+    <button class="ml-tab" onclick="switchTab('datasets', this)">📦 Dataset Bank</button>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="ml-content">
+
+  <!-- ════════════ PROBLEMS TAB ════════════ -->
+  <div class="ml-section active" id="tab-problems">
+    <div class="section-head reveal">
+      <div>
+        <h2>Problem Statements</h2>
+        <p>Pick a challenge, build it, ship it. Sorted by difficulty and domain.</p>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn on" onclick="filterProblems('all', this)">All</button>
+        <button class="filter-btn" onclick="filterProblems('beginner', this)">Beginner</button>
+        <button class="filter-btn" onclick="filterProblems('intermediate', this)">Intermediate</button>
+        <button class="filter-btn" onclick="filterProblems('advanced', this)">Advanced</button>
+        <button class="filter-btn" onclick="filterProblems('nlp', this)">NLP</button>
+        <button class="filter-btn" onclick="filterProblems('cv', this)">Computer Vision</button>
+      </div>
+    </div>
+
+    <div class="problems-grid" id="problems-grid"></div>
+  </div>
+
+  <!-- ════════════ ROADMAPS TAB ════════════ -->
+  <div class="ml-section" id="tab-roadmaps">
+    <div class="section-head reveal">
+      <div>
+        <h2>Learning Roadmaps</h2>
+        <p>Step-by-step paths to build real ML projects. Follow the sequence, build something tangible.</p>
+      </div>
+    </div>
+    <div class="roadmap-grid" id="roadmap-grid"></div>
+  </div>
+
+  <!-- ════════════ DATASETS TAB ════════════ -->
+  <div class="ml-section" id="tab-datasets">
+    <div class="section-head reveal">
+      <div>
+        <h2>Dataset Bank</h2>
+        <p>Handpicked datasets from Kaggle, UCI, HuggingFace and more. Tagged by difficulty and task type.</p>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn on" onclick="filterDatasets('all', this)">All</button>
+        <button class="filter-btn" onclick="filterDatasets('kaggle', this)">Kaggle</button>
+        <button class="filter-btn" onclick="filterDatasets('huggingface', this)">HuggingFace</button>
+        <button class="filter-btn" onclick="filterDatasets('uci', this)">UCI</button>
+        <button class="filter-btn" onclick="filterDatasets('sklearn', this)">Sklearn</button>
+      </div>
+    </div>
+    <div class="datasets-grid" id="datasets-grid"></div>
+  </div>
+
+</div>
+
+<script>
+/* ════════════ AUTH CHECK ════════════ */
+(async () => {
+  const state = await getAuthState();
+  if (!state.loggedIn) {
+    document.getElementById('auth-gate').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+})();
+
+/* ════════════ TAB SWITCHING ════════════ */
+function switchTab(name, btn) {
+  document.querySelectorAll('.ml-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.ml-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  revealCards();
+}
+
+/* ════════════ DATA ════════════ */
+const PROBLEMS = [
+  {
+    id:1, icon:'🏠', color:'purple', title:'House Price Prediction',
+    desc:'Predict residential property prices using structured tabular data with regression techniques.',
+    level:'beginner', domain:'tab',
+    tools:['pandas','sklearn','xgboost'],
+    hint:'Start with LinearRegression → add feature engineering → try XGBoost'
+  },
+  {
+    id:2, icon:'💬', color:'cyan', title:'Sentiment Analysis Engine',
+    desc:'Classify user reviews as positive/negative/neutral using NLP techniques.',
+    level:'beginner', domain:'nlp',
+    tools:['NLTK','sklearn','transformers'],
+    hint:'TF-IDF + LogReg → BERT fine-tuning'
+  },
+  {
+    id:3, icon:'🌸', color:'green', title:'Flower Species Classifier',
+    desc:'Build a CNN to classify 102 flower species from images with transfer learning.',
+    level:'beginner', domain:'cv',
+    tools:['PyTorch','torchvision','PIL'],
+    hint:'Use ResNet18 pretrained → freeze layers → fine-tune last FC'
+  },
+  {
+    id:4, icon:'🎵', color:'amber', title:'Music Genre Classification',
+    desc:'Extract audio features (MFCCs, spectrograms) and classify genres from raw .wav files.',
+    level:'intermediate', domain:'tab',
+    tools:['librosa','sklearn','torch'],
+    hint:'librosa for feature extraction → CNN on mel spectrograms'
+  },
+  {
+    id:5, icon:'🛡️', color:'pink', title:'Fake News Detector',
+    desc:'Build a binary classifier to identify misinformation using headline + article text.',
+    level:'intermediate', domain:'nlp',
+    tools:['transformers','torch','BERT'],
+    hint:'Fine-tune DistilBERT on LIAR dataset'
+  },
+  {
+    id:6, icon:'🩺', color:'purple', title:'Medical Image Diagnosis',
+    desc:'Detect pneumonia from chest X-rays using deep CNNs on imbalanced datasets.',
+    level:'intermediate', domain:'cv',
+    tools:['PyTorch','OpenCV','albumentations'],
+    hint:'Handle class imbalance with weighted loss → EfficientNet-B0'
+  },
+  {
+    id:7, icon:'📈', color:'cyan', title:'Stock Movement Predictor',
+    desc:'Forecast next-day stock direction using LSTM/GRU on OHLCV time-series data.',
+    level:'intermediate', domain:'tab',
+    tools:['PyTorch','pandas','ta-lib'],
+    hint:'Add technical indicators as features → Bidirectional LSTM'
+  },
+  {
+    id:8, icon:'🤖', color:'green', title:'Chatbot with RAG',
+    desc:'Build a retrieval-augmented chatbot that answers questions from a custom document corpus.',
+    level:'advanced', domain:'nlp',
+    tools:['LangChain','FAISS','OpenAI'],
+    hint:'Chunk docs → embed with sentence-transformers → FAISS index → LLM answer'
+  },
+  {
+    id:9, icon:'👁️', color:'amber', title:'Real-time Object Detector',
+    desc:'Deploy a YOLOv8 model to detect objects in live webcam feed with custom classes.',
+    level:'advanced', domain:'cv',
+    tools:['ultralytics','OpenCV','FastAPI'],
+    hint:'Train YOLOv8n on custom dataset → stream with FastAPI WebSocket'
+  },
+  {
+    id:10, icon:'🎨', color:'pink', title:'Image Style Transfer',
+    desc:'Apply artistic styles to photos using Neural Style Transfer or fine-tuned diffusion models.',
+    level:'advanced', domain:'cv',
+    tools:['PyTorch','diffusers','PIL'],
+    hint:'Gram matrix loss for NST → or LoRA on Stable Diffusion'
+  },
+  {
+    id:11, icon:'🌍', color:'purple', title:'Language Translation',
+    desc:'Build a seq2seq transformer model for English ↔ Kannada / Hindi translation.',
+    level:'advanced', domain:'nlp',
+    tools:['transformers','sentencepiece','torch'],
+    hint:'Fine-tune mBART-50 on IndicGLUE dataset'
+  },
+  {
+    id:12, icon:'🎮', color:'cyan', title:'Game Playing Agent',
+    desc:'Train a Deep Q-Network (DQN) agent to play CartPole, LunarLander or Atari.',
+    level:'advanced', domain:'rl',
+    tools:['gymnasium','stable-baselines3','torch'],
+    hint:'Start with CartPole-v1 → PPO → Atari with CNN feature extractor'
+  },
+  {
+    id:13, icon:'🔍', color:'green', title:'Anomaly Detection System',
+    desc:'Detect fraudulent transactions in imbalanced credit card data using unsupervised methods.',
+    level:'intermediate', domain:'tab',
+    tools:['sklearn','IsolationForest','AutoEncoder'],
+    hint:'IsolationForest baseline → Autoencoder reconstruction error'
+  },
+  {
+    id:14, icon:'✍️', color:'amber', title:'Handwriting OCR',
+    desc:'Build an end-to-end OCR pipeline to extract text from handwritten form images.',
+    level:'intermediate', domain:'cv',
+    tools:['tesseract','PaddleOCR','OpenCV'],
+    hint:'Preprocess with adaptive threshold → CRNN model for sequence output'
+  },
+  {
+    id:15, icon:'🧬', color:'pink', title:'Protein Structure Predictor',
+    desc:'Use ESMFold or AlphaFold APIs to predict protein structures from amino acid sequences.',
+    level:'advanced', domain:'gen',
+    tools:['ESM','BioPython','py3Dmol'],
+    hint:'ESM-2 embeddings → ESMFold API → 3D visualization with py3Dmol'
+  },
+];
+
+/* Structured smart hints mapped by problem id (easy to extend / replace with JSON fetch later) */
+const HINTS = {
+  1: {
+    idea: 'Supervised regression on tabular features to estimate continuous house prices.',
+    real: 'Banks and listing sites estimate property value for loans and pricing.',
+    start: [
+      'Split train/val; baseline with LinearRegression.',
+      'Feature engineer: price_per_sqft, age, locality, room counts.',
+      'Benchmark tree/boosting (RandomForest, XGBoost) and compare RMSE.',
+    ],
+    resources: [
+      { label: 'sklearn regression guide', url: 'https://scikit-learn.org/stable/supervised_learning.html' },
+      { label: 'XGBoost docs', url: 'https://xgboost.readthedocs.io/en/stable/' },
+    ],
+    tips: ['Watch for leakage (year built vs price), scale numeric features, hold-out by city if multi-city.'],
+  },
+  2: {
+    idea: 'Text sentiment classification (positive/negative/neutral).',
+    real: 'Product review routing, support triage, social listening.',
+    start: ['TF-IDF + LogisticRegression baseline', 'Upgrade to DistilBERT fine-tuning', 'Track macro-F1 for class balance'],
+    resources: [
+      { label: 'TF-IDF text features', url: 'https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction' },
+      { label: 'HF sequence classification', url: 'https://huggingface.co/docs/transformers/tasks/sequence_classification' },
+    ],
+    tips: ['Limit vocab size; use stratified split; consider class weights.'],
+  },
+  3: {
+    idea: 'Image classification with transfer learning (ResNet18).',
+    real: 'Plant species ID, product tagging, medical triage.',
+    start: ['ImageFolder + transforms', 'Freeze backbone, train head; then unfreeze last blocks', 'Early stop on val loss'],
+    resources: [{ label: 'TorchVision finetuning tutorial', url: 'https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html' }],
+    tips: ['Use balanced sampler; keep input 224px to save VRAM.'],
+  },
+  4: {
+    idea: 'Audio genre classification via mel-spectrogram + CNN.',
+    real: 'Music tagging, podcast categorization.',
+    start: ['Load WAV → mel-spectrogram (librosa)', '2D CNN or VGGish-style model', 'Augment: noise, pitch/time shift'],
+    resources: [{ label: 'Librosa features', url: 'https://librosa.org/doc/latest/feature.html' }],
+    tips: ['Standardize sample rate; pad/trim duration; use SpecAugment.'],
+  },
+  5: {
+    idea: 'Fake-news detection using transformers.',
+    real: 'Content moderation and credibility scoring.',
+    start: ['Baseline TF-IDF + SVM', 'Fine-tune DistilBERT on LIAR/your dataset', 'Evaluate with F1/ROC'],
+    resources: [{ label: 'LIAR dataset', url: 'https://paperswithcode.com/dataset/liar' }],
+    tips: ['Handle class imbalance; clean HTML; limit max_seq_length.'],
+  },
+  6: {
+    idea: 'Chest X-ray classification with EfficientNet.',
+    real: 'Computer-aided diagnosis (pneumonia, TB screening).',
+    start: ['Balance with class weights', 'Use pretrained EfficientNet-B0', 'Add Grad-CAM for explainability'],
+    resources: [{ label: 'EfficientNet paper', url: 'https://arxiv.org/abs/1905.11946' }],
+    tips: ['Normalize pixel stats; strong augmentations help; watch label noise.'],
+  },
+  7: {
+    idea: 'Directional stock movement prediction from OHLCV.',
+    real: 'Trading signals, risk alerts.',
+    start: ['Create features (returns, RSI, rolling mean/vol)', 'Baseline logistic regression', 'Sequence models: LSTM/Transformer'],
+    resources: [{ label: 'ta indicators', url: 'https://github.com/bukosabino/ta' }],
+    tips: ['No leakage—use past-only features; walk-forward validation.'],
+  },
+  8: {
+    idea: 'RAG chatbot over custom documents.',
+    real: 'Enterprise search/support bots.',
+    start: ['Chunk docs → embed (sentence-transformers)', 'Store in FAISS/Chroma', 'Retrieve top-k → LLM answer'],
+    resources: [{ label: 'Sentence-Transformers', url: 'https://www.sbert.net/' }, { label: 'FAISS', url: 'https://faiss.ai/' }],
+    tips: ['Normalize text; choose embedding model per language; cache indexes.'],
+  },
+  9: {
+    idea: 'YOLOv8 object detection for live video.',
+    real: 'Retail, safety monitoring, counting.',
+    start: ['Collect/label via Roboflow', 'Train YOLOv8n', 'Serve via FastAPI + WebSocket stream'],
+    resources: [{ label: 'Ultralytics YOLOv8 docs', url: 'https://docs.ultralytics.com/' }],
+    tips: ['Consistent image sizes; adjust confidence/NMS thresholds.'],
+  },
+  10: {
+    idea: 'Neural style transfer / diffusion fine-tuning.',
+    real: 'Creative tools, photo filters.',
+    start: ['Fast style transfer baseline', 'LoRA on Stable Diffusion for custom looks', 'Export pipeline for inference'],
+    resources: [{ label: 'Pytorch NST tutorial', url: 'https://pytorch.org/tutorials/advanced/neural_style_tutorial.html' }],
+    tips: ['Clamp output size; monitor VRAM; consider safety checker for SD.'],
+  },
+  11: {
+    idea: 'Seq2Seq translation with mBART.',
+    real: 'Cross-language support, news.',
+    start: ['Load mBART-50', 'Fine-tune on target pair', 'Evaluate ROUGE/BLEU'],
+    resources: [{ label: 'mBART docs', url: 'https://huggingface.co/docs/transformers/model_doc/mbart' }],
+    tips: ['Use language codes; limit max_length to avoid truncation.'],
+  },
+  12: {
+    idea: 'Reinforcement learning agent (PPO/DQN).',
+    real: 'Robotics, game AI.',
+    start: ['Start CartPole-v1 with PPO', 'Add CNN encoder for Atari', 'Tune clip range, entropy, gamma'],
+    resources: [{ label: 'PPO paper', url: 'https://arxiv.org/abs/1707.06347' }],
+    tips: ['Normalize rewards; seed envs for reproducibility.'],
+  },
+  13: {
+    idea: 'Anomaly detection on imbalanced transactions.',
+    real: 'Fraud detection, ops monitoring.',
+    start: ['IsolationForest baseline', 'Autoencoder reconstruction error', 'Evaluate AUROC/PR'],
+    resources: [{ label: 'Sklearn outlier detection', url: 'https://scikit-learn.org/stable/modules/outlier_detection.html' }],
+    tips: ['Set contamination; scale features; watch class imbalance.'],
+  },
+  14: {
+    idea: 'OCR for handwritten forms (CRNN/TrOCR).',
+    real: 'Digitizing forms, invoices.',
+    start: ['Preprocess: denoise, binarize, deskew', 'Train/finetune CRNN or TrOCR', 'CTC decoding or seq2seq'],
+    resources: [{ label: 'TrOCR', url: 'https://arxiv.org/abs/2109.10282' }],
+    tips: ['Augment with rotations; ensure consistent DPI; add language model for cleanup.'],
+  },
+  15: {
+    idea: 'Protein structure prediction assist (ESMFold).',
+    real: 'Drug discovery and bioinformatics.',
+    start: ['Generate embeddings with ESM-2', 'Call ESMFold API', 'Visualize via py3Dmol'],
+    resources: [{ label: 'ESMFold', url: 'https://esmatlas.com/about' }],
+    tips: ['Long sequences need chunking; limit batch size for GPU.'],
+  },
+};
+
+const ROADMAPS = [
+  {
+    color:'purple-h', numColor:'purple-n', emoji:'🖼️',
+    title:'Build an Image Classifier',
+    desc:'Go from raw images to a deployed web API in 8 focused steps.',
+    time:'3–4 weeks', level:'Beginner friendly',
+    steps:[
+      { title:'Python & NumPy Basics', desc:'Numpy arrays, matplotlib, image as matrix', tags:['numpy','matplotlib'] },
+      { title:'Data Collection & EDA', desc:'Download dataset, visualize class distribution, check for corruption', tags:['pandas','PIL'] },
+      { title:'Data Augmentation', desc:'Flips, rotations, color jitter to combat overfitting', tags:['albumentations','torchvision'] },
+      { title:'Build a CNN from Scratch', desc:'Conv → ReLU → Pool → FC layers with PyTorch', tags:['torch','nn.Module'] },
+      { title:'Transfer Learning', desc:'Fine-tune ResNet50 pretrained on ImageNet', tags:['torchvision','pretrained'] },
+      { title:'Evaluate & Iterate', desc:'Confusion matrix, F1 score, misclassification analysis', tags:['sklearn'] },
+      { title:'Build FastAPI Endpoint', desc:'Wrap model in REST API, accept image upload', tags:['FastAPI','pydantic'] },
+      { title:'Deploy on Hugging Face Spaces', desc:'Gradio demo deployed for free', tags:['Gradio','HF Spaces'] },
+    ]
+  },
+  {
+    color:'cyan-h', numColor:'cyan-n', emoji:'💬',
+    title:'Build a Chatbot',
+    desc:'From rule-based to RAG-powered chatbot with a full frontend.',
+    time:'4–5 weeks', level:'Intermediate',
+    steps:[
+      { title:'Text Preprocessing', desc:'Tokenization, stopword removal, lemmatization', tags:['NLTK','spaCy'] },
+      { title:'Intent Classification', desc:'TF-IDF + Logistic Regression for basic intent matching', tags:['sklearn','TF-IDF'] },
+      { title:'Understand Transformers', desc:'Attention mechanism, encoder/decoder, BERT architecture', tags:['transformers'] },
+      { title:'Fine-tune DistilBERT', desc:'Train on custom Q&A pairs for your domain', tags:['HuggingFace','torch'] },
+      { title:'Add Memory (RAG)', desc:'FAISS vector store, semantic search, context retrieval', tags:['FAISS','LangChain'] },
+      { title:'Build Chat Interface', desc:'React frontend with streaming responses via SSE', tags:['React','FastAPI'] },
+    ]
+  },
+  {
+    color:'green-h', numColor:'green-n', emoji:'📊',
+    title:'Tabular ML Mastery',
+    desc:'Master the techniques that win Kaggle competitions on structured data.',
+    time:'2–3 weeks', level:'Beginner',
+    steps:[
+      { title:'EDA Deep Dive', desc:'Missing values, distributions, correlations, outliers', tags:['pandas','seaborn'] },
+      { title:'Feature Engineering', desc:'Encoding, scaling, polynomial features, interaction terms', tags:['sklearn'] },
+      { title:'Baseline Models', desc:'LR, Decision Trees, KNN — understand bias-variance', tags:['sklearn'] },
+      { title:'Ensemble Methods', desc:'Random Forest, Gradient Boosting, XGBoost, LightGBM', tags:['xgboost','lgbm'] },
+      { title:'Hyperparameter Tuning', desc:'Optuna Bayesian search for best parameters', tags:['Optuna','GridSearch'] },
+      { title:'Stacking & Blending', desc:'Combine multiple models for Kaggle-winning score', tags:['mlens','sklearn'] },
+    ]
+  },
+  {
+    color:'pink-h', numColor:'pink-n', emoji:'🧠',
+    title:'NLP from Scratch to BERT',
+    desc:'Master natural language processing from bag-of-words to transformers.',
+    time:'5–6 weeks', level:'Intermediate',
+    steps:[
+      { title:'Text Representation', desc:'BoW, TF-IDF, N-grams — the classics', tags:['sklearn','NLTK'] },
+      { title:'Word Embeddings', desc:'Word2Vec, GloVe, fastText — semantic similarity', tags:['gensim'] },
+      { title:'RNN & LSTM', desc:'Sequence modelling, vanishing gradient, gates', tags:['torch','LSTM'] },
+      { title:'Attention & Transformers', desc:'Self-attention from scratch, positional encoding', tags:['torch'] },
+      { title:'BERT & Fine-tuning', desc:'Classification, NER, QA — HuggingFace trainer', tags:['transformers'] },
+      { title:'Deploy an NLP API', desc:'Wrap model in FastAPI, add rate limiting, deploy', tags:['FastAPI','Docker'] },
+    ]
+  },
+  {
+    color:'amber-h', numColor:'amber-n', emoji:'🎮',
+    title:'Reinforcement Learning',
+    desc:'Teach an agent to learn by reward. Build a game-playing AI.',
+    time:'4–5 weeks', level:'Advanced',
+    steps:[
+      { title:'RL Fundamentals', desc:'MDP, rewards, policy, value function, Bellman equation', tags:['theory'] },
+      { title:'Q-Learning', desc:'Q-table on simple GridWorld from scratch', tags:['numpy','gymnasium'] },
+      { title:'Deep Q-Network (DQN)', desc:'Neural net as Q-function, experience replay, target net', tags:['torch','gym'] },
+      { title:'Policy Gradient', desc:'REINFORCE algorithm, advantage estimation', tags:['torch'] },
+      { title:'PPO Agent', desc:'Train on LunarLander-v2 with stable-baselines3', tags:['SB3','gymnasium'] },
+      { title:'Custom Environment', desc:'Build your own Gym environment for a real problem', tags:['gym','pygame'] },
+    ]
+  },
+  {
+    color:'purple-h', numColor:'purple-n', emoji:'🎨',
+    title:'Generative AI & Diffusion',
+    desc:'Understand and build generative models — from GANs to Stable Diffusion.',
+    time:'5–6 weeks', level:'Advanced',
+    steps:[
+      { title:'Autoencoders', desc:'Encoder-decoder, latent space, reconstruction loss', tags:['torch'] },
+      { title:'Variational Autoencoders', desc:'Reparameterization trick, KL divergence, generation', tags:['torch'] },
+      { title:'GANs from Scratch', desc:'Generator + Discriminator, mode collapse, training tricks', tags:['torch','DCGAN'] },
+      { title:'Diffusion Models', desc:'DDPM forward/reverse process, U-Net denoiser', tags:['diffusers','torch'] },
+      { title:'Fine-tune Stable Diffusion', desc:'LoRA fine-tuning on custom style dataset', tags:['LoRA','diffusers'] },
+      { title:'Build a Demo App', desc:'Gradio UI, deploy to HuggingFace Spaces', tags:['Gradio','HF'] },
+    ]
+  },
+];
+
+const DATASETS = [
+  { source:'kaggle',      title:'Titanic Survival',         desc:'Classic binary classification. Predict survival from passenger data.', tags:['classification','beginner'], url:'https://kaggle.com/c/titanic' },
+  { source:'kaggle',      title:'House Prices (Ames)',       desc:'Advanced regression with 79 features. The gold standard for feature engineering practice.', tags:['regression','intermediate'], url:'https://kaggle.com/c/house-prices-advanced-regression-techniques' },
+  { source:'huggingface', title:'IMDB Sentiment',           desc:'50K movie reviews for binary sentiment classification. Perfect NLP starter.', tags:['nlp','beginner'], url:'https://huggingface.co/datasets/imdb' },
+  { source:'uci',         title:'UCI Heart Disease',        desc:'Predict heart disease presence from clinical features. Healthcare ML classic.', tags:['classification','beginner'], url:'https://archive.ics.uci.edu/ml/datasets/heart+disease' },
+  { source:'sklearn',     title:'Iris Dataset',             desc:'The hello world of ML. 150 samples, 4 features, 3 classes.', tags:['classification','beginner'], url:'https://scikit-learn.org/stable/datasets/toy_dataset.html' },
+  { source:'kaggle',      title:'Chest X-Ray (Pneumonia)',  desc:'5,863 chest X-ray images for binary medical image classification.', tags:['cv','intermediate'], url:'https://kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia' },
+  { source:'huggingface', title:'SQuAD 2.0',                desc:'Stanford QA dataset. 100K+ question-answer pairs on Wikipedia articles.', tags:['nlp','advanced'], url:'https://huggingface.co/datasets/squad_v2' },
+  { source:'kaggle',      title:'MNIST Digits',             desc:'70,000 handwritten digit images. The most famous CV benchmark.', tags:['cv','beginner'], url:'https://kaggle.com/c/digit-recognizer' },
+  { source:'uci',         title:'Credit Card Fraud',        desc:'284K transactions, 492 frauds — extreme class imbalance challenge.', tags:['anomaly','intermediate'], url:'https://archive.ics.uci.edu/ml/datasets/creditcard' },
+  { source:'huggingface', title:'Common Voice (Indic)',     desc:'Mozilla speech dataset with Indian language audio for ASR models.', tags:['audio','intermediate'], url:'https://huggingface.co/datasets/mozilla-foundation/common_voice_13_0' },
+  { source:'kaggle',      title:'CIFAR-10',                 desc:'60K 32×32 images, 10 classes. Standard CNN benchmark.', tags:['cv','beginner'], url:'https://kaggle.com/datasets/swaroopkml/cifar10-pngs-in-folders' },
+  { source:'uci',         title:'Air Quality UCI',          desc:'Hourly air quality sensor readings. Great for time-series forecasting.', tags:['timeseries','intermediate'], url:'https://archive.ics.uci.edu/ml/datasets/Air+Quality' },
+  { source:'huggingface', title:'IndicNLP Suite',           desc:'Curated NLP datasets for 12 Indian languages including Kannada, Hindi, Tamil.', tags:['nlp','multilingual'], url:'https://huggingface.co/datasets/ai4bharat/IndicNLPSuite' },
+  { source:'kaggle',      title:'Dog Breed Identification', desc:'120 dog breeds from Stanford Dogs dataset. Multi-class fine-grained recognition.', tags:['cv','intermediate'], url:'https://kaggle.com/c/dog-breed-identification' },
+  { source:'sklearn',     title:'California Housing',       desc:'~20K samples, predict housing prices from census data. Great regression dataset.', tags:['regression','beginner'], url:'https://scikit-learn.org/stable/datasets/real_world.html' },
+  { source:'kaggle',      title:'Twitter Sentiment 140',   desc:'1.6M tweets labelled positive/negative. Large-scale NLP dataset.', tags:['nlp','intermediate'], url:'https://kaggle.com/datasets/kazanova/sentiment140' },
+  { source:'huggingface', title:'COCO Captions',           desc:'330K images with 5 human-written captions each. Image-text multimodal tasks.', tags:['cv','nlp','advanced'], url:'https://huggingface.co/datasets/ydshieh/coco_dataset_script' },
+  { source:'uci',         title:'Wine Quality',            desc:'Red/white wine quality scores from physicochemical tests. Regression + classification.', tags:['classification','beginner'], url:'https://archive.ics.uci.edu/ml/datasets/wine+quality' },
+];
+
+/* ════════════ RENDER PROBLEMS ════════════ */
+function renderProblems(filter = 'all') {
+  const grid = document.getElementById('problems-grid');
+  const filtered = filter === 'all' ? PROBLEMS : PROBLEMS.filter(p =>
+    p.level === filter || p.domain === filter
+  );
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>No problems match this filter.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map((p, i) => `
+    <div class="problem-card ${p.color} reveal" style="animation-delay:${i*0.05}s">
+      <div class="card-top">
+        <span class="card-icon">${p.icon}</span>
+        <div class="card-badges">
+          <span class="badge badge-${p.level}">${p.level}</span>
+          <span class="badge badge-${p.domain}">${p.domain.toUpperCase()}</span>
+        </div>
+      </div>
+      <h3>${p.title}</h3>
+      <p>${p.desc}</p>
+      <div class="card-meta">
+        <div class="tools">${p.tools.map(t=>`<span class="tool-pill">${t}</span>`).join('')}</div>
+        <button class="card-action" type="button" onclick="showHint(${p.id})">Hint →</button>
+      </div>
+    </div>
+  `).join('');
+
+  revealCards();
+}
+
+function showHint(id) {
+  const p = PROBLEMS.find(x => x.id === id);
+  const hint = getHint(id);
+  const overlay = document.getElementById('hint-overlay');
+  const body = document.getElementById('hint-body');
+  const title = document.getElementById('hint-title');
+  if (!p || !overlay || !body || !title) return;
+  if (!hint) {
+    // Fallback to legacy toast
+    const toast = document.createElement('div');
+    toast.style.cssText = `position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#1e1b4b;border:1px solid rgba(124,58,237,.5);border-radius:12px;padding:.85rem 1.5rem;color:#c4b5fd;font-size:.85rem;font-weight:600;z-index:9999;max-width:480px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:fadeSlideDown .3s ease`;
+    toast.textContent = `💡 ${p.hint || 'Try a baseline model then iterate with feature engineering.'}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+    return;
+  }
+
+  title.textContent = `${p.icon} ${p.title}`;
+  body.innerHTML = `
+    <div class="hint-section">
+      <h4>🧠 Idea Overview</h4>
+      <p>${hint.idea}</p>
+      <div class="hint-tags">
+        <span class="hint-tag">${p.level.toUpperCase()}</span>
+        <span class="hint-tag">${p.domain.toUpperCase()}</span>
+        ${p.tools.map(t => `<span class="hint-tag">${t}</span>`).join('')}
+      </div>
+    </div>
+    <div class="hint-section">
+      <h4>🌍 Real-world Use</h4>
+      <p>${hint.real}</p>
+    </div>
+    <div class="hint-section">
+      <h4>🚀 How to Start</h4>
+      <ul class="hint-list">${hint.start.map(s => `<li>${s}</li>`).join('')}</ul>
+    </div>
+    <div class="hint-section">
+      <h4>🔗 Resources</h4>
+      <div class="hint-resources">
+        ${hint.resources.map(r => `<a href="${r.url}" target="_blank" rel="noopener">${r.label}</a>`).join('')}
+      </div>
+    </div>
+    ${hint.tips?.length ? `
+      <div class="hint-section">
+        <h4>💡 Optional Tips</h4>
+        <ul class="hint-list">${hint.tips.map(t => `<li>${t}</li>`).join('')}</ul>
+      </div>` : '' }
+    <div class="hint-footer">
+      <span>Need more? Check resources above.</span>
+      <button class="btn btn-outline btn-sm" onclick="closeHint()">Close</button>
+    </div>
+  `;
+
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  // Animate modal with Motion if available
+  if (window.motion?.animate) {
+    const modal = overlay.querySelector('.hint-modal');
+    window.motion.animate(overlay, { opacity: [0, 1] }, { duration: 0.25 });
+    window.motion.animate(modal, { opacity: [0, 1], y: [16, 0], scale: [0.98, 1] }, { duration: 0.28, easing: 'ease-out' });
+  }
+}
+
+function closeHint() {
+  const overlay = document.getElementById('hint-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('active');
+  document.body.style.overflow = '';
+
+  // Motion fade-out (optional)
+  if (window.motion?.animate) {
+    window.motion.animate(overlay, { opacity: [1, 0] }, { duration: 0.18 });
+  }
+}
+
+function getHint(id) {
+  // Placeholder for future dynamic loading (e.g., fetch('/api/hints?id=...'))
+  return HINTS[id] || null;
+}
+
+function filterProblems(filter, btn) {
+  document.querySelectorAll('#tab-problems .filter-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderProblems(filter);
+}
+
+/* ════════════ RENDER ROADMAPS ════════════ */
+function renderRoadmaps() {
+  const grid = document.getElementById('roadmap-grid');
+  grid.innerHTML = ROADMAPS.map((r, i) => `
+    <div class="roadmap-card reveal" style="animation-delay:${i*0.07}s">
+      <div class="roadmap-header ${r.color}">
+        <span class="roadmap-emoji">${r.emoji}</span>
+        <h3>${r.title}</h3>
+        <p>${r.desc}</p>
+        <div class="roadmap-meta">
+          <span>⏱ ${r.time}</span>
+          <span>📊 ${r.level}</span>
+          <span>📋 ${r.steps.length} steps</span>
+        </div>
+      </div>
+      <div class="roadmap-steps">
+        ${r.steps.map((s, j) => `
+          <div class="roadmap-step">
+            <div class="step-num ${r.numColor}">${String(j+1).padStart(2,'0')}</div>
+            <div class="step-content">
+              <div class="step-title">${s.title}</div>
+              <div class="step-desc">${s.desc}</div>
+              <div class="step-tags">${s.tags.map(t=>`<span class="step-tag">${t}</span>`).join('')}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="roadmap-footer">
+        <span style="font-size:.75rem;color:#475569;">${r.steps.length} milestones</span>
+      </div>
+    </div>
+  `).join('');
+  revealCards();
+}
+
+/* ════════════ RENDER DATASETS ════════════ */
+const SOURCE_LABEL = { kaggle:'Kaggle', huggingface:'HuggingFace', uci:'UCI', sklearn:'Sklearn', other:'Other' };
+const SOURCE_CLASS  = { kaggle:'ds-kaggle', huggingface:'ds-hf', uci:'ds-uci', sklearn:'ds-sklearn', other:'ds-other' };
+const CARD_CLASS    = { kaggle:'kaggle', huggingface:'hf', uci:'uci', sklearn:'sklearn', other:'other' };
+
+function renderDatasets(filter = 'all') {
+  const grid = document.getElementById('datasets-grid');
+  const filtered = filter === 'all' ? DATASETS : DATASETS.filter(d => d.source === filter);
+
+  grid.innerHTML = filtered.map((d, i) => `
+    <a class="dataset-card ${CARD_CLASS[d.source] || 'other'} reveal" href="${d.url}" target="_blank" rel="noopener" style="animation-delay:${i*0.04}s">
+      <div class="dataset-top">
+        <span class="ds-source ${SOURCE_CLASS[d.source] || 'ds-other'}">${SOURCE_LABEL[d.source] || d.source}</span>
+      </div>
+      <h4>${d.title}</h4>
+      <p>${d.desc}</p>
+      <div class="dataset-bottom">
+        <div class="ds-tags">${d.tags.slice(0,2).map(t=>`<span class="ds-tag">${t}</span>`).join('')}</div>
+        <span class="ds-link">Open ↗</span>
+      </div>
+    </a>
+  `).join('');
+  revealCards();
+}
+
+function filterDatasets(filter, btn) {
+  document.querySelectorAll('#tab-datasets .filter-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderDatasets(filter);
+}
+
+/* ════════════ SCROLL REVEAL ════════════ */
+function revealCards() {
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.reveal').forEach((el, i) => {
+      setTimeout(() => el.classList.add('visible'), i * 40);
+    });
+  });
+}
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+/* ════════════ INIT ════════════ */
+renderProblems();
+renderRoadmaps();
+renderDatasets();
+revealCards();
+
+// Hint overlay wiring (ensure DOM is ready)
+document.addEventListener('DOMContentLoaded', () => {
+  const overlayEl = document.getElementById('hint-overlay');
+  if (!overlayEl) return;
+  overlayEl.addEventListener('click', (e) => { if (e.target === overlayEl) closeHint(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHint(); });
+});
+</script>
+
+<div class="hint-overlay" id="hint-overlay" aria-modal="true" role="dialog">
+  <div class="hint-modal">
+    <div class="hint-header">
+      <h3 id="hint-title">Hint</h3>
+      <button class="hint-close" onclick="closeHint()">Close ✕</button>
+    </div>
+    <div class="hint-body" id="hint-body"></div>
+  </div>
+</div>
+</body>
+</html>

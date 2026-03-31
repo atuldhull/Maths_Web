@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js" defer></script>
+  <style>
+    .dash-layout { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
+    .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .dash-header h1 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; }
+
+    .dash-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .dash-stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; transition: border-color 0.25s; }
+    .dash-stat:hover { border-color: var(--border-acc); }
+    .dash-stat .label { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); margin-bottom: 0.5rem; }
+    .dash-stat .value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, white, var(--purple-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .dash-grid { display: grid; grid-template-columns: 1fr 360px; gap: 1.5rem; }
+    .dash-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 2rem; }
+    .panel-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+
+    /* History */
+    .history-item { display: flex; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+    .history-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .h-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .h-icon.correct { background: rgba(74,222,128,0.12); }
+    .h-icon.wrong   { background: rgba(239,68,68,0.12); }
+    .h-text { flex: 1; min-width: 0; }
+    .h-text h4 { font-size: 0.88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .h-text span { font-size: 0.78rem; color: var(--text-3); font-family: 'Space Mono', monospace; }
+    .h-xp { font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--purple-light); font-weight: 700; flex-shrink: 0; }
+
+    /* Profile */
+    .profile-card { text-align: center; padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .profile-avatar { width: 72px; height: 72px; background: linear-gradient(135deg, var(--purple), var(--blue)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin: 0 auto 1rem; box-shadow: 0 0 24px rgba(124,58,237,0.4); }
+    .profile-name { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; }
+    .profile-title-badge { font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--purple-light); margin-top: 0.25rem; }
+    .profile-email { font-size: 0.82rem; color: var(--text-3); margin-top: 0.4rem; }
+    .xp-bar { margin: 1.25rem 0 0.5rem; background: rgba(255,255,255,0.06); border-radius: 99px; height: 6px; overflow: hidden; }
+    .xp-fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--blue)); border-radius: 99px; width: 0%; transition: width 1s ease; }
+    .xp-bar-text { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--text-3); }
+
+    /* Password change */
+    .password-section { margin-top: 1.5rem; }
+    .password-section h4 { font-family: 'Space Mono', monospace; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-2); margin-bottom: 1rem; }
+    .toggle-pass { background: none; border: none; color: var(--purple-light); font-size: 0.8rem; cursor: pointer; text-decoration: underline; margin-bottom: 1rem; display: block; }
+    .pass-form { display: none; }
+    .pass-form.open { display: block; }
+    .pass-form input { width: 100%; margin-bottom: 0.75rem; }
+    #pass-msg { font-size: 0.82rem; margin-bottom: 0.75rem; padding: 8px 12px; border-radius: 6px; display: none; }
+
+    /* Admin link */
+    .admin-badge { background: var(--purple-dim); border: 1px solid var(--border-acc); border-radius: 8px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; cursor: pointer; transition: background 0.2s; text-decoration: none; }
+    .admin-badge:hover { background: rgba(124,58,237,0.2); }
+    .admin-badge span { font-size: 0.85rem; color: var(--purple-light); font-weight: 600; }
+
+    /* Auth Gate */
+    .auth-gate { display: none; position: fixed; inset: 0; background: rgba(2,8,23,0.95); backdrop-filter: blur(12px); z-index: 500; align-items: center; justify-content: center; padding: 1.5rem; }
+    .auth-gate.visible { display: flex; }
+    .auth-gate-card { background: var(--surface); border: 1px solid var(--border-acc); border-radius: var(--radius-xl); padding: 3rem 2.5rem; text-align: center; max-width: 420px; width: 100%; }
+    .auth-gate-card h2 { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; margin-bottom: 0.75rem; }
+    .auth-gate-card p { color: var(--text-2); margin-bottom: 2rem; }
+
+    @media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } .dash-stats { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .dash-stats { grid-template-columns: 1fr; } }
+
+
+  </style>
+</head>
+<body>
+
+<div class="auth-gate" id="authGate">
+  <div class="auth-gate-card">
+    <div style="font-size:2.5rem;margin-bottom:1rem;">📊</div>
+    <h2>Members Only</h2>
+    <p>Log in to view your dashboard, XP history, and stats.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;">
+      <a href="/login?redirect=/dashboard" class="btn btn-primary btn-lg">Log In</a>
+      <a href="/register" class="btn btn-ghost btn-lg">Join Free</a>
+    </div>
+  </div>
+</div>
+
+<nav class="mc-nav">
+  <a href="/" class="mc-nav__logo"><div class="mc-nav__logo-mark">Σ</div> Math Collective</a>
+  <ul class="mc-nav__links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/arena">Arena</a></li>
+    <li><a href="/events">Events</a></li>
+    <li><a href="/ml-launchpad" style="color:#a78bfa;">🧠 ML</a></li>
+  </ul>
+  <div class="mc-nav__actions">
+    <div class="mc-nav__user" id="nav-user-pill">
+      <div class="mc-nav__avatar">A</div>
+      <span class="mc-nav__username">Member</span>
+      <a href="/profile" style="color:var(--text-3);font-size:0.75rem;margin-left:4px;">👤</a>
+      <span style="color:var(--text-3);font-size:0.75rem;margin-left:4px;cursor:pointer;" onclick="logout()">↩</span>
+    </div>
+    <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light">🌙</button>
+    <a href="/login" class="btn btn-ghost btn-sm" id="nav-login-btn">Log In</a>
+  </div>
+</nav>
+
+<div class="dash-layout">
+
+  <div class="dash-header">
+    <div>
+      <p style="font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--purple-light);margin-bottom:0.25rem;">Dashboard</p>
+      <h1>Welcome back, <span id="greeting-name">Member</span></h1>
+    </div>
+    <a href="/arena" class="btn btn-primary">⚔ Go to Arena</a>
+  </div>
+
+  <div class="dash-stats reveal">
+    <div class="dash-stat"><div class="label">Total XP</div><div class="value" id="stat-xp">—</div></div>
+    <div class="dash-stat"><div class="label">Solved</div><div class="value" id="stat-solved">—</div></div>
+    <div class="dash-stat"><div class="label">Accuracy</div><div class="value" id="stat-accuracy">—</div></div>
+    <div class="dash-stat"><div class="label">Global Rank</div><div class="value" id="stat-rank">#—</div></div>
+  </div>
+
+  <div class="section section--tight reveal">
+    <div class="stat-grid">
+      <div class="stat-card hover-lift">
+        <h4>Weekly Activity</h4>
+        <div class="stat-big" id="overview-attempts">—</div>
+        <div class="pill pill--purple" id="overview-correct">Loading…</div>
+      </div>
+      <div class="stat-card hover-lift">
+        <h4>XP earned (last 7d)</h4>
+        <div class="stat-big" id="overview-xp">— XP</div>
+        <div class="pill pill--green" id="overview-xp-rate">Keep going!</div>
+      </div>
+      <div class="stat-card hover-lift">
+        <h4>Recent accuracy</h4>
+        <div class="stat-big" id="overview-acc">—%</div>
+        <div class="pill pill--amber" id="overview-acc-note">Collecting data…</div>
+      </div>
+      <div class="stat-card hover-lift">
+        <h4>Quick access</h4>
+        <div class="cluster">
+          <a class="btn btn-outline btn-sm" href="/arena">Arena</a>
+          <a class="btn btn-outline btn-sm" href="/ml-launchpad">ML</a>
+          <a class="btn btn-outline btn-sm" href="/projects">Projects</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-grid reveal">
+
+    <!-- History -->
+    <div class="dash-panel">
+      <div class="panel-title">
+        <span>📋 Recent Submissions</span>
+        <span class="badge badge-purple" id="history-count">0</span>
+      </div>
+      <div id="history-list">
+        <div style="color:var(--text-3);text-align:center;padding:3rem 0;font-size:0.88rem;">Loading history...</div>
+      </div>
+    </div>
+    
+
+    <!-- Profile + Password Change -->
+    <div class="dash-panel">
+      <div class="profile-card">
+        <div class="profile-avatar" id="profile-avatar">A</div>
+        <div class="profile-name" id="profile-name">Loading...</div>
+        <div class="profile-title-badge" id="profile-title">Axiom Scout</div>
+        <div class="profile-email" id="profile-email"></div>
+        <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
+        <div class="xp-bar-text" id="xp-text">0 / 500 XP to next level</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity + Notifications -->
+  <div class="section section--tight reveal">
+    <div class="activity-grid">
+      <div class="card card--muted hover-lift">
+        <div class="card__title">Recent Activity</div>
+        <div id="history-list" class="history-list"></div>
+        <div id="history-count" class="card__meta" style="margin-top:0.5rem;">0 attempts</div>
+      </div>
+      <div class="card hover-lift">
+        <div class="card__title">Notifications</div>
+        <div id="notif-list" class="notif-list">
+          <div class="empty-state">Loading notifications...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Action Cards -->
+  <div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.25rem;">
+
+        <!-- Tests — Electric Blue -->
+        <a href="/tests" style="text-decoration:none;display:block;" id="testsCard">
+          <div style="border-radius:14px;padding:1rem 1.25rem;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(99,102,241,0.08));border:1px solid rgba(59,130,246,0.3);display:flex;align-items:center;gap:1rem;transition:all .2s;cursor:pointer;position:relative;overflow:hidden;"
+            onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(59,130,246,0.25)'"
+            onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">📋</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;color:#93c5fd;">Scheduled Tests</div>
+              <div style="font-size:.75rem;color:var(--text-3);margin-top:2px;">Upcoming quizzes & exams</div>
+            </div>
+            <div style="font-size:1.1rem;color:#60a5fa;opacity:.7;">→</div>
+          </div>
+        </a>
+
+        <!-- Projects — Golden -->
+        <a href="/projects" style="text-decoration:none;display:block;">
+          <div style="border-radius:14px;padding:1rem 1.25rem;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(245,158,11,0.06));border:1px solid rgba(251,191,36,0.3);display:flex;align-items:center;gap:1rem;transition:all .2s;cursor:pointer;"
+            onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(251,191,36,0.2)'"
+            onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(251,191,36,0.15);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">🚀</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;color:#fde68a;">Team Projects</div>
+              <div style="font-size:.75rem;color:var(--text-3);margin-top:2px;">Collaborate & build together</div>
+            </div>
+            <div style="font-size:1.1rem;color:#fbbf24;opacity:.7;">→</div>
+          </div>
+        </a>
+
+        <!-- Arena shortcut — Purple fire -->
+        <a href="/arena" style="text-decoration:none;display:block;">
+          <div style="border-radius:14px;padding:1rem 1.25rem;background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(139,92,246,0.08));border:1px solid rgba(124,58,237,0.4);display:flex;align-items:center;gap:1rem;transition:all .2s;cursor:pointer;position:relative;"
+            onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(124,58,237,0.3)'"
+            onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(124,58,237,0.25);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">⚔️</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;color:#c4b5fd;">Challenge Arena</div>
+              <div style="font-size:.75rem;color:var(--text-3);margin-top:2px;">Solve · Earn XP · Climb ranks</div>
+            </div>
+            <div style="font-size:.65rem;background:rgba(124,58,237,.3);color:#a78bfa;padding:2px 8px;border-radius:99px;border:1px solid rgba(124,58,237,.4);">LIVE</div>
+          </div>
+        </a>
+
+        <!-- ML Launchpad -->
+        <a href="/ml-launchpad" style="text-decoration:none;display:block;">
+          <div style="border-radius:14px;padding:1rem 1.25rem;background:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(6,182,212,0.06));border:1px solid rgba(124,58,237,0.25);display:flex;align-items:center;gap:1rem;transition:all .2s;cursor:pointer;"
+            onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(124,58,237,0.25)'"
+            onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">🧠</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;color:#c4b5fd;">ML Launchpad</div>
+              <div style="font-size:.75rem;color:var(--text-3);margin-top:2px;">Problems · Roadmaps · Datasets</div>
+            </div>
+            <div style="font-size:.62rem;background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(6,182,212,.2));color:#a78bfa;padding:2px 8px;border-radius:99px;border:1px solid rgba(124,58,237,.4);white-space:nowrap;">NEW ✦</div>
+          </div>
+        </a>
+
+        <!-- Admin (hidden by default) -->
+        <a href="/admin" id="adminLink" style="text-decoration:none;display:none;">
+          <div style="border-radius:14px;padding:1rem 1.25rem;background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(220,38,38,0.05));border:1px solid rgba(239,68,68,0.3);display:flex;align-items:center;gap:1rem;transition:all .2s;"
+            onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(239,68,68,0.2)'"
+            onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(239,68,68,0.15);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">🛠</div>
+            <div style="flex:1;">
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;color:#fca5a5;">Admin Dashboard</div>
+              <div style="font-size:.75rem;color:var(--text-3);margin-top:2px;">Manage the platform</div>
+            </div>
+            <div style="font-size:1.1rem;color:#f87171;opacity:.7;">→</div>
+          </div>
+        </a>
+
+        <!-- Teacher (hidden by default) -->
+        <a href="/teacher" id="teacherLink" style="text-decoration:none;display:none;">
+          <div style="border-radius:14px;padding:1rem 1.25rem;background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(5,150,105,0.05));border:1px solid rgba(16,185,129,0.3);display:flex;align-items:center;gap:1rem;transition:all .2s;"
+            onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(16,185,129,0.2)'"
+            onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">🎓</div>
+            <div style="flex:1;">
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.92rem;color:#6ee7b7;">Teacher Portal</div>
+              <div style="font-size:.75rem;color:var(--text-3);margin-top:2px;">Manage students & tests</div>
+            </div>
+            <div style="font-size:1.1rem;color:#10b981;opacity:.7;">→</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Security -->
+      <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:.85rem 1rem;margin-bottom:1.25rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:.8rem;font-weight:600;color:var(--text-2);">🔑 Account Security</div>
+          <button onclick="togglePassForm()" style="font-size:.72rem;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:3px 10px;color:var(--text-2);cursor:pointer;">Change Password</button>
+        </div>
+        <div class="pass-form" id="passForm" style="margin-top:.75rem;">
+          <div id="pass-msg"></div>
+          <input class="form-input" type="password" id="currentPass" placeholder="Current password" style="margin-bottom:.5rem;">
+          <input class="form-input" type="password" id="newPass" placeholder="New password (min 8)" style="margin-bottom:.5rem;">
+          <input class="form-input" type="password" id="confirmPass" placeholder="Confirm new password" style="margin-bottom:.5rem;">
+          <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="changePassword()">Update Password</button>
+        </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:.85rem 1rem;">
+        <div style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;margin-bottom:.85rem;display:flex;align-items:center;gap:.5rem;">
+          🏆 <span>Top Solvers</span>
+        </div>
+        <div id="lb-list">
+          <div style="color:var(--text-3);font-size:0.85rem;text-align:center;padding:1rem 0;">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="mc-footer" style="margin-top:0;">
+  <div class="mc-footer__bottom" style="max-width:1200px;margin:0 auto;">
+    <span>© 2026 Math Collective · BMSIT</span>
+    <a href="/" style="color:var(--text-3);">← Home</a>
+  </div>
+</footer>
+
+<script>
+  const TITLES = [
+    [0, 'Axiom Scout'], [100, 'Variable Hunter'], [300, 'Proof Apprentice'],
+    [600, 'Theorem Analyst'], [1000, 'Calculus Knight'], [1500, 'Series Master'],
+    [2500, 'Grand Theorem Lord'],
+  ];
+  function getTitle(xp) {
+    let t = TITLES[0][1];
+    for (const [req, title] of TITLES) { if (xp >= req) t = title; }
+    return t;
+  }
+
+  async function loadDashboard() {
+    const state = await getAuthState();
+    if (!state.loggedIn) {
+      document.getElementById('authGate').classList.add('visible');
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+
+    const user = state.user;
+    const name = (user.name || user.email?.split('@')[0] || 'Member');
+    document.getElementById('greeting-name').textContent  = name.split(' ')[0];
+    document.getElementById('profile-name').textContent   = name;
+    document.getElementById('profile-email').textContent  = user.email || '';
+    document.getElementById('profile-avatar').textContent = name.charAt(0).toUpperCase();
+
+    // Load in parallel
+    await Promise.all([loadStats(), loadHistory(), loadLeaderboard(), loadAnnouncements(), loadNotifications()]);
+  }
+
+  /* ── Announcements ── */
+  async function loadAnnouncements() {
+    try {
+      const res  = await fetch('/api/announcements');
+      if (!res.ok) return;
+      const data = await res.json();
+      const el   = document.getElementById('announcement-banner');
+      if (!el || !data.length) return;
+      el.innerHTML = data.map(a => `
+        <div style="background:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(59,130,246,0.08));border:1px solid rgba(124,58,237,0.3);border-radius:10px;padding:1rem 1.25rem;margin-bottom:0.75rem;">
+          <div style="font-weight:700;font-size:0.92rem;margin-bottom:3px;">📢 ${a.title}</div>
+          <div style="color:var(--text-2);font-size:0.85rem;line-height:1.6;">${a.body}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--text-3);margin-top:6px;">${new Date(a.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
+        </div>
+      `).join('');
+      el.style.display = 'block';
+    } catch (e) {}
+  }
+
+  async function loadStats() {
+    try {
+      const res  = await fetch('/api/user/stats');
+      if (!res.ok) return;
+      const data = await res.json();
+      window.dashboardStats = data;
+
+      document.getElementById('stat-xp').textContent       = data.xp       || 0;
+      document.getElementById('stat-solved').textContent   = data.solved    || 0;
+      document.getElementById('stat-accuracy').textContent = (data.accuracy || 0) + '%';
+      document.getElementById('stat-rank').textContent     = '#' + (data.rank || '—');
+      document.getElementById('profile-title').textContent = data.title || getTitle(data.xp || 0);
+
+      // XP progress bar
+      const xp    = data.xp || 0;
+      const levels = TITLES.map(t => t[0]);
+      const next  = levels.find(l => l > xp) || xp + 500;
+      const prev  = [...levels].reverse().find(l => l <= xp) || 0;
+      const pct   = Math.min(((xp - prev) / (next - prev)) * 100, 100);
+      setTimeout(() => { document.getElementById('xp-fill').style.width = pct + '%'; }, 300);
+      document.getElementById('xp-text').textContent = `${xp} / ${next} XP to next level`;
+
+      // Show admin link if admin
+      if (data.role === 'admin') {
+        document.getElementById('adminLink').style.display  = 'flex';
+        document.getElementById('teacherLink').style.display = 'flex';
+      }
+      if (data.role === 'teacher') {
+        document.getElementById('teacherLink').style.display = 'flex';
+      }
+
+      updateActivityOverview();
+    } catch (e) { console.error('[Dashboard] Stats error:', e); }
+  }
+
+  async function loadHistory() {
+    try {
+      const res      = await fetch('/api/arena/history');
+      if (!res.ok) return;
+      const attempts = await res.json();
+      const list     = document.getElementById('history-list');
+      window.historyAttempts = attempts || [];
+      document.getElementById('history-count').textContent = (attempts.length || 0) + ' attempts';
+
+      if (!Array.isArray(attempts) || !attempts.length) {
+        list.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:3rem 0;font-size:0.88rem;">No submissions yet.<br>Head to the Arena!</div>';
+        return;
+      }
+
+      list.innerHTML = attempts.slice(0, 10).map(a => {
+        const ok = a.correct === true;
+        const title = a.challenges?.title || 'Challenge';
+        const date  = a.created_at ? new Date(a.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short' }) : '';
+        return `
+          <div class="history-item">
+            <div class="h-icon ${ok ? 'correct' : 'wrong'}">${ok ? '✓' : '✗'}</div>
+            <div class="h-text">
+              <h4>${title}</h4>
+              <span>${date}</span>
+            </div>
+            <div class="h-xp">${ok ? '+' + (a.xp_earned || 50) + ' XP' : '0 XP'}</div>
+          </div>`;
+      }).join('');
+
+      updateActivityOverview();
+    } catch (e) { console.error('[Dashboard] History error:', e); }
+  }
+
+  async function loadNotifications() {
+    const list = document.getElementById('notif-list');
+    if (!list) return;
+    try {
+      const res = await fetch('/api/notifications');
+      if (!res.ok) throw new Error('notif fetch failed');
+      const data = await res.json();
+      if (!Array.isArray(data) || !data.length) {
+        list.innerHTML = '<div class="empty-state">No new notifications.</div>';
+        return;
+      }
+      list.innerHTML = data.slice(0, 5).map(n => {
+        const date = n.created_at ? new Date(n.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short' }) : '';
+        return `
+          <div class="notif-item">
+            <div class="notif-dot"></div>
+            <div>
+              <div class="notif-title">${n.title || 'Notification'}</div>
+              <div class="notif-meta">${date} • ${n.type || 'info'}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      list.innerHTML = '<div class="empty-state">Notifications unavailable.</div>';
+    }
+  }
+
+  function updateActivityOverview() {
+    const stats = window.dashboardStats || {};
+    const attempts = window.historyAttempts || [];
+
+    // Weekly window
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recent = attempts.filter(a => a.created_at && new Date(a.created_at).getTime() >= weekAgo);
+    const attemptsWeek = recent.length;
+    const correctWeek  = recent.filter(a => a.correct).length;
+    const xpWeek       = recent.reduce((s,a) => s + (a.xp_earned || 0), 0);
+    const accWeek      = attemptsWeek ? Math.round((correctWeek / attemptsWeek) * 100) : 0;
+
+    const attemptsLabel = document.getElementById('overview-attempts');
+    const correctLabel  = document.getElementById('overview-correct');
+    const xpLabel       = document.getElementById('overview-xp');
+    const xpRate        = document.getElementById('overview-xp-rate');
+    const accLabel      = document.getElementById('overview-acc');
+    const accNote       = document.getElementById('overview-acc-note');
+
+    if (attemptsLabel) attemptsLabel.textContent = attemptsWeek ? `${attemptsWeek} in 7 days` : 'No attempts yet';
+    if (correctLabel)  correctLabel.textContent  = attemptsWeek ? `${correctWeek} correct` : 'Solve one to begin';
+    if (xpLabel)       xpLabel.textContent       = `${xpWeek || 0} XP`;
+    if (xpRate)        xpRate.textContent        = attemptsWeek ? 'Keep the streak!' : 'Try an Arena problem';
+    if (accLabel)      accLabel.textContent      = attemptsWeek ? `${accWeek}%` : (stats.accuracy || '—') + '%';
+    if (accNote)       accNote.textContent       = attemptsWeek ? 'Based on last 7 days' : 'Need more data';
+  }
+
+  async function loadLeaderboard() {
+    try {
+      const res   = await fetch('/api/leaderboard');
+      if (!res.ok) return;
+      const users = await res.json();
+      const list  = document.getElementById('lb-list');
+      const medals = ['🥇','🥈','🥉'];
+
+      if (!Array.isArray(users) || !users.length) {
+        list.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:1rem 0;font-size:0.85rem;">No data yet.</div>';
+        return;
+      }
+
+      list.innerHTML = users.slice(0, 7).map((u, i) => `
+        <div class="lb-row">
+          <span class="lb-rank">${medals[i] || '#' + (i + 1)}</span>
+          <span class="lb-name">${u.name}</span>
+          <span class="lb-xp">${u.xp} XP</span>
+        </div>
+      `).join('');
+    } catch (e) { console.error('[Dashboard] Leaderboard error:', e); }
+  }
+
+  /* ── Password Change ── */
+  function togglePassForm() {
+    const form = document.getElementById('passForm');
+    form.classList.toggle('open');
+  }
+
+  async function changePassword() {
+    const currentPass = document.getElementById('currentPass').value.trim();
+    const newPass     = document.getElementById('newPass').value.trim();
+    const confirmPass = document.getElementById('confirmPass').value.trim();
+    const msg         = document.getElementById('pass-msg');
+
+    const showMsg = (text, type) => {
+      msg.style.display     = 'block';
+      msg.className         = 'alert alert-' + type;
+      msg.textContent       = text;
+    };
+
+    if (!currentPass || !newPass || !confirmPass) return showMsg('All fields are required.', 'error');
+    if (newPass.length < 8)  return showMsg('New password must be at least 8 characters.', 'error');
+    if (newPass !== confirmPass) return showMsg('New passwords do not match.', 'error');
+    if (newPass === currentPass) return showMsg('New password must be different from current.', 'error');
+
+    try {
+      const res  = await fetch('/api/user/change-password', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ currentPassword: currentPass, newPassword: newPass }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) return showMsg('✗ ' + (data.error || 'Failed'), 'error');
+
+      showMsg('✓ Password changed successfully!', 'success');
+      document.getElementById('currentPass').value = '';
+      document.getElementById('newPass').value     = '';
+      document.getElementById('confirmPass').value = '';
+      setTimeout(() => { document.getElementById('passForm').classList.remove('open'); }, 2000);
+    } catch (e) {
+      showMsg('Network error. Try again.', 'error');
+    }
+  }
+
+  loadDashboard();
+
+  /* ── Auto-refresh when tab becomes visible (e.g. returning from Arena) ── */
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      // Silently refresh stats and history without showing loading states
+      loadStats();
+      loadHistory();
+      loadLeaderboard();
+    }
+  });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js"></script>
+  <style>
+    .profile-page { max-width: 860px; margin: 4rem auto 6rem; padding: 0 1.5rem; }
+
+    /* Hero card */
+    .profile-hero { background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(59,130,246,0.08)); border: 1px solid rgba(124,58,237,0.3); border-radius: 20px; padding: 2.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; }
+    .profile-avatar-big { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; flex-shrink: 0; }
+    .profile-hero-info h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .profile-hero-info .title-tag { font-family: 'Space Mono', monospace; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--purple-light); }
+    .profile-hero-stats { display: flex; gap: 1.5rem; margin-top: 1rem; flex-wrap: wrap; }
+    .profile-hero-stats .stat { text-align: center; }
+    .profile-hero-stats .stat .val { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; }
+    .profile-hero-stats .stat .lbl { font-family: 'Space Mono', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); }
+
+    /* Streak */
+    .streak-card { background: linear-gradient(135deg, rgba(251,146,60,0.12), rgba(239,68,68,0.08)); border: 1px solid rgba(251,146,60,0.3); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1.5rem; }
+    .streak-fire { font-size: 3rem; }
+    .streak-num  { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; color: #fb923c; }
+    .streak-lbl  { font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+
+    /* Section card */
+    .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.75rem; margin-bottom: 1.5rem; }
+    .section-card h2 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; }
+
+    /* XP bar */
+    .xp-bar { height: 10px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
+    .xp-fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--blue)); border-radius: 99px; transition: width 1s ease; }
+
+    /* Topics */
+    .topic-row { display: flex; align-items: center; gap: 1rem; padding: 0.65rem 0; border-bottom: 1px solid var(--border); }
+    .topic-row:last-child { border-bottom: none; }
+    .topic-name { flex: 1; font-size: 0.88rem; font-weight: 600; }
+    .topic-bar-wrap { width: 120px; }
+    .topic-mini-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
+    .topic-mini-fill { height: 100%; border-radius: 99px; }
+    .fill-high   { background: #4ade80; }
+    .fill-medium { background: #fbbf24; }
+    .fill-low    { background: #f87171; }
+    .topic-pct { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--text-3); width: 36px; text-align: right; }
+
+    /* Password form */
+    .pass-form { display: none; margin-top: 1rem; }
+    .pass-form.open { display: block; }
+
+    /* Avatar modal */
+    .av-modal-overlay { display:none; position:fixed; inset:0; background:rgba(2,8,23,.88); backdrop-filter:blur(10px); z-index:1000; align-items:center; justify-content:center; padding:1rem; }
+    .av-modal-overlay.open { display:flex; }
+    .av-modal { background:var(--surface,#0d1117); border:1px solid var(--border,rgba(255,255,255,.1)); border-radius:20px; padding:1.5rem; max-width:520px; width:100%; max-height:92vh; overflow-y:auto; }
+    .av-modal h3 { font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:700; margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between; }
+    .av-style-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-bottom:1rem; }
+    .av-style-card { border-radius:10px; border:1.5px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03); padding:7px 4px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:all .15s; }
+    .av-style-card:hover { border-color:rgba(124,58,237,.5); }
+    .av-style-card.on { border-color:#7c3aed; background:rgba(124,58,237,.12); }
+    .av-style-card img { width:52px; height:52px; border-radius:50%; }
+    .av-style-card span { font-size:.65rem; color:var(--text-2,#94a3b8); }
+    .av-dot-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:1rem; }
+    .av-dot { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2.5px solid transparent; transition:transform .15s,border-color .15s; }
+    .av-dot:hover { transform:scale(1.15); }
+    .av-dot.on { border-color:#f1f5f9; transform:scale(1.1); }
+    .av-random-row { display:flex; flex-wrap:wrap; gap:8px; }
+    .av-random { width:52px; height:52px; border-radius:50%; border:2px solid transparent; cursor:pointer; overflow:hidden; transition:border-color .15s,transform .15s; background:rgba(255,255,255,.05); }
+    .av-random:hover { border-color:rgba(124,58,237,.6); transform:scale(1.08); }
+    .av-random.on { border-color:#7c3aed; box-shadow:0 0 0 3px rgba(124,58,237,.25); }
+    .av-random img { width:100%; height:100%; }
+    .av-seed-row { display:flex; gap:8px; margin-bottom:1rem; }
+    .av-seed-row input { flex:1; }
+    .profile-avatar-big { cursor:pointer; transition:transform .2s; }
+    .profile-avatar-big:hover { transform:scale(1.05); }
+  </style>
+</head>
+<body>
+
+<nav class="mc-nav">
+  <a href="/" class="mc-nav__logo"><div class="mc-nav__logo-mark">Σ</div> Math Collective</a>
+  <ul class="mc-nav__links">
+    <li><a href="/arena">Arena</a></li>
+    <li><a href="/dashboard">Dashboard</a></li>
+    <li><a href="/projects">Projects</a></li>
+  </ul>
+  <div class="mc-nav__actions">
+    <div class="mc-nav__user" id="nav-user-pill">
+      <div class="mc-nav__avatar">A</div>
+      <span class="mc-nav__username">Member</span>
+      <span style="color:var(--text-3);font-size:0.75rem;margin-left:4px;cursor:pointer;" onclick="logout()">↩</span>
+    </div>
+    <a href="/login" class="btn btn-ghost btn-sm" id="nav-login-btn">Log In</a>
+  </div>
+</nav>
+
+<div class="profile-page">
+
+  <!-- Hero -->
+  <div class="profile-hero reveal">
+    <img id="p-avatar" src="" width="80" height="80" class="profile-avatar-big" style="width:80px;height:80px;border-radius:50%;cursor:pointer;flex-shrink:0;object-fit:cover;background:#1a1a2e;" onclick="openAvatarBuilder()" title="Click to customize avatar">
+    <div class="profile-hero-info" style="flex:1;">
+      <div class="title-tag" id="p-title-tag">Axiom Scout</div>
+      <h1 id="p-name">Loading...</h1>
+      <div style="color:var(--text-2);font-size:0.85rem;" id="p-email"></div>
+      <div style="color:var(--text-3);font-size:0.82rem;margin-top:.35rem;font-style:italic;" id="p-bio"></div>
+      <div class="profile-hero-stats">
+        <div class="stat"><div class="val" id="p-xp">0</div><div class="lbl">Total XP</div></div>
+        <div class="stat"><div class="val" id="p-solved">0</div><div class="lbl">Solved</div></div>
+        <div class="stat"><div class="val" id="p-rank">#—</div><div class="lbl">Rank</div></div>
+        <div class="stat"><div class="val" id="p-accuracy">0%</div><div class="lbl">Accuracy</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Streak -->
+  <div class="streak-card reveal">
+    <div class="streak-fire">🔥</div>
+    <div>
+      <div class="streak-num" id="streak-num">0</div>
+      <div class="streak-lbl">Day Streak</div>
+      <div style="color:var(--text-2);font-size:0.82rem;margin-top:4px;" id="streak-msg">Solve a challenge today to start your streak!</div>
+    </div>
+  </div>
+
+  <!-- XP Progress -->
+  <div class="section-card reveal">
+    <h2>⚡ XP Progress</h2>
+    <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
+      <span style="font-size:0.82rem;color:var(--text-2);" id="p-level-label">Level 1</span>
+      <span style="font-family:'Space Mono',monospace;font-size:0.78rem;color:var(--text-3);" id="p-xp-label">0 / 500 XP</span>
+    </div>
+    <div class="xp-bar"><div class="xp-fill" id="p-xp-fill" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-top:0.75rem;font-size:0.78rem;color:var(--text-3);">
+      <span>Current: <span id="p-cur-title" style="color:var(--purple-light);">Axiom Scout</span></span>
+      <span>Next: <span id="p-next-title" style="color:var(--text-2);">—</span></span>
+    </div>
+  </div>
+
+  <!-- Topic performance -->
+  <div class="section-card reveal">
+    <h2>📊 Performance by Topic</h2>
+    <div id="topic-breakdown"><div style="color:var(--text-3);text-align:center;padding:2rem;">Calculating...</div></div>
+  </div>
+
+  <!-- Test History -->
+  <div class="section-card reveal">
+    <h2>📋 Test History</h2>
+    <div id="test-history-list"><div style="color:var(--text-3);text-align:center;padding:2rem;">Loading...</div></div>
+  </div>
+
+    <!-- Avatar Modal (DiceBear) -->
+    <div class="av-modal-overlay" id="av-modal">
+      <div class="av-modal">
+        <h3>🎨 Pick Your Avatar
+          <button onclick="closeAvatarBuilder()" style="background:none;border:none;color:var(--text-3,#64748b);cursor:pointer;font-size:1.2rem;padding:0;">✕</button>
+        </h3>
+        <!-- Preview -->
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;">
+          <img id="av-big-preview" src="" width="90" height="90" style="width:90px;height:90px;border-radius:50%;border:3px solid #7c3aed;background:#1a1a2e;object-fit:cover;">
+          <div style="flex:1;">
+            <div class="av-seed-row">
+              <input class="form-input" id="av-seed-inp" placeholder="Your name or anything..." oninput="avOnSeed()" style="font-size:.85rem;">
+              <button class="btn btn-ghost btn-sm" onclick="avRandom()">🎲 Random</button>
+            </div>
+            <div style="font-size:.72rem;color:var(--text-3,#64748b);margin-top:.4rem;">Changing the seed changes your unique look</div>
+          </div>
+        </div>
+        <!-- Styles -->
+        <div style="font-size:.7rem;font-weight:700;color:var(--text-3,#64748b);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;">Style</div>
+        <div class="av-style-grid" id="av-style-grid"></div>
+        <!-- Background -->
+        <div style="font-size:.7rem;font-weight:700;color:var(--text-3,#64748b);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;">Background</div>
+        <div class="av-dot-row" id="av-bg-row"></div>
+        <!-- Quick picks -->
+        <div style="font-size:.7rem;font-weight:700;color:var(--text-3,#64748b);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;">Quick picks</div>
+        <div class="av-random-row" id="av-random-row"></div>
+        <!-- Actions -->
+        <div style="display:flex;gap:.75rem;margin-top:1.25rem;align-items:center;">
+          <button class="btn btn-primary" onclick="saveAvatarBuilder()" style="flex:1;">Save Avatar</button>
+          <div id="av-save-msg" style="font-size:.78rem;color:#4ade80;min-height:16px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="section-card reveal">
+    <h2>⚙️ Account Settings</h2>
+
+    <!-- Avatar -->
+    <div style="padding:.75rem 0;border-bottom:1px solid var(--border);">
+      <div style="font-size:.9rem;font-weight:600;margin-bottom:.75rem;">Avatar</div>
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <img id="av-mini" src="" width="64" height="64" style="width:64px;height:64px;border-radius:50%;border:2px solid rgba(124,58,237,.4);cursor:pointer;object-fit:cover;background:#1a1a2e;" onclick="openAvatarBuilder()">
+        <div>
+          <div style="font-size:.85rem;color:var(--text-2,#94a3b8);margin-bottom:.5rem;">Pick from 8 avatar styles — cartoon, pixel, robot, emoji and more.</div>
+          <button class="btn btn-ghost btn-sm" onclick="openAvatarBuilder()">🎨 Customize Avatar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Display Name + Bio -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;">
+        <div style="font-size:0.9rem;font-weight:600;">Display Name &amp; Bio</div>
+        <div style="font-size:0.82rem;color:var(--text-2);" id="settings-name">—</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleEditProfile()">Edit</button>
+    </div>
+    <div id="edit-profile-form" style="display:none;padding:.75rem 0;border-bottom:1px solid var(--border);">
+      <div style="display:grid;gap:.65rem;">
+        <div>
+          <label style="font-size:.73rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.3rem;">Name</label>
+          <input class="form-input" type="text" id="edit-name" placeholder="Your display name" maxlength="60">
+        </div>
+        <div>
+          <label style="font-size:.73rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.3rem;">Bio <span style="font-weight:400;color:var(--text-3);">(max 200 chars)</span></label>
+          <input class="form-input" type="text" id="edit-bio" placeholder="e.g. Math nerd · AIML dept · Loves number theory" maxlength="200">
+        </div>
+        <div id="edit-profile-msg" style="display:none;"></div>
+        <button class="btn btn-primary btn-sm" onclick="saveProfile()" style="align-self:flex-start;">Save Changes</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0;">
+      <div>
+        <div style="font-size:0.9rem;font-weight:600;">Password</div>
+        <div style="font-size:0.82rem;color:var(--text-2);">Change your login password</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="togglePassForm()">Change</button>
+    </div>
+    <div class="pass-form" id="passForm">
+      <div style="display:grid;gap:0.75rem;margin-top:0.5rem;">
+        <input class="form-input" type="password" id="currentPass" placeholder="Current password">
+        <input class="form-input" type="password" id="newPass"     placeholder="New password (min 8)">
+        <input class="form-input" type="password" id="confirmPass" placeholder="Confirm new password">
+        <div id="pass-msg" style="display:none;"></div>
+        <button class="btn btn-primary btn-sm" onclick="changePassword()" style="align-self:flex-start;">Save Password</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+    async function loadProfile() {
+    const state = await getAuthState();
+    if (!state.loggedIn) { window.location.href = '/login?redirect=/profile'; return; }
+
+    const [profile, stats, history] = await Promise.all([
+      fetch('/api/user/profile').then(r => r.json()),
+      fetch('/api/user/stats').then(r => r.json()),
+      fetch('/api/arena/history').then(r => r.json()),
+    ]);
+
+    const { xp, solved, rank, accuracy, title, nextTitle } = stats;
+    const name = profile.name || state.user.name || 'Member';
+
+    document.getElementById('p-avatar').textContent    = name.charAt(0).toUpperCase();
+    document.getElementById('p-name').textContent      = name;
+    document.getElementById('p-email').textContent     = profile.email || state.user.email || '';
+    document.getElementById('p-title-tag').textContent = title || 'Axiom Scout';
+    document.getElementById('p-xp').textContent        = xp || 0;
+    document.getElementById('p-solved').textContent    = solved || 0;
+    document.getElementById('p-rank').textContent      = '#' + (rank || '—');
+    document.getElementById('p-accuracy').textContent  = (accuracy || 0) + '%';
+    document.getElementById('settings-name').textContent = name;
+
+    // Bio
+    if (profile.bio) {
+      document.getElementById('p-bio').textContent = profile.bio;
+    }
+
+    // Avatar — load from localStorage or profile
+    const savedConfig = localStorage.getItem('mc-avatar-config');
+    if (savedConfig) try { avState = JSON.parse(savedConfig); } catch {}
+    else if (profile.avatar_config) try { avState = JSON.parse(profile.avatar_config); } catch {}
+    const avatarUrl = localStorage.getItem('mc-avatar-url') || avUrl(avState.style, avState.seed, avState.bg);
+    syncAvatarPreviews(avatarUrl);
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-bio').value  = profile.bio || '';
+
+    // XP bar — use nextTitle from server
+    const next = nextTitle || profile.nextTitle;
+    if (next) {
+      const xpRequired = next.xpRequired;
+      const xpEarned   = xp;
+      const pct        = Math.min((xpEarned / xpRequired) * 100, 100);
+      document.getElementById('p-level-label').textContent = `Level ${Math.floor(Math.sqrt(xp / 50)) + 1}`;
+      document.getElementById('p-xp-label').textContent    = `${xp} / ${xpRequired} XP`;
+      document.getElementById('p-cur-title').textContent   = title;
+      document.getElementById('p-next-title').textContent  = next.title;
+      setTimeout(() => { document.getElementById('p-xp-fill').style.width = pct + '%'; }, 300);
+    } else {
+      document.getElementById('p-level-label').textContent = 'Max Level';
+      document.getElementById('p-xp-label').textContent    = `${xp} XP — Legend`;
+      document.getElementById('p-cur-title').textContent   = title;
+      document.getElementById('p-next-title').textContent  = '👑 MAX';
+      setTimeout(() => { document.getElementById('p-xp-fill').style.width = '100%'; }, 300);
+    }
+
+    // Streak
+    const attempts = Array.isArray(history) ? history : [];
+    const streak   = calcStreak(attempts);
+    document.getElementById('streak-num').textContent = streak;
+    document.getElementById('streak-msg').textContent = streak === 0
+      ? 'Solve a challenge today to start your streak!'
+      : streak === 1 ? '1 day in a row — keep it up!'
+      : `${streak} days in a row — you're on fire! 🔥`;
+
+    buildTopicBreakdown(attempts);
+    loadTestHistory();
+  }
+
+  /* ════ AVATAR — DiceBear ════ */
+  const AV_STYLES=[
+    {id:'avataaars',label:'Cartoon'},
+    {id:'lorelei',label:'Lorelei'},
+    {id:'notionists',label:'Notion'},
+    {id:'adventurer',label:'Adventurer'},
+    {id:'fun-emoji',label:'Emoji'},
+    {id:'pixel-art',label:'Pixel'},
+    {id:'bottts',label:'Robot'},
+    {id:'thumbs',label:'Thumbs'},
+  ];
+  const AV_BGS=['b6e3f4','c0aede','d1d4f9','ffd5dc','ffdfbf','7c3aed','059669','dc2626','1e1b4b','transparent'];
+  const AV_SEEDS=['Atul','Shashank','Priya','Euler','Gauss','Riemann','Sigma','Delta','Lambda','Pi','Omega','Newton','Ramanujan','Archimedes','Pythagoras'];
+
+  let avState={style:'avataaars',seed:'MathCollective',bg:'b6e3f4'};
+
+  function avUrl(style,seed,bg){
+    const b=bg==='transparent'?'':'&backgroundColor='+bg;
+    return `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed)}${b}&size=128`;
+  }
+
+  function avRender(){
+    const u=avUrl(avState.style,avState.seed,avState.bg);
+    const big=document.getElementById('av-big-preview');
+    if(big)big.src=u;
+  }
+
+  function avBuildModal(){
+    const styleGrid=document.getElementById('av-style-grid');
+    if(styleGrid){
+      styleGrid.innerHTML=AV_STYLES.map(s=>`
+        <div class="av-style-card${avState.style===s.id?' on':''}" onclick="avPickStyle('${s.id}')">
+          <img src="${avUrl(s.id,'preview','b6e3f4')}" alt="${s.label}" loading="lazy">
+          <span>${s.label}</span>
+        </div>`).join('');
+    }
+    const bgRow=document.getElementById('av-bg-row');
+    if(bgRow){
+      bgRow.innerHTML=AV_BGS.map(bg=>{
+        const sty=bg==='transparent'?'background:repeating-conic-gradient(#666 0% 25%,#333 0% 50%) 0 0/10px 10px':'background:#'+bg;
+        return `<div class="av-dot${avState.bg===bg?' on':''}" style="${sty}" onclick="avPickBg('${bg}')"></div>`;
+      }).join('');
+    }
+    const rrow=document.getElementById('av-random-row');
+    if(rrow){
+      rrow.innerHTML=AV_SEEDS.map(s=>`
+        <div class="av-random${avState.seed===s?' on':''}" id="avr-${s}" onclick="avPickSeed('${s}')">
+          <img src="${avUrl(avState.style,s,avState.bg)}" alt="${s}" loading="lazy">
+        </div>`).join('');
+    }
+    const inp=document.getElementById('av-seed-inp');
+    if(inp)inp.value=avState.seed;
+    avRender();
+  }
+
+  function avPickStyle(id){avState.style=id;avBuildModal();}
+  function avPickBg(bg){avState.bg=bg;avBuildModal();}
+  function avPickSeed(s){
+    avState.seed=s;
+    document.querySelectorAll('.av-random').forEach(el=>el.classList.remove('on'));
+    const el=document.getElementById('avr-'+s);
+    if(el)el.classList.add('on');
+    const inp=document.getElementById('av-seed-inp');
+    if(inp)inp.value=s;
+    avRender();
+  }
+  function avOnSeed(){
+    avState.seed=document.getElementById('av-seed-inp').value||'default';
+    document.querySelectorAll('.av-random').forEach(el=>el.classList.remove('on'));
+    avRender();
+  }
+  function avRandom(){
+    const words=['Euler','Prime','Sigma','Vector','Axiom','Lemma','Theorem','Fractal','Tangent','Vortex','Cipher','Nexus'];
+    avState.seed=words[Math.floor(Math.random()*words.length)]+Math.floor(Math.random()*999);
+    document.getElementById('av-seed-inp').value=avState.seed;
+    document.querySelectorAll('.av-random').forEach(el=>el.classList.remove('on'));
+    avRender();
+  }
+
+  function openAvatarBuilder(){
+    const saved=localStorage.getItem('mc-avatar-config');
+    if(saved)try{avState=JSON.parse(saved);}catch{}
+    avBuildModal();
+    document.getElementById('av-modal').classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function closeAvatarBuilder(){
+    document.getElementById('av-modal').classList.remove('open');
+    document.body.style.overflow='';
+  }
+
+  async function saveAvatarBuilder(){
+    const avatarUrl=avUrl(avState.style,avState.seed,avState.bg);
+    localStorage.setItem('mc-avatar-config',JSON.stringify(avState));
+    localStorage.setItem('mc-avatar-url',avatarUrl);
+    syncAvatarPreviews(avatarUrl);
+    await fetch('/api/user/profile',{
+      method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({avatar_config:JSON.stringify(avState)}),
+    });
+    const msg=document.getElementById('av-save-msg');
+    msg.textContent='✓ Saved!';
+    setTimeout(()=>{msg.textContent='';closeAvatarBuilder();},1200);
+  }
+
+  function syncAvatarPreviews(avatarUrl){
+    const url=avatarUrl||localStorage.getItem('mc-avatar-url');
+    if(!url)return;
+    const hero=document.getElementById('p-avatar');
+    if(hero)hero.src=url;
+    const mini=document.getElementById('av-mini');
+    if(mini)mini.src=url;
+  }
+
+
+  function toggleEditProfile() {
+    const form = document.getElementById('edit-profile-form');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  }
+
+  async function saveProfile() {
+    const name = document.getElementById('edit-name').value.trim();
+    const bio  = document.getElementById('edit-bio').value.trim();
+    const msg  = document.getElementById('edit-profile-msg');
+
+    if (!name) { msg.style.display='block'; msg.className='alert alert-error'; msg.textContent='Name required.'; return; }
+
+    const res  = await fetch('/api/user/profile', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, bio }),
+    });
+    const data = await res.json();
+    if (!res.ok) { msg.style.display='block'; msg.className='alert alert-error'; msg.textContent=data.error; return; }
+
+    msg.style.display='block'; msg.className='alert alert-success'; msg.textContent='✓ Profile updated!';
+    document.getElementById('p-name').textContent         = name;
+    document.getElementById('p-bio').textContent          = bio;
+    document.getElementById('settings-name').textContent  = name;
+    setTimeout(() => { document.getElementById('edit-profile-form').style.display='none'; }, 1500);
+  }
+
+  /* ── Test History ── */
+  async function loadTestHistory() {
+    const res  = await fetch('/api/user/test-history');
+    const data = await res.json();
+    const el   = document.getElementById('test-history-list');
+    if (!data.length) {
+      el.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:2rem;">No tests taken yet.</div>';
+      return;
+    }
+    el.innerHTML = data.map(t => {
+      const pct   = t.percentage;
+      const color = pct >= 80 ? '#4ade80' : pct >= 50 ? '#f59e0b' : '#f87171';
+      const date  = t.submittedAt ? new Date(t.submittedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
+      return `
+        <div style="display:flex;align-items:center;gap:1rem;padding:.85rem 0;border-bottom:1px solid var(--border);">
+          <div style="width:48px;height:48px;border-radius:12px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:${color};">${pct}%</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:.88rem;">${t.test.title}</div>
+            <div style="font-size:.75rem;color:var(--text-3);font-family:'Space Mono',monospace;margin-top:2px;">${t.score} / ${t.maxScore} pts · ${date}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function calcStreak(attempts) {
+    if (!attempts.length) return 0;
+    const days = new Set(attempts.map(a => new Date(a.created_at).toDateString()));
+    const today = new Date();
+    let streak = 0, d = new Date(today);
+    while (true) {
+      if (days.has(d.toDateString())) { streak++; d.setDate(d.getDate() - 1); }
+      else if (d.toDateString() === today.toDateString()) break;
+      else break;
+    }
+    return streak;
+  }
+
+  function buildTopicBreakdown(attempts) {
+    // Group by difficulty as proxy for topic
+    const groups = { EASY: { total:0, correct:0 }, MEDIUM: { total:0, correct:0 }, HARD: { total:0, correct:0 } };
+    attempts.forEach(a => {
+      const d = (a.challenges?.difficulty || 'MEDIUM').toUpperCase();
+      if (groups[d]) { groups[d].total++; if (a.correct) groups[d].correct++; }
+    });
+
+    const el = document.getElementById('topic-breakdown');
+    if (!attempts.length) { el.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:2rem;">No attempts yet — head to the Arena!</div>'; return; }
+
+    el.innerHTML = Object.entries(groups).map(([diff, g]) => {
+      const pct = g.total > 0 ? Math.round((g.correct / g.total) * 100) : 0;
+      const cls = pct >= 70 ? 'fill-high' : pct >= 40 ? 'fill-medium' : 'fill-low';
+      return `
+        <div class="topic-row">
+          <div class="topic-name">${diff.charAt(0) + diff.slice(1).toLowerCase()} Questions</div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.78rem;color:var(--text-2);">${g.correct}/${g.total}</div>
+          <div class="topic-bar-wrap">
+            <div class="topic-mini-bar"><div class="topic-mini-fill ${cls}" style="width:${pct}%"></div></div>
+          </div>
+          <div class="topic-pct">${pct}%</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function togglePassForm() {
+    document.getElementById('passForm').classList.toggle('open');
+  }
+
+  async function changePassword() {
+    const cur     = document.getElementById('currentPass').value;
+    const newP    = document.getElementById('newPass').value;
+    const confirm = document.getElementById('confirmPass').value;
+    const msgEl   = document.getElementById('pass-msg');
+    const show    = (t, type) => { msgEl.style.display='block'; msgEl.className='alert alert-'+type; msgEl.textContent=t; };
+
+    if (!cur || !newP || !confirm) return show('All fields required.', 'error');
+    if (newP.length < 8) return show('Min 8 characters.', 'error');
+    if (newP !== confirm) return show('Passwords do not match.', 'error');
+
+    const res  = await fetch('/api/user/change-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword: cur, newPassword: newP }),
+    });
+    const data = await res.json();
+    if (!res.ok) return show('✗ ' + data.error, 'error');
+    show('✓ Password changed!', 'success');
+    ['currentPass','newPass','confirmPass'].forEach(id => document.getElementById(id).value = '');
+    setTimeout(() => document.getElementById('passForm').classList.remove('open'), 2000);
+  }
+
+  loadProfile();
+</script>
+</body>
+</html>

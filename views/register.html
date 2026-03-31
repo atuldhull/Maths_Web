@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join the Collective | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js" defer></script>
+  <style>
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .auth-bg {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 70% -10%, rgba(59,130,246,0.15), transparent),
+        radial-gradient(ellipse 60% 50% at 20% 90%, rgba(124,58,237,0.12), transparent),
+        var(--bg);
+      z-index: -1;
+    }
+
+    .auth-page {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 1.5rem;
+    }
+
+    .auth-container {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 4rem;
+      max-width: 900px;
+      width: 100%;
+      align-items: center;
+    }
+
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem;
+    }
+
+    .auth-card h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 0.4rem;
+      letter-spacing: -0.02em;
+    }
+    .auth-card .sub { color: var(--text-2); font-size: 0.88rem; margin-bottom: 2rem; }
+
+    #msg { margin-bottom: 1.25rem; }
+
+    .auth-brand .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--purple-dim);
+      border: 1px solid var(--border-acc);
+      padding: 5px 14px;
+      border-radius: 99px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.66rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--purple-light);
+      margin-bottom: 1.5rem;
+    }
+
+    .auth-brand h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+
+    .auth-brand p { color: var(--text-2); font-size: 1rem; line-height: 1.75; max-width: 340px; }
+
+    .perks { margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem; }
+    .perk  { display: flex; align-items: flex-start; gap: 0.75rem; }
+    .perk-icon {
+      width: 32px; height: 32px;
+      background: var(--purple-dim);
+      border: 1px solid var(--border-acc);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0; margin-top: 2px;
+    }
+    .perk-text strong { display: block; font-size: 0.9rem; margin-bottom: 2px; }
+    .perk-text span   { font-size: 0.82rem; color: var(--text-2); }
+
+    .auth-footer { text-align: center; font-size: 0.85rem; color: var(--text-2); margin-top: 1.5rem; }
+    .auth-footer a { color: var(--purple-light); font-weight: 600; }
+
+    @media (max-width: 768px) {
+      .auth-container { grid-template-columns: 1fr; }
+      .auth-brand { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-bg"></div>
+
+<nav class="mc-nav">
+  <a href="/" class="mc-nav__logo">
+    <div class="mc-nav__logo-mark">Σ</div>
+    Math Collective
+  </a>
+  <div class="mc-nav__actions">
+    <a href="/login" class="btn btn-ghost btn-sm">Already a member?</a>
+  </div>
+</nav>
+
+<div class="auth-page">
+  <div class="auth-container">
+
+    <!-- Left: Form -->
+    <div class="auth-card">
+      <h2>Create Account</h2>
+      <p class="sub">Join BMSIT's premier math community — it's free.</p>
+
+      <div id="msg" style="display:none;"></div>
+
+      <form id="registerForm">
+        <div class="form-group">
+          <label class="form-label" for="name">Full Name</label>
+          <input class="form-input" type="text" id="name" name="name" placeholder="Carl Friedrich Gauss" required autocomplete="name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Institutional Email</label>
+          <input class="form-input" type="email" id="email" name="email" placeholder="name@bmsit.in" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input class="form-input" type="password" id="password" name="password" placeholder="Min. 8 characters" required minlength="8" autocomplete="new-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;" id="submitBtn">
+          Join the Collective →
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Already a member? <a href="/login">Log in here</a>
+      </div>
+    </div>
+
+    <!-- Right: Brand Panel -->
+    <div class="auth-brand">
+      <div class="badge-pill"><span>✦</span> Free to Join</div>
+      <h2>Start solving. Start winning.</h2>
+      <p>Create your account in seconds and immediately access the full Math Collective platform.</p>
+      <div class="perks">
+        <div class="perk">
+          <div class="perk-icon">⚔</div>
+          <div class="perk-text">
+            <strong>Arena Access</strong>
+            <span>Compete in AI-generated math challenges daily.</span>
+          </div>
+        </div>
+        <div class="perk">
+          <div class="perk-icon">💎</div>
+          <div class="perk-text">
+            <strong>Earn XP & Titles</strong>
+            <span>Level up from "Axiom Scout" to "Grand Theorem Master".</span>
+          </div>
+        </div>
+        <div class="perk">
+          <div class="perk-icon">🏆</div>
+          <div class="perk-text">
+            <strong>Leaderboard Ranking</strong>
+            <span>See how you rank against fellow math enthusiasts.</span>
+          </div>
+        </div>
+        <div class="perk">
+          <div class="perk-icon">📅</div>
+          <div class="perk-text">
+            <strong>Event Invitations</strong>
+            <span>Get exclusive access to workshops and olympiad prep.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  /* ── Check if registrations are open ── */
+  async function checkRegistrationsOpen() {
+    try {
+      const res      = await fetch('/api/events/settings');
+      const settings = await res.json();
+
+      if (settings.registrations_open === 'false') {
+        document.getElementById('registerForm').style.display = 'none';
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) submitBtn.style.display = 'none';
+
+        const adminMsg = (settings.registration_message || '').trim();
+
+        const msg = document.getElementById('msg');
+        msg.style.display = 'block';
+        msg.className     = '';
+        msg.style.cssText = 'display:block;text-align:center;padding:1.5rem 0;';
+        msg.innerHTML = `
+          <div style="font-size:2rem;margin-bottom:.9rem;">🔒</div>
+          <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:#f1f5f9;margin-bottom:.5rem;">
+            Portal Not Open Yet
+          </div>
+          <div style="font-size:.88rem;color:#64748b;line-height:1.7;margin-bottom:1.5rem;">
+            ${adminMsg || 'New registrations aren\'t open right now.<br>Wait until the portal opens again.'}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.6rem;align-items:center;">
+            <a href="/login" style="
+              display:inline-flex;align-items:center;gap:.5rem;width:100%;max-width:260px;
+              justify-content:center;padding:.65rem 1.25rem;border-radius:10px;
+              background:linear-gradient(135deg,#7c3aed,#3b82f6);
+              color:#fff;font-size:.88rem;font-weight:700;text-decoration:none;">
+              Already a member? Log in →
+            </a>
+            <a href="/about" style="
+              display:inline-flex;align-items:center;gap:.5rem;width:100%;max-width:260px;
+              justify-content:center;padding:.65rem 1.25rem;border-radius:10px;
+              background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+              color:#94a3b8;font-size:.88rem;font-weight:600;text-decoration:none;">
+              Explore the club →
+            </a>
+          </div>
+        `;
+      }
+    } catch {}
+  }
+  checkRegistrationsOpen();
+
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const msg  = document.getElementById('msg');
+    const btn  = document.getElementById('submitBtn');
+
+    btn.disabled    = true;
+    btn.textContent = 'Creating account...';
+    msg.style.display = 'none';
+
+    try {
+      const res  = await fetch('/api/auth/register', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name:     form.name.value,
+          email:    form.email.value,
+          password: form.password.value,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+      msg.style.display = 'block';
+      msg.className = 'alert alert-success';
+      msg.textContent = '✓ Account created! Please verify your email, then log in.';
+      form.reset();
+      btn.textContent = 'Account Created ✓';
+
+      setTimeout(() => { window.location.href = '/login'; }, 2500);
+    } catch (err) {
+      msg.style.display = 'block';
+      msg.className = 'alert alert-error';
+      msg.textContent = '✗ ' + (err.message || 'Registration failed');
+      btn.disabled    = false;
+      btn.textContent = 'Join the Collective →';
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About | Math Collective</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/app.js" defer></script>
+  <style>
+    .page-hero {
+      max-width: 1100px;
+      margin: 5rem auto 0;
+      padding: 0 1.5rem;
+      text-align: center;
+    }
+    .page-hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+    }
+    .page-hero p {
+      color: var(--text-2);
+      font-size: 1.1rem;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+
+    .about-grid {
+      max-width: 1100px;
+      margin: 5rem auto 0;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .about-text h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.25rem;
+    }
+    .about-text p {
+      color: var(--text-2);
+      font-size: 0.95rem;
+      line-height: 1.8;
+      margin-bottom: 1rem;
+    }
+
+    .about-visual {
+      background: var(--surface);
+      border: 1px solid var(--border-acc);
+      border-radius: var(--radius-xl);
+      padding: 3rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .about-visual::before {
+      content: 'Σ';
+      position: absolute;
+      top: -30px;
+      right: -10px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10rem;
+      color: rgba(124,58,237,0.07);
+      pointer-events: none;
+    }
+    .about-visual .big-math {
+      font-family: 'Space Mono', monospace;
+      font-size: 2rem;
+      color: var(--purple-light);
+      line-height: 2;
+    }
+
+    .values {
+      max-width: 1100px;
+      margin: 5rem auto 0;
+      padding: 0 1.5rem;
+    }
+    .values__header { text-align: center; margin-bottom: 3rem; }
+    .values__header h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.75rem;
+    }
+    .values__header p { color: var(--text-2); font-size: 1rem; }
+
+    .values-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+
+    .value-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .value-card:hover { border-color: var(--border-acc); transform: translateY(-3px); }
+    .value-icon { font-size: 2rem; margin-bottom: 1rem; }
+    .value-card h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.6rem; }
+    .value-card p  { color: var(--text-2); font-size: 0.88rem; line-height: 1.65; }
+
+    .team {
+      max-width: 1100px;
+      margin: 5rem auto 0;
+      padding: 0 1.5rem;
+    }
+    .team h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 2.5rem;
+    }
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+    }
+    .team-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      text-align: center;
+      transition: border-color 0.25s;
+    }
+    .team-card:hover { border-color: var(--border-acc); }
+    .team-avatar {
+      width: 60px; height: 60px;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      margin: 0 auto 1rem;
+    }
+    .team-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .team-card span { font-size: 0.78rem; color: var(--text-3); font-family: 'Space Mono', monospace; }
+
+    .cta-section {
+      max-width: 1100px;
+      margin: 5rem auto 0;
+      padding: 0 1.5rem;
+      text-align: center;
+    }
+    .cta-section h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+    }
+    .cta-section p { color: var(--text-2); font-size: 1rem; max-width: 440px; margin: 0 auto 2rem; line-height: 1.7; }
+
+    @media (max-width: 768px) {
+      .about-grid { grid-template-columns: 1fr; }
+      .values-grid { grid-template-columns: 1fr 1fr; }
+      .team-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .values-grid { grid-template-columns: 1fr; }
+      .team-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="mc-nav">
+  <a href="/" class="mc-nav__logo">
+    <div class="mc-nav__logo-mark">Σ</div>
+    Math Collective
+  </a>
+  <ul class="mc-nav__links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about" style="color:var(--text);">About</a></li>
+    <li><a href="/events">Events</a></li>
+    <li><a href="/contact">Contact</a></li>
+  </ul>
+  <div class="mc-nav__actions">
+    <div class="mc-nav__user" id="nav-user-pill">
+      <div class="mc-nav__avatar">A</div>
+      <span class="mc-nav__username">Member</span>
+      <span style="color:var(--text-3);font-size:0.75rem;margin-left:4px;cursor:pointer;" onclick="logout()">↩</span>
+    </div>
+    <a href="/login" class="btn btn-ghost btn-sm" id="nav-login-btn">Log In</a>
+    <a href="/register" class="btn btn-primary btn-sm">Join Free</a>
+  </div>
+</nav>
+
+<!-- Page Hero -->
+<div class="page-hero reveal">
+  <div class="section-label">About Us</div>
+  <h1>Where Math Meets Mastery</h1>
+  <p>The Math Collective is BMSIT's premier competitive mathematics community — built by students, for students.</p>
+</div>
+
+<!-- About Section -->
+<div class="about-grid reveal">
+  <div class="about-text">
+    <h2>Our Story</h2>
+    <p>Founded in 2026 at BMS Institute of Technology, Math Collective began as a small group of students who believed that mathematics was more than a course — it was a discipline that demanded passion and competition.</p>
+    <p>We built a digital arena where members face AI-generated challenges, earn XP for correct solutions, and compete for glory on a live leaderboard. Today we're 239+ members strong and growing.</p>
+    <p>Our mission is to make competitive math accessible, engaging, and deeply rewarding for every level of student.</p>
+    <a href="/register" class="btn btn-primary" style="margin-top:1rem;">Join the Community</a>
+  </div>
+  <div class="about-visual">
+    <div class="big-math">
+      e^(iπ) + 1 = 0<br>
+      ∑ 1/n² = π²/6<br>
+      ∫ e^(−x²) = √π<br>
+      φ = (1+√5)/2
+    </div>
+  </div>
+</div>
+
+<!-- Values -->
+<section class="values reveal">
+  <div class="values__header">
+    <div class="section-label">Our Values</div>
+    <h2>What We Stand For</h2>
+    <p>Three principles guide everything we build and do.</p>
+  </div>
+  <div class="values-grid">
+    <div class="value-card">
+      <div class="value-icon">🎯</div>
+      <h3>Rigor</h3>
+      <p>Mathematical truth demands precision. We hold our problems, solutions, and processes to the highest standards of correctness.</p>
+    </div>
+    <div class="value-card">
+      <div class="value-icon">🤝</div>
+      <h3>Community</h3>
+      <p>Competition is healthy, but collaboration is how we all grow. We build a space where everyone can ask questions without fear.</p>
+    </div>
+    <div class="value-card">
+      <div class="value-icon">🚀</div>
+      <h3>Ambition</h3>
+      <p>We don't solve easy problems. We reach for the hardest theorems and use every tool — from pen-and-paper to AI — to get there.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Team -->
+<section class="team reveal">
+  <h2>Meet the Founders</h2>
+  <div class="team-grid">
+    <div class="team-card">
+      <div class="team-avatar">🧮</div>
+      <h4>Arjun Sharma</h4>
+      <span>Founder & President</span>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">📐</div>
+      <h4>Priya Nair</h4>
+      <span>Co-Founder & CTO</span>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">∫</div>
+      <h4>Rohit Menon</h4>
+      <span>Challenge Director</span>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">π</div>
+      <h4>Sneha Reddy</h4>
+      <span>Community Lead</span>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section reveal">
+  <h2>Ready to join?</h2>
+  <p>Create your free account and start your mathematical journey with the Collective today.</p>
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+    <a href="/register" class="btn btn-primary btn-lg">Get Started Free</a>
+    <a href="/contact" class="btn btn-ghost btn-lg">Contact Us</a>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="mc-footer">
+  <div class="mc-footer__grid">
+    <div class="mc-footer__brand">
+      <div class="mc-nav__logo" style="margin-bottom:0.75rem;">
+        <div class="mc-nav__logo-mark">Σ</div>
+        Math Collective
+      </div>
+      <p>A university hub for competitive mathematics, algorithmic thinking, and the relentless pursuit of mathematical truth.</p>
+    </div>
+    <div class="mc-footer__col">
+      <h4>Navigate</h4>
+      <a href="/">Home</a><a href="/about">About</a><a href="/events">Events</a><a href="/contact">Contact</a>
+    </div>
+    <div class="mc-footer__col">
+      <h4>Platform</h4>
+      <a href="/arena">The Arena</a><a href="/login">Login</a><a href="/register">Register</a>
+    </div>
+    <div class="mc-footer__col">
+      <h4>Legal</h4>
+      <a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a>
+    </div>
+  </div>
+  <div class="mc-footer__bottom">
+    <span>© 2026 Math Collective · BMSIT. All rights reserved.</span>
+    <span style="font-family:'Space Mono',monospace;font-size:0.72rem;">e^(iπ) + 1 = 0</span>
+  </div>
+</footer>
+
+</body>
+</html>

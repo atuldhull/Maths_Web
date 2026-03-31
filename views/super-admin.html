@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Super Admin — Math Collective Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --card: #16161f;
+      --border: #1e1e2d;
+      --accent: #7c3aed;
+      --accent2: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --sidebar-w: 240px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; position: relative; overflow-x: hidden; }
+    /* floating particles */
+    #sa-bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.35; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w); min-height: 100vh; background: var(--surface);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; z-index: 100;
+    }
+    .sidebar-brand {
+      padding: 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .brand-text { font-size: 13px; font-weight: 700; }
+    .brand-sub  { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+    .nav-section { padding: 8px 12px; margin-top: 8px; }
+    .nav-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; padding: 4px 8px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+      border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500;
+      color: var(--muted); transition: all .15s; margin-bottom: 2px;
+    }
+    .nav-item:hover, .nav-item.active { background: rgba(124,58,237,.15); color: var(--accent); }
+    .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+    .nav-badge { margin-left: auto; background: var(--danger); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 99px; }
+    .sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); }
+    .impersonation-banner {
+      background: rgba(245,158,11,.15); border: 1px solid var(--warning);
+      border-radius: 8px; padding: 8px 10px; font-size: 11px; color: var(--warning);
+      display: none; margin-bottom: 8px; cursor: pointer;
+    }
+
+    /* ── MAIN ── */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      height: 56px; background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; position: sticky; top: 0; z-index: 50;
+    }
+    .page-title { font-size: 16px; font-weight: 700; }
+    .topbar-actions { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#7c3aed,#3b82f6); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+    /* ── CONTENT ── */
+    .content { padding: 24px; flex: 1; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── STAT CARDS ── */
+    .stats-grid, .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .card__meta { color: var(--muted); font-size: 12px; letter-spacing: 0.01em; }
+    .stat-big  { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+    .stat-card {
+      background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(59,130,246,0.08)), var(--card);
+      border: 1px solid var(--border); border-radius: 14px; padding: 20px;
+      position: relative; overflow: hidden;
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 18px 50px rgba(0,0,0,0.28); border-color: rgba(124,58,237,0.35); }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; opacity: .9; }
+    .stat-card.purple::before { background: var(--accent); }
+    .stat-card.blue::before   { background: var(--accent2); }
+    .stat-card.green::before  { background: var(--success); }
+    .stat-card.orange::before { background: var(--warning); }
+    .stat-icon { font-size: 24px; margin-bottom: 12px; background: rgba(255,255,255,0.06); width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; }
+    .stat-val  { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+    .stat-label { font-size: 12px; color: var(--muted); }
+    .stat-change { font-size: 11px; margin-top: 6px; }
+    .stat-change.up   { color: var(--success); }
+    .stat-change.down { color: var(--danger); }
+
+    /* ── GRID ── */
+    .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 16px; margin-bottom: 24px; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(0,0,0,0.26); border-color: rgba(124,58,237,0.25); }
+    .card-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-title { font-size: 14px; font-weight: 600; }
+    .card-body  { padding: 16px 20px; }
+    .hover-lift { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+    .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 18px 50px rgba(0,0,0,0.28); border-color: rgba(124,58,237,0.35); }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { color: var(--muted); font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+    td { padding: 12px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+    tr:hover td { background: rgba(124,58,237,.07); }
+
+    /* ── BADGES ── */
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+    .badge-active     { background: rgba(16,185,129,.15); color: var(--success); }
+    .badge-suspended  { background: rgba(239,68,68,.15);  color: var(--danger);  }
+    .badge-trial      { background: rgba(245,158,11,.15); color: var(--warning); }
+    .badge-free       { background: rgba(100,116,139,.15); color: var(--muted); }
+    .badge-pro        { background: rgba(124,58,237,.2);  color: #a78bfa; }
+    .badge-enterprise { background: rgba(59,130,246,.2);  color: #60a5fa; }
+
+    /* pills (shared) */
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); font-size: 11px; font-weight: 600; color: var(--muted); background: rgba(255,255,255,0.03); }
+    .pill--green { border-color: rgba(16,185,129,.4); color: var(--success); background: rgba(16,185,129,.12); }
+    .pill--amber { border-color: rgba(245,158,11,.4); color: var(--warning); background: rgba(245,158,11,.12); }
+    .pill--purple { border-color: rgba(124,58,237,.4); color: #c4b5fd; background: rgba(124,58,237,.12); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 8px; border: none; cursor: pointer;
+      font-size: 12px; font-weight: 600; font-family: inherit; transition: all .15s;
+    }
+    .btn-primary   { background: var(--accent);  color: #fff; }
+    .btn-primary:hover { background: #6d28d9; }
+    .btn-danger    { background: rgba(239,68,68,.15); color: var(--danger); border: 1px solid rgba(239,68,68,.3); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+    .btn-ghost     { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--text); }
+    .btn-sm        { padding: 4px 10px; font-size: 11px; }
+    .btn-warning   { background: rgba(245,158,11,.15); color: var(--warning); border: 1px solid rgba(245,158,11,.3); }
+
+    /* subtle glow on focus */
+    .btn:focus { outline: 2px solid rgba(124,58,237,0.35); outline-offset: 2px; }
+
+    /* ── ORG ROW ACTIONS ── */
+    .org-actions { display: flex; gap: 6px; align-items: center; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.7);
+      display: none; align-items: center; justify-content: center; z-index: 200;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      width: 480px; max-height: 90vh; overflow-y: auto; padding: 28px;
+    }
+    .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 13px;
+      font-family: inherit; outline: none; transition: border .15s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: rgba(124,58,237,.8); box-shadow: 0 0 0 3px rgba(124,58,237,.2); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+    /* ── PLAN GRID ── */
+    .plan-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .plan-card {
+      border: 2px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer;
+      transition: all .15s;
+    }
+    .plan-card.selected { border-color: var(--accent); background: rgba(124,58,237,.1); }
+    .plan-card:hover:not(.selected) { border-color: var(--muted); }
+    .plan-name  { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .plan-price { font-size: 22px; font-weight: 800; }
+    .plan-price span { font-size: 12px; font-weight: 400; color: var(--muted); }
+    .plan-limit { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+    /* ── FEATURE TOGGLES ── */
+    .feature-list { display: flex; flex-direction: column; gap: 10px; }
+    .feature-row { display: flex; align-items: center; justify-content: space-between; }
+    .feature-name { font-size: 13px; }
+    .toggle { position: relative; width: 40px; height: 22px; }
+    .toggle input { display: none; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: var(--border); border-radius: 99px;
+      cursor: pointer; transition: .2s;
+    }
+    .toggle-slider::after {
+      content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%;
+      background: var(--muted); top: 2px; left: 2px; transition: .2s;
+    }
+    .toggle input:checked + .toggle-slider { background: var(--accent); }
+    .toggle input:checked + .toggle-slider::after { transform: translateX(18px); background: #fff; }
+
+    /* ── SEARCH ── */
+    .search-bar {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 7px 12px; font-size: 13px; color: var(--muted);
+    }
+    .search-bar input { background: none; border: none; outline: none; color: var(--text); font-size: 13px; width: 220px; }
+
+    /* ── AUDIT LOG ── */
+    .log-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .log-item:last-child { border-bottom: none; }
+    .log-action { font-size: 12px; font-weight: 600; color: var(--accent); }
+    .log-meta   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── PROGRESS ── */
+    .progress { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 99px; transition: width .3s; }
+
+    /* ── TOAST ── */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 999; }
+    .toast {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 16px; font-size: 13px; max-width: 300px;
+      animation: slideIn .3s ease; display: flex; align-items: center; gap: 8px;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .toast.success { border-color: var(--success); }
+    .toast.error   { border-color: var(--danger);  }
+
+    /* ── EMPTY STATE ── */
+    .empty { text-align: center; padding: 40px; color: var(--muted); }
+    .empty .icon { font-size: 40px; margin-bottom: 12px; }
+
+    @media (max-width: 1100px) {
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .two-col    { grid-template-columns: 1fr; }
+    }
+</style>
+</head>
+<body>
+<canvas id="sa-bg-canvas"></canvas>
+
+<!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">♾️</div>
+    <div>
+      <div class="brand-text">Math Collective</div>
+      <div class="brand-sub">Platform Control</div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="showPage('analytics')">
+      <span class="icon">📊</span> Analytics
+    </div>
+    <div class="nav-item" onclick="showPage('audit')">
+      <span class="icon">🔍</span> Audit Logs
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Organisations</div>
+    <div class="nav-item" onclick="showPage('orgs')">
+      <span class="icon">🏛️</span> All Organisations
+    </div>
+    <div class="nav-item" onclick="openCreateOrgModal()">
+      <span class="icon">➕</span> New Organisation
+    </div>
+    <div class="nav-item" onclick="showPage('global-lb')">
+      <span class="icon">🏆</span> Global Leaderboard
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Platform</div>
+    <div class="nav-item" onclick="showPage('plans')">
+      <span class="icon">💳</span> Subscription Plans
+    </div>
+    <div class="nav-item" onclick="showPage('impersonation')">
+      <span class="icon">🎭</span> Impersonation
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="impersonation-banner" id="impersonationBanner" onclick="stopImpersonation()">
+      🎭 Impersonating: <strong id="impersonatingOrgName"></strong><br>
+      <small>Click to exit</small>
+    </div>
+    <div class="nav-item" onclick="logout()" style="margin:0">
+      <span class="icon">🚪</span> Logout
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════ MAIN ═══════════════════ -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">Platform Analytics</div>
+    <div class="topbar-actions">
+      <div class="search-bar">
+        🔍 <input type="text" placeholder="Search anything…" id="globalSearch"/>
+      </div>
+      <div class="avatar" id="adminAvatar">S</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── ANALYTICS PAGE ── -->
+    <div class="page active" id="page-analytics">
+      <div class="stat-grid">
+        <div class="stat-card hover-lift">
+          <div class="card__meta">Organisations</div>
+          <div class="stat-big" id="totalOrgs">—</div>
+          <div class="pill pill--purple" id="activeOrgs">Active: —</div>
+        </div>
+        <div class="stat-card hover-lift">
+          <div class="card__meta">Total Users</div>
+          <div class="stat-big" id="totalUsers">—</div>
+          <div class="pill pill--green" id="activeUsers">Active (7d): —</div>
+        </div>
+        <div class="stat-card hover-lift">
+          <div class="card__meta">Arena Attempts</div>
+          <div class="stat-big" id="totalAttempts">—</div>
+          <div class="pill pill--amber">Engagement</div>
+        </div>
+        <div class="stat-card hover-lift">
+          <div class="card__meta">Monthly Revenue (MRR)</div>
+          <div class="stat-big" id="mrrVal">—</div>
+          <div class="pill">Updated live</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Plans Breakdown</div>
+            <div class="card-meta">Live counts per plan</div>
+          </div>
+          <div class="card-body" id="planBreakdownBody">
+            <div class="empty"><div class="icon">⏳</div>Loading…</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent Organisations</div>
+            <button class="btn btn-primary btn-sm" onclick="showPage('orgs')">View All</button>
+          </div>
+          <div class="card-body table-wrap" id="recentOrgsBody">
+            <div class="empty"><div class="icon">⏳</div>Loading…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ORGANISATIONS PAGE ── -->
+    <div class="page" id="page-orgs">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div class="search-bar">
+            🔍 <input type="text" placeholder="Search orgs…" id="orgSearch" oninput="filterOrgs()"/>
+          </div>
+          <select id="orgStatusFilter" onchange="loadOrgs()" style="background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 12px;font-size:13px;outline:none;">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="trial">Trial</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateOrgModal()">➕ New Organisation</button>
+      </div>
+      <div class="card">
+        <div class="card-body table-wrap" id="orgsTableBody">
+          <div class="empty"><div class="icon">⏳</div>Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GLOBAL LEADERBOARD ── -->
+    <div class="page" id="page-global-lb">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🌍 Global Leaderboard — All Organisations</div>
+        </div>
+        <div class="card-body table-wrap" id="globalLbBody">
+          <div class="empty"><div class="icon">⏳</div>Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AUDIT LOGS ── -->
+    <div class="page" id="page-audit">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔍 Audit Logs</div>
+        </div>
+        <div class="card-body" id="auditLogBody">
+          <div class="empty"><div class="icon">⏳</div>Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PLANS PAGE ── -->
+    <div class="page" id="page-plans">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💳 Subscription Plans</div>
+        </div>
+        <div class="card-body table-wrap" id="plansTableBody">
+          <div class="empty"><div class="icon">⏳</div>Loading…</div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:20px;">
+        <div class="card-header">
+          <div class="card-title">📋 Platform Payment History</div>
+        </div>
+        <div class="card-body table-wrap" id="platformPaymentsWrap">
+          <div class="empty"><div class="icon">⏳</div>Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── IMPERSONATION ── -->
+    <div class="page" id="page-impersonation">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🎭 Impersonate an Organisation</div></div>
+        <div class="card-body">
+          <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">
+            Enter an organisation as their admin to debug issues. All actions are logged.
+          </p>
+          <div id="impersonateOrgList"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ═══════════════════ MODALS ═══════════════════ -->
+
+<!-- Create Org Modal -->
+<div class="modal-overlay" id="createOrgModal">
+  <div class="modal">
+    <h3>➕ Create New Organisation</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Organisation Name *</label>
+        <input id="newOrgName" type="text" placeholder="BMSIT Math Club"/>
+      </div>
+      <div class="form-group">
+        <label>URL Slug * (unique)</label>
+        <input id="newOrgSlug" type="text" placeholder="bmsit-math"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Institution</label>
+      <input id="newOrgInstitution" type="text" placeholder="BMS Institute of Technology"/>
+    </div>
+    <div class="form-group">
+      <label>Admin Email (will receive invite)</label>
+      <input id="newOrgAdminEmail" type="email" placeholder="admin@bmsit.in"/>
+    </div>
+    <div class="form-group">
+      <label>Plan</label>
+      <select id="newOrgPlan">
+        <option value="free">Free</option>
+        <option value="basic">Basic ($29/mo)</option>
+        <option value="pro" selected>Pro ($79/mo)</option>
+        <option value="enterprise">Enterprise ($199/mo)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Brand Color</label>
+        <input id="newOrgColor" type="color" value="#7c3aed"/>
+      </div>
+      <div class="form-group">
+        <label>Contact Email</label>
+        <input id="newOrgContact" type="email" placeholder="contact@bmsit.in"/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" onclick="createOrg()">Create Organisation</button>
+    </div>
+  </div>
+</div>
+
+<!-- Org Detail / Feature Flags Modal -->
+<div class="modal-overlay" id="orgDetailModal">
+  <div class="modal">
+    <h3 id="orgDetailTitle">Organisation Features</h3>
+    <input type="hidden" id="detailOrgId"/>
+    <div id="featureToggles" class="feature-list"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFeatureFlags()">Save Feature Flags</button>
+    </div>
+  </div>
+</div>
+
+<!-- Suspend Confirm Modal -->
+<div class="modal-overlay" id="suspendModal">
+  <div class="modal">
+    <h3>⚠️ Suspend Organisation?</h3>
+    <input type="hidden" id="suspendOrgId"/>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">
+      All users of this organisation will lose access immediately.
+    </p>
+    <div class="form-group">
+      <label>Reason (optional)</label>
+      <input id="suspendReason" type="text" placeholder="Policy violation…"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmSuspend()">Suspend Organisation</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+let allOrgs = [];
+const FEATURES = [
+  { key: 'arena',            label: '⚡ Arena (Quiz Battle)' },
+  { key: 'certificates',     label: '📜 Certificates Module' },
+  { key: 'ai_tools',         label: '🤖 AI Question Generator' },
+  { key: 'custom_branding',  label: '🎨 Custom Branding' },
+  { key: 'analytics',        label: '📊 Analytics Dashboard' },
+  { key: 'api_access',       label: '🔌 API Access' },
+  { key: 'white_label',      label: '🏷️ White Label' },
+  { key: 'priority_support', label: '🆘 Priority Support' },
+];
+
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+const PAGE_TITLES = {
+  analytics: 'Platform Analytics', orgs: 'Organisations',
+  'global-lb': 'Global Leaderboard', audit: 'Audit Logs',
+  plans: 'Subscription Plans', impersonation: 'Impersonation',
+};
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const p = document.getElementById('page-' + name);
+  if (p) p.classList.add('active');
+  document.getElementById('pageTitle').textContent = PAGE_TITLES[name] || name;
+  // lazy load
+  if (name === 'analytics')  loadAnalytics();
+  if (name === 'orgs')       loadOrgs();
+  if (name === 'global-lb')  loadGlobalLb();
+  if (name === 'audit')      loadAudit();
+  if (name === 'plans')      loadPlans();
+  if (name === 'impersonation') loadImpersonationList();
+}
+
+/* ═══════════════════════════════════════
+   API HELPERS
+═══════════════════════════════════════ */
+async function api(method, path, body) {
+  const r = await fetch('/api/super-admin' + path, {
+    method, headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return r.json();
+}
+
+/* ═══════════════════════════════════════
+   ANALYTICS
+═══════════════════════════════════════ */
+async function loadAnalytics() {
+  const d = await api('GET', '/analytics');
+  if (d.error) return;
+  const s = d.summary;
+  document.getElementById('totalOrgs').textContent    = s.totalOrgs;
+  document.getElementById('activeOrgs').textContent   = `${s.activeOrgs} active`;
+  document.getElementById('totalUsers').textContent   = s.totalUsers;
+  document.getElementById('activeUsers').textContent  = `${s.activeUsers} active (7d)`;
+  document.getElementById('totalAttempts').textContent = s.totalAttempts?.toLocaleString();
+  document.getElementById('mrrVal').textContent       = `$${parseFloat(s.mrr || 0).toFixed(0)}`;
+
+  // Plan breakdown
+  const pb = document.getElementById('planBreakdownBody');
+  const plans = d.planBreakdown || {};
+  const total = Object.values(plans).reduce((a,b)=>a+b,0) || 1;
+  const colors = { free:'var(--muted)', basic:'var(--accent2)', pro:'var(--accent)', enterprise:'var(--success)' };
+  pb.innerHTML = Object.entries(plans).map(([plan,count]) => `
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
+        <span style="text-transform:capitalize;font-weight:600;">${plan}</span>
+        <span style="color:var(--muted)">${count} org${count!==1?'s':''}</span>
+      </div>
+      <div class="progress">
+        <div class="progress-fill" style="width:${(count/total*100).toFixed(0)}%;background:${colors[plan]||'var(--accent)'}"></div>
+      </div>
+    </div>`).join('') || '<div class="empty">No data</div>';
+
+  // Recent orgs table
+  const rb = document.getElementById('recentOrgsBody');
+  rb.innerHTML = `<table>
+    <thead><tr><th>Organisation</th><th>Plan</th><th>Status</th></tr></thead>
+    <tbody>${(d.recentOrgs||[]).slice(0,8).map(o=>`
+      <tr>
+        <td><strong>${o.name}</strong><br><small style="color:var(--muted)">${o.slug}</small></td>
+        <td><span class="badge badge-${o.plan_name}">${o.plan_name}</span></td>
+        <td><span class="badge badge-${o.status}">${o.status}</span></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+/* ═══════════════════════════════════════
+   ORGANISATIONS
+═══════════════════════════════════════ */
+async function loadOrgs() {
+  const status = document.getElementById('orgStatusFilter')?.value || '';
+  const d = await api('GET', `/organisations?limit=50${status ? '&status='+status : ''}`);
+  allOrgs = d.data || [];
+  renderOrgs(allOrgs);
+}
+
+function filterOrgs() {
+  const q = document.getElementById('orgSearch').value.toLowerCase();
+  renderOrgs(q ? allOrgs.filter(o => o.name.toLowerCase().includes(q) || o.slug.includes(q)) : allOrgs);
+}
+
+function renderOrgs(orgs) {
+  const body = document.getElementById('orgsTableBody');
+  if (!orgs.length) { body.innerHTML = '<div class="empty"><div class="icon">🏛️</div>No organisations found</div>'; return; }
+  body.innerHTML = `<table>
+    <thead><tr><th>Organisation</th><th>Plan</th><th>Status</th><th>Users</th><th>Created</th><th>Actions</th></tr></thead>
+    <tbody>${orgs.map(o=>`
+      <tr>
+        <td>
+          <strong>${o.name}</strong><br>
+          <small style="color:var(--muted)">${o.slug}${o.subdomain?` · ${o.subdomain}.app`:''}</small>
+        </td>
+        <td><span class="badge badge-${o.plan_name}">${o.plan_name}</span></td>
+        <td><span class="badge badge-${o.status}">${o.status}</span></td>
+        <td>${o.user_count || 0}</td>
+        <td style="color:var(--muted);font-size:12px">${new Date(o.created_at).toLocaleDateString()}</td>
+        <td>
+          <div class="org-actions">
+            <button class="btn btn-ghost btn-sm" onclick="openFeatureModal('${o.id}','${o.name}',${JSON.stringify(o.feature_flags||{}).replace(/"/g,"'")})">⚙️ Features</button>
+            <button class="btn btn-ghost btn-sm" onclick="impersonateOrg('${o.id}','${o.name}')">🎭</button>
+            ${o.status==='active'
+              ? `<button class="btn btn-warning btn-sm" onclick="openSuspendModal('${o.id}')">⏸</button>`
+              : `<button class="btn btn-ghost btn-sm" onclick="activateOrg('${o.id}')">▶️</button>`}
+          </div>
+        </td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+/* ═══════════════════════════════════════
+   CREATE ORG
+═══════════════════════════════════════ */
+function openCreateOrgModal() {
+  document.getElementById('createOrgModal').classList.add('open');
+}
+async function createOrg() {
+  const body = {
+    name:          document.getElementById('newOrgName').value,
+    slug:          document.getElementById('newOrgSlug').value,
+    institution:   document.getElementById('newOrgInstitution').value,
+    admin_email:   document.getElementById('newOrgAdminEmail').value,
+    plan_name:     document.getElementById('newOrgPlan').value,
+    primary_color: document.getElementById('newOrgColor').value,
+    contact_email: document.getElementById('newOrgContact').value,
+  };
+  if (!body.name || !body.slug) return toast('Name and slug are required', 'error');
+  const d = await api('POST', '/organisations', body);
+  if (d.error) return toast(d.error, 'error');
+  toast(`✅ ${d.organisation.name} created!`, 'success');
+  closeModals();
+  loadOrgs();
+}
+
+/* ═══════════════════════════════════════
+   FEATURE FLAGS
+═══════════════════════════════════════ */
+function openFeatureModal(orgId, orgName, flags) {
+  document.getElementById('detailOrgId').value = orgId;
+  document.getElementById('orgDetailTitle').textContent = `⚙️ Features — ${orgName}`;
+  const container = document.getElementById('featureToggles');
+  container.innerHTML = FEATURES.map(f => `
+    <div class="feature-row">
+      <span class="feature-name">${f.label}</span>
+      <label class="toggle">
+        <input type="checkbox" id="flag-${f.key}" ${flags[f.key] ? 'checked' : ''}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>`).join('');
+  document.getElementById('orgDetailModal').classList.add('open');
+}
+async function saveFeatureFlags() {
+  const orgId = document.getElementById('detailOrgId').value;
+  const flags = {};
+  FEATURES.forEach(f => { flags[f.key] = document.getElementById('flag-'+f.key).checked; });
+  const d = await api('PUT', `/organisations/${orgId}/features`, { flags });
+  if (d.error) return toast(d.error, 'error');
+  toast('✅ Feature flags saved!', 'success');
+  closeModals();
+}
+
+/* ═══════════════════════════════════════
+   SUSPEND / ACTIVATE
+═══════════════════════════════════════ */
+function openSuspendModal(orgId) {
+  document.getElementById('suspendOrgId').value = orgId;
+  document.getElementById('suspendModal').classList.add('open');
+}
+async function confirmSuspend() {
+  const orgId  = document.getElementById('suspendOrgId').value;
+  const reason = document.getElementById('suspendReason').value;
+  const d = await api('POST', `/organisations/${orgId}/suspend`, { reason });
+  if (d.error) return toast(d.error, 'error');
+  toast('Organisation suspended', 'success');
+  closeModals();
+  loadOrgs();
+}
+async function activateOrg(orgId) {
+  const d = await api('POST', `/organisations/${orgId}/activate`, {});
+  if (d.error) return toast(d.error, 'error');
+  toast('✅ Organisation activated', 'success');
+  loadOrgs();
+}
+
+/* ═══════════════════════════════════════
+   IMPERSONATION
+═══════════════════════════════════════ */
+async function impersonateOrg(orgId, orgName) {
+  if (!confirm(`Enter ${orgName} as admin? This will be logged.`)) return;
+  const d = await api('POST', `/impersonate/${orgId}`, { reason: 'Support debugging' });
+  if (d.error) return toast(d.error, 'error');
+  document.getElementById('impersonationBanner').style.display = 'block';
+  document.getElementById('impersonatingOrgName').textContent = orgName;
+  toast(`🎭 Now impersonating ${orgName}`, 'success');
+  // Redirect to admin panel in context
+  setTimeout(() => window.location.href = '/admin', 1500);
+}
+async function stopImpersonation() {
+  await api('DELETE', '/impersonate');
+  document.getElementById('impersonationBanner').style.display = 'none';
+  toast('Exited impersonation mode', 'success');
+  loadOrgs();
+}
+async function loadImpersonationList() {
+  const d = await api('GET', '/organisations?limit=30');
+  const orgs = d.data || [];
+  document.getElementById('impersonateOrgList').innerHTML = `<table>
+    <thead><tr><th>Organisation</th><th>Status</th><th></th></tr></thead>
+    <tbody>${orgs.map(o=>`
+      <tr>
+        <td><strong>${o.name}</strong></td>
+        <td><span class="badge badge-${o.status}">${o.status}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="impersonateOrg('${o.id}','${o.name}')">🎭 Enter as Admin</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+/* ═══════════════════════════════════════
+   GLOBAL LEADERBOARD
+═══════════════════════════════════════ */
+async function loadGlobalLb() {
+  const d = await api('GET', '/leaderboard');
+  if (!Array.isArray(d)) return;
+  document.getElementById('globalLbBody').innerHTML = `<table>
+    <thead><tr><th>#</th><th>Name</th><th>Organisation</th><th>XP</th><th>Title</th></tr></thead>
+    <tbody>${d.map(s=>`
+      <tr>
+        <td style="color:var(--muted);font-weight:700">${s.rank}</td>
+        <td><strong>${s.name}</strong></td>
+        <td style="color:var(--muted);font-size:12px">${s.org}</td>
+        <td style="color:var(--accent);font-weight:700">${s.xp?.toLocaleString()}</td>
+        <td style="font-size:12px">${s.title}</td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+/* ═══════════════════════════════════════
+   AUDIT LOGS
+═══════════════════════════════════════ */
+async function loadAudit() {
+  const d = await api('GET', '/audit-logs?limit=50');
+  const logs = d.data || [];
+  document.getElementById('auditLogBody').innerHTML = logs.length
+    ? logs.map(l=>`
+      <div class="log-item">
+        <div class="log-action">${l.action.replace(/_/g,' ').toUpperCase()}</div>
+        <div class="log-meta">
+          ${l.organisations?.name || 'Platform'} · ${l.actor_role} · ${l.ip_address || 'N/A'}
+          <br>${new Date(l.created_at).toLocaleString()}
+        </div>
+      </div>`).join('')
+    : '<div class="empty"><div class="icon">📋</div>No audit logs yet</div>';
+}
+
+/* ═══════════════════════════════════════
+   PLANS
+═══════════════════════════════════════ */
+async function loadPlans() {
+  const plans = await api('GET', '/plans');
+  if (!Array.isArray(plans)) return;
+  document.getElementById('plansTableBody').innerHTML = `<table>
+    <thead><tr><th>Plan</th><th>Price/mo (INR)</th><th>Max Users</th><th>Max Challenges</th><th>Features</th></tr></thead>
+    <tbody>${plans.map(p=>`
+      <tr>
+        <td><strong style="text-transform:capitalize">${p.display_name}</strong></td>
+        <td style="color:var(--success);font-weight:700">&#8377;${p.price_monthly}</td>
+        <td>${p.max_users < 0 ? 'Unlimited' : p.max_users}</td>
+        <td>${p.max_challenges < 0 ? 'Unlimited' : p.max_challenges}</td>
+        <td style="font-size:11px;color:var(--muted)">
+          ${Object.entries(p.features||{}).filter(([,v])=>v).map(([k])=>k.replace(/_/g,' ')).join(', ')}
+        </td>
+      </tr>`).join('')}
+    </tbody></table>`;
+  loadPlatformPayments();
+}
+
+async function loadPlatformPayments() {
+  const wrap = document.getElementById('platformPaymentsWrap');
+  if (!wrap) return;
+  try {
+    const resp = await fetch('/api/super-admin/payments');
+    const rows = await resp.json();
+    if (!Array.isArray(rows) || !rows.length) {
+      wrap.innerHTML = '<div class="empty"><div class="icon">&#128179;</div>No payments recorded yet</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr><th>Date</th><th>Organisation</th><th>Plan</th><th>Amount</th><th>Status</th><th>Payment ID</th></tr></thead>
+      <tbody>${rows.map(h=>`
+        <tr>
+          <td>${new Date(h.created_at).toLocaleDateString('en-IN')}</td>
+          <td>${h.org_name || h.org_id?.slice(0,8) || '&#8212;'}</td>
+          <td style="text-transform:capitalize;font-weight:600">${h.plan_name}</td>
+          <td style="color:var(--success);font-weight:600">&#8377;${Number(h.amount).toLocaleString('en-IN')}</td>
+          <td><span class="badge badge-${h.status==='paid'?'active':h.status==='failed'?'suspended':'trial'}">${h.status}</span></td>
+          <td style="font-size:11px;color:var(--muted)">${h.razorpay_payment_id || '&#8212;'}</td>
+        </tr>`).join('')}
+      </tbody></table>`;
+  } catch(e) {
+    wrap.innerHTML = '<div class="empty"><div class="icon">&#9888;&#65039;</div>Could not load payment data</div>';
+  }
+}
+
+/* ═══════════════════════════════════════
+   UTILS
+═══════════════════════════════════════ */
+function closeModals() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) closeModals(); });
+});
+
+function toast(msg, type = 'info') {
+  const tc = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `${type==='success'?'✅':type==='error'?'❌':'ℹ️'} ${msg}`;
+  tc.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login';
+}
+
+/* ── Auto-fill slug from name ── */
+document.getElementById('newOrgName')?.addEventListener('input', function() {
+  document.getElementById('newOrgSlug').value = this.value
+    .toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+});
+
+/* ── Init ── */
+async function init() {
+  const s = await fetch('/api/auth/session').then(r=>r.json()).catch(()=>({}));
+  if (!s.user || s.user.role !== 'super_admin') {
+    window.location.href = '/login'; return;
+  }
+  document.getElementById('adminAvatar').textContent = (s.user.name||'S')[0].toUpperCase();
+  if (s.user.impersonating_org) {
+    document.getElementById('impersonationBanner').style.display = 'block';
+    document.getElementById('impersonatingOrgName').textContent = s.user.impersonating_org;
+  }
+  loadAnalytics();
+}
+
+init();
+
+const prefersReduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ── Background particles (visible motion) ── */
+(function startParticles() {
+  if (prefersReduceMotion) return;
+  const canvas = document.getElementById('sa-bg-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const particles = Array.from({ length: 32 }, () => ({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    r: 1.2 + Math.random() * 1.6,
+    dx: (-0.35 + Math.random()*0.7),
+    dy: (-0.35 + Math.random()*0.7),
+  }));
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  function step() {
+    if (document.hidden) { requestAnimationFrame(step); return; }
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = 'rgba(124,58,237,0.7)';
+    particles.forEach(p => {
+      p.x += p.dx; p.y += p.dy;
+      if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+    });
+    requestAnimationFrame(step);
+  }
+  step();
+})();
+
+/* ── Scroll/entry animations (real movement) ── */
+(function animateCards() {
+  if (prefersReduceMotion) return;
+  const targets = document.querySelectorAll('.stat-card, .card');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const el = e.target;
+        el.style.transform = 'translateY(12px)';
+        el.style.opacity = '0';
+        requestAnimationFrame(() => {
+          el.style.transition = 'transform .45s ease, opacity .45s ease';
+          el.style.transform = 'translateY(0)';
+          el.style.opacity = '1';
+        });
+        observer.unobserve(el);
+      }
+    });
+  }, { threshold: 0.2 });
+  targets.forEach(t => observer.observe(t));
+})();
+
+</script>
+</body>
+</html>
